@@ -10,6 +10,7 @@ Tài liệu thiết kế kiến trúc, catalog nghiệp vụ và lộ trình chu
 |---|---|
 | [`architecture/CURRENT-ARCHITECTURE-AUDIT.md`](./architecture/CURRENT-ARCHITECTURE-AUDIT.md) | Báo cáo kiểm toán kiến trúc Node.js hiện tại (Anemic Model, đánh giá mức độ DDD) — baseline từ ZaloCRM v1 (Zalo-only) |
 | [`architecture/NEXTGEN-GOLANG-DDD-SPEC.md`](./architecture/NEXTGEN-GOLANG-DDD-SPEC.md) | Đặc tả kiến trúc Go Core + Clean/DDD + Connect-RPC + Dual-System AI (Jev + LangChainGo) |
+| [`architecture/STORAGE-STRATEGY-AND-ORM.md`](./architecture/STORAGE-STRATEGY-AND-ORM.md) | Quyết định kiến trúc: Chọn Bun ORM cho CRM, chiến lược lưu trữ message phân cấp & pgvector AI |
 | [`architecture/ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | 442 API endpoints & 13 background workers — catalog đầy đủ từ source code ZaloCRM v1 |
 | [`migration/DDD-MIGRATION-MASTER-PLAN.md`](./migration/DDD-MIGRATION-MASTER-PLAN.md) | Kế hoạch tổng thể: Bounded Contexts, database strategy, proto contract, lộ trình 4 giai đoạn |
 | [`diagrams/`](./diagrams/) | Sơ đồ hệ thống, data model, backend modules (Mermaid, Excalidraw, PNG, SVG) |
