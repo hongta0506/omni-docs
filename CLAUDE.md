@@ -1,13 +1,13 @@
-# AGENTS.md — Omni Docs
+# CLAUDE.md — Omni Docs
 
-> Mandatory instructions for all AI coding agents working in the `omni-docs` repository.
+> Guidelines for managing documentation and specifications in the `omni-docs` repository.
 
 ---
 
-## 0. CRITICAL: Communication Language
+## 0. Communication Language
 
 **ALL explanations, summaries, plans, and responses to the user MUST be written in Vietnamese.**
-Identifiers, file paths, commands, and schemas remain in their original form.
+Code identifiers, file paths, commands, and schemas remain in their original form.
 
 ---
 
@@ -16,24 +16,21 @@ Identifiers, file paths, commands, and schemas remain in their original form.
 ### Protected Branches
 - `main`: Canonical production documentation. **DIRECT PUSH FORBIDDEN.**
 - `staging`: QA / Staging documentation. **DIRECT PUSH FORBIDDEN.**
-- All changes must go through a branch and Pull Request.
+- All changes must go through a branch and Pull Request into `staging`.
 
 ### Branch Naming Convention
 ```
 <type>/<issue-or-task-number>-<short-kebab-desc>
 ```
 Types: `docs`, `feat`, `fix`, `refactor`, `chore`
-Examples:
-- `docs/1-customer-api-mapping`
-- `docs/4-zalocrm-catalog`
 
 ### Standard Workflow
-1. `git checkout staging && git pull origin staging` (luôn pull code mới nhất)
+1. `git checkout staging && git pull origin staging`
 2. `git checkout -b <type>/<task-number>-<short-desc>`
-3. Viết tài liệu theo cấu trúc markdown rõ ràng, nhất quán
+3. Write clean, structured markdown docs
 4. Commit: `docs(<scope>): <short description>`
 5. Push: `git push origin <branch-name>`
-6. Tạo Pull Request vào `staging` (hoặc `main` khi có yêu cầu)
+6. Create PR into `staging`
 
 ---
 
@@ -64,10 +61,3 @@ Status options:
   ```bash
   gh project item-list 11 --owner hongta0506 --format json | jq '.items[] | select(.content.number==<ISSUE_NUMBER>) | .id'
   ```
-
----
-
-## 3. Communication
-
-**ALL explanations, plans, and responses MUST be in Vietnamese.**  
-File content (markdown docs, schemas, code blocks, commands, file paths, identifiers): keep in original English form.
