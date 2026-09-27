@@ -27,4 +27,4 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 - Quản lý Pool Proxy Egress và chống rate-limit.
 
 ### 4. [ZALOCRM-FUNCTIONAL-CATALOG.md](./ZALOCRM-FUNCTIONAL-CATALOG.md) (Tham Chiếu Nghiệp Vụ ZaloCRM)
-- Danh mục tra cứu 442 API endpoints và 13 background workers của hệ thống cũ.
+- Danh mục tra cứu 792 API endpoints và 27 background workers của hệ thống cũ.
