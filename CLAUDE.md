@@ -15,7 +15,7 @@ Tên biến, hàm, endpoint, commands, file paths, JSON/Protobuf schemas giữ n
 
 Trước khi thiết kế, viết tài liệu hoặc hướng dẫn triển khai cho bất kỳ tính năng nào:
 1. **Đọc tài liệu gốc tại `omni-docs/architecture/` và `omni-docs/migration/`**:
-   - `FULL-615-ENDPOINTS-DDD-ARCHITECTURE.md`
+   - `MASTER-ARCHITECTURE-BLUEPRINT.md`
    - `NEXTGEN-GOLANG-DDD-SPEC.md`
    - `DDD-MIGRATION-MASTER-PLAN.md`
    - `mapping-service-api-and-analytics.md`
