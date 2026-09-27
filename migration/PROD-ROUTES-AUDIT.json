@@ -1,0 +1,3213 @@
+{
+  "total": 614,
+  "summary": [
+    {
+      "mod": "contacts",
+      "count": 78
+    },
+    {
+      "mod": "service-api",
+      "count": 68
+    },
+    {
+      "mod": "integrations",
+      "count": 54
+    },
+    {
+      "mod": "zalo",
+      "count": 51
+    },
+    {
+      "mod": "chat",
+      "count": 39
+    },
+    {
+      "mod": "auth",
+      "count": 35
+    },
+    {
+      "mod": "media",
+      "count": 24
+    },
+    {
+      "mod": "dashboard",
+      "count": 23
+    },
+    {
+      "mod": "deals",
+      "count": 23
+    },
+    {
+      "mod": "ai",
+      "count": 20
+    },
+    {
+      "mod": "system-notifications",
+      "count": 19
+    },
+    {
+      "mod": "rbac",
+      "count": 18
+    },
+    {
+      "mod": "order-store",
+      "count": 17
+    },
+    {
+      "mod": "quotes",
+      "count": 17
+    },
+    {
+      "mod": "ai-agent",
+      "count": 15
+    },
+    {
+      "mod": "api",
+      "count": 14
+    },
+    {
+      "mod": "ops-radar",
+      "count": 12
+    },
+    {
+      "mod": "products",
+      "count": 12
+    },
+    {
+      "mod": "tags",
+      "count": 12
+    },
+    {
+      "mod": "analytics",
+      "count": 10
+    },
+    {
+      "mod": "scoring",
+      "count": 10
+    },
+    {
+      "mod": "privacy",
+      "count": 9
+    },
+    {
+      "mod": "order-platform",
+      "count": 8
+    },
+    {
+      "mod": "accounts",
+      "count": 6
+    },
+    {
+      "mod": "work-items",
+      "count": 4
+    },
+    {
+      "mod": "activity",
+      "count": 3
+    },
+    {
+      "mod": "engagement",
+      "count": 3
+    },
+    {
+      "mod": "branding",
+      "count": 2
+    },
+    {
+      "mod": "campaign",
+      "count": 2
+    },
+    {
+      "mod": "entitlement",
+      "count": 2
+    },
+    {
+      "mod": "config",
+      "count": 1
+    },
+    {
+      "mod": "notifications",
+      "count": 1
+    },
+    {
+      "mod": "search",
+      "count": 1
+    },
+    {
+      "mod": "users",
+      "count": 1
+    }
+  ],
+  "results": [
+    {
+      "method": "GET",
+      "path": "/api/v1/accounts",
+      "file": "accounts/account-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/accounts/:id",
+      "file": "accounts/account-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/accounts",
+      "file": "accounts/account-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/accounts/:id",
+      "file": "accounts/account-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/accounts/:id",
+      "file": "accounts/account-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/accounts/:id/contacts",
+      "file": "accounts/account-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/:id/timeline",
+      "file": "activity/timeline-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/:id/activity-log",
+      "file": "activity/timeline-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/timeline/export",
+      "file": "activity/timeline-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/providers",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai/providers/:id",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/providers/:id/models",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/config",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai/config",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/usage",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/suggest",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/company-profile",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai/company-profile",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/knowledge",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai/knowledge",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/knowledge/documents",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/summarize/:id",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/sentiment/:id",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/sales-handoff-message",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/format-rich",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/assistant-config",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai/assistant-config",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/contacts/:contactId/apply-ai-suggestion",
+      "file": "ai/ai-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai-agents",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai-agents/sync",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai-agents/_meta/vault-scopes",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai-agents/_meta/accounts",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai-agents/_meta/channels/rotate-bridge-secret",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai-agents/_meta/auto-reply",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai-agents/_meta/auto-reply",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai-agents/_meta/providers",
+      "file": "ai-agent/ai-agent-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/ai-agent/available",
+      "file": "ai-agent/default-ai-agent-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings/ai-agent/default",
+      "file": "ai-agent/default-ai-agent-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/goclaw-providers/_meta/types",
+      "file": "ai-agent/goclaw-provider-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/goclaw-providers",
+      "file": "ai-agent/goclaw-provider-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/retail-channel",
+      "file": "ai-agent/retail-channel-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/retail-channel/sync-progress",
+      "file": "ai-agent/retail-channel-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/retail-channel/kiotviet/resync",
+      "file": "ai-agent/retail-channel-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/analytics/conversion-funnel",
+      "file": "analytics/analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/analytics/team-performance",
+      "file": "analytics/analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/analytics/response-time",
+      "file": "analytics/analytics-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/analytics/custom",
+      "file": "analytics/analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/saved-reports",
+      "file": "analytics/saved-report-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/saved-reports",
+      "file": "analytics/saved-report-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/saved-reports/:id",
+      "file": "analytics/saved-report-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/saved-reports/:id",
+      "file": "analytics/saved-report-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/saved-reports/:id",
+      "file": "analytics/saved-report-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/saved-reports/:id/run",
+      "file": "analytics/saved-report-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/contacts",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/contacts/:id",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/public/contacts",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/public/contacts/:id",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/conversations",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/conversations/:id/messages",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/appointments",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/public/appointments",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/public/messages/send",
+      "file": "api/public-api-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/webhook",
+      "file": "api/webhook-settings-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings/webhook",
+      "file": "api/webhook-settings-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/webhook/test",
+      "file": "api/webhook-settings-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/api-key/generate",
+      "file": "api/webhook-settings-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/api-key",
+      "file": "api/webhook-settings-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/tenants",
+      "file": "auth/auth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/profile",
+      "file": "auth/auth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization",
+      "file": "auth/org-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/organization/system-notify-nick",
+      "file": "auth/org-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/organization",
+      "file": "auth/org-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/organization/automation-settings",
+      "file": "auth/org-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/organization/automation-settings",
+      "file": "auth/org-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/teams",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/teams",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/teams/:id",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/teams/:id",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/teams/:id/members",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/teams/:id/members",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/teams/:id/members/:userId",
+      "file": "auth/team-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/preferences",
+      "file": "auth/user-preference-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/preferences/:key",
+      "file": "auth/user-preference-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/me/preferences/:key",
+      "file": "auth/user-preference-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/me/preferences/:key",
+      "file": "auth/user-preference-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/users/:id",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/users/:id/password",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/users/:id",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/:id/handoff",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/bulk-assign",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/audit-logs",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/users/:id/max-privacy-nicks",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/internal-contact",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/onboarding",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/change-password",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/me/profile",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/avatar",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/onboarding/skip-step",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/onboarding/dismiss",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/onboarding/reopen",
+      "file": "auth/user-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/branding",
+      "file": "branding/branding-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/org-branding",
+      "file": "branding/org-branding-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/campaigns/random-friend-request",
+      "file": "campaign/campaign-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/campaigns/contacts/:contactId/attempts",
+      "file": "campaign/campaign-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/channel-accounts/capabilities",
+      "file": "chat/channel-access-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/channel-accounts/:id/access",
+      "file": "chat/channel-access-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/channel-accounts/:id/access",
+      "file": "chat/channel-access-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/channel-accounts/:id/access/:accessId",
+      "file": "chat/channel-access-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/channel-accounts/:id/access/:accessId",
+      "file": "chat/channel-access-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/attachments",
+      "file": "chat/chat-attachment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/reactions",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/conversations/:id/reactions",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/typing",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/conversations/:id/messages/:msgId",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/messages/:msgId/undo",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/messages/:msgId/edit",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/forward",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/pin",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/unpin",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/sticker",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/link",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/card",
+      "file": "chat/chat-operations-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/conversations/counts",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/conversations/event-counts",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/conversations/sidebar-tags",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/conversations",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/conversations/:id",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/touch-profile",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/conversations/:id/messages",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/messages",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/send-block",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/upload-image",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/mark-read",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chat/send-handoff",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/conversations/:id/tab",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/conversations/:id",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/restore",
+      "file": "chat/chat-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/account-folders",
+      "file": "chat/folder-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/account-folders",
+      "file": "chat/folder-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/account-folders/reorder",
+      "file": "chat/folder-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/account-folders/sync-by-owner",
+      "file": "chat/folder-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/filter-presets",
+      "file": "chat/preset-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/filter-presets",
+      "file": "chat/preset-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/config",
+      "file": "config/config-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/a/:code",
+      "file": "contacts/appointment-public-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/appointments/action",
+      "file": "contacts/appointment-public-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/public/appointments/action",
+      "file": "contacts/appointment-public-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments/today",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments/upcoming",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments/:id",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/appointments",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/appointments/:id",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/appointments/:id/status",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments/settings",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/appointments/settings",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/appointments/:id",
+      "file": "contacts/appointment-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:id/cockpit",
+      "file": "contacts/cockpit-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:id/teammates",
+      "file": "contacts/cockpit-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/stats",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/sources",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/pipeline",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:id",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/quick-create",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/:id/virtual-conversation",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/contacts/:id",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/contacts/:id/tags",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/contacts/:id",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/duplicates",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/duplicates/:groupId/dismiss",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/duplicates/:groupId/merge",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/intelligence/recompute",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:id/friendships",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/backfill-global-id",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/friends/:id",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/friends/:id/ensure-conversation",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:accountId/groups/:groupId/ensure-conversation",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/resolve-by-keys",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/ensure-by-uid",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/friends/:id/promote-to-parent",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/:id/merge-into",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/:id/link-parent",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/:id/unlink-parent",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/parent-candidates",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/parent-candidates/:id/accept",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/parent-candidates/:id/dismiss",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/run-detector",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/migrate-status-table",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/backfill-missing-friends",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/backfill-orphan-friends",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/backfill-friend-display-name",
+      "file": "contacts/contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:id/appointments",
+      "file": "contacts/contact-sub-resource-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/by-zalo-uid/:uid",
+      "file": "contacts/contact-sub-resource-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/crm-tag-groups",
+      "file": "contacts/crm-tag-group-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/crm-tag-groups",
+      "file": "contacts/crm-tag-group-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/crm-tag-groups/:id",
+      "file": "contacts/crm-tag-group-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/crm-tag-groups/:id",
+      "file": "contacts/crm-tag-group-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/crm-tags",
+      "file": "contacts/crm-tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/crm-tags",
+      "file": "contacts/crm-tag-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/crm-tags/:id",
+      "file": "contacts/crm-tag-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/crm-tags/:id",
+      "file": "contacts/crm-tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/crm-tags/reorder",
+      "file": "contacts/crm-tag-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:contactId/notes",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/contacts/:contactId/notes",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/notes/:id",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/notes/:id",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notes/:id/reactions",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notes/:id/ai-parse",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notes/:id/link-appointment",
+      "file": "contacts/notes-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/statuses",
+      "file": "contacts/status-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/statuses",
+      "file": "contacts/status-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings/statuses/:id",
+      "file": "contacts/status-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/statuses/reorder",
+      "file": "contacts/status-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/settings/statuses/:id",
+      "file": "contacts/status-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-bankcard",
+      "file": "contacts/zinstant-proxy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-sticker/:catId/:id",
+      "file": "contacts/zinstant-proxy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-sticker-list",
+      "file": "contacts/zinstant-proxy-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-user-info/batch",
+      "file": "contacts/zinstant-proxy-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-user-info/find-by-phone",
+      "file": "contacts/zinstant-proxy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-user-info/:uid",
+      "file": "contacts/zinstant-proxy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/action-hub/me",
+      "file": "dashboard/dashboard-action-hub-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/action-hub/team",
+      "file": "dashboard/dashboard-action-hub-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/action-hub/system",
+      "file": "dashboard/dashboard-action-hub-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/action-hub/picker/users",
+      "file": "dashboard/dashboard-action-hub-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/action-hub/picker/depts",
+      "file": "dashboard/dashboard-action-hub-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/kpi",
+      "file": "dashboard/dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/message-volume",
+      "file": "dashboard/dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/pipeline",
+      "file": "dashboard/dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/sources",
+      "file": "dashboard/dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/appointments",
+      "file": "dashboard/dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/overview",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/nick-fleet",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/sales-performance",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/pipeline",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/lead-pool",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/automation",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/engagement",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/audit",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/crm-usage",
+      "file": "dashboard/report-analytics-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/messages",
+      "file": "dashboard/report-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/contacts",
+      "file": "dashboard/report-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/appointments",
+      "file": "dashboard/report-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/export",
+      "file": "dashboard/report-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals/:dealId/activities",
+      "file": "deals/deal-activity-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/deals/:dealId/activities",
+      "file": "deals/deal-activity-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/deals/:dealId/activities/:id",
+      "file": "deals/deal-activity-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/deals/:dealId/activities/:id",
+      "file": "deals/deal-activity-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals/approvals/pending",
+      "file": "deals/deal-approval-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals/:id/approvals",
+      "file": "deals/deal-approval-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/deals/:id/${action}",
+      "file": "deals/deal-approval-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals/views-count",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals/pipeline/summary",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/deals/:id",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/deals",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/deals/:id",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/deals/:id/lines",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/deals/:id/transition",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/deals/:id/undo",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/deals/:id/quote-sent",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/deals/:id",
+      "file": "deals/deal-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings/deal-stages",
+      "file": "deals/deal-stage-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/deal-stages",
+      "file": "deals/deal-stage-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings/deal-stages/:id",
+      "file": "deals/deal-stage-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/deal-stages/reorder",
+      "file": "deals/deal-stage-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/settings/deal-stages/:id",
+      "file": "deals/deal-stage-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contacts/:id/engagement-timeline",
+      "file": "engagement/engagement-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/engagement/recompute",
+      "file": "engagement/engagement-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/engagement/backfill",
+      "file": "engagement/engagement-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/my/entitlement",
+      "file": "entitlement/entitlement-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/entitlements",
+      "file": "entitlement/entitlement-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/external-conversations",
+      "file": "integrations/external-inbox-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/external-conversations/:id/messages",
+      "file": "integrations/external-inbox-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/external-conversations/:id/link-contact",
+      "file": "integrations/external-inbox-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/external-conversations/:id/link-contact",
+      "file": "integrations/external-inbox-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/external-conversations/:id/read",
+      "file": "integrations/external-inbox-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/external-conversations/:id/messages",
+      "file": "integrations/external-inbox-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/facebook/config",
+      "file": "integrations/facebook-oauth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/facebook/oauth/start",
+      "file": "integrations/facebook-oauth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/facebook/oauth/callback",
+      "file": "integrations/facebook-oauth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/facebook/pages",
+      "file": "integrations/facebook-oauth-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/integrations/facebook/pages/:pageId",
+      "file": "integrations/facebook-oauth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations",
+      "file": "integrations/integration-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/integrations",
+      "file": "integrations/integration-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/integrations/:id",
+      "file": "integrations/integration-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/integrations/:id",
+      "file": "integrations/integration-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/integrations/:id/sync",
+      "file": "integrations/integration-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/:id/logs",
+      "file": "integrations/integration-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/facebook/webhook",
+      "file": "integrations/providers/facebook/facebook-webhook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/integrations/facebook/webhook",
+      "file": "integrations/providers/facebook/facebook-webhook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal/goclaw/context",
+      "file": "integrations/providers/goclaw-bridge/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal/goclaw/media",
+      "file": "integrations/providers/goclaw-bridge/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/internal/goclaw/reply",
+      "file": "integrations/providers/goclaw-bridge/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/agent-control",
+      "file": "integrations/providers/goclaw-bridge/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/conversations/:id/human-takeover",
+      "file": "integrations/providers/goclaw-bridge/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pancake/status",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pancake/config",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/pancake/config",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/pancake/config",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pancake/orders",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pancake/products",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pancake/warehouses",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/pancake/orders",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/pancake/orders/:id/cancel",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pancake/orders/:id",
+      "file": "integrations/providers/pancake-pos/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telegram-bridge/:zaloAccountId/status",
+      "file": "integrations/providers/telegram-bridge/telegram-bridge-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-bridge/link-code",
+      "file": "integrations/providers/telegram-bridge/telegram-bridge-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-bridge/provision/:zaloAccountId",
+      "file": "integrations/providers/telegram-bridge/telegram-bridge-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-bridge/disable/:zaloAccountId",
+      "file": "integrations/providers/telegram-bridge/telegram-bridge-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telegram-personal/accounts",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-personal/login/start",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telegram-personal/login/:id",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-personal/login/:id/password",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/telegram-personal/login/:id",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-personal/accounts/:id/sync",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-personal/accounts/:id/disconnect",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/telegram-personal/accounts/:id/proxy",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telegram-personal/accounts/:id/proxy/test",
+      "file": "integrations/providers/telegram-personal/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/zalo-bot/accounts",
+      "file": "integrations/providers/zalo-bot/account-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/integrations/zalo-bot/accounts",
+      "file": "integrations/providers/zalo-bot/account-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/zalo-oa/accounts",
+      "file": "integrations/providers/zalo-oa/account-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/zalo-oa/oauth/start",
+      "file": "integrations/providers/zalo-oa/oauth-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/zalo-oa/oauth/callback",
+      "file": "integrations/providers/zalo-oa/oauth-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/integrations/zalo-oa/webhook",
+      "file": "integrations/providers/zalo-oa/webhook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/zalo-oa/conversations/:id/window",
+      "file": "integrations/providers/zalo-oa/window-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/uploaders",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/upload",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/save-from-chat",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/save-from-chat-batch",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/:id/send",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/media/:id",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/media/bulk",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/media/:id",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/download",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/trash",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/:id/restore",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/media/:id/permanent",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/media/trash/empty",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/:id/watermark",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/media/:id/watermark",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/folders",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/folders",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/suggest",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/tags",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/stats",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/:id/favorite",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/media/favorites",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/media/album/send",
+      "file": "media/media-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications",
+      "file": "notifications/notification-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/settings",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ops-radar/settings",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/groups",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ops-radar/groups/:conversationId",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/groups/:conversationId/members",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ops-radar/telegram/test",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ops-radar/sweep/run",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ops-radar/reports/run",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/overview",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/signals",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/reports",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ops-radar/reports/:id",
+      "file": "ops-radar/ops-radar-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-platform/status",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-platform/products",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-platform/products/:variationId",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-platform/orders",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-platform/orders/list",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-platform/orders/:id",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-platform/orders",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/order-platform/connection",
+      "file": "order-platform/routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-store/buyers/unlinked",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/buyers/link",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/buyers/create-contacts",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/orders/:orderId/link",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-store/contacts/:contactId/purchases",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-store/totals/segment",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/totals/recompute",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-store/deals/:dealId/order",
+      "file": "order-store/order-link-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-store/sync",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/order-store/sync",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/sync/run",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/sync/backfill",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/order-store/webhook",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/webhook/enable",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/order-store/webhook/disable",
+      "file": "order-store/order-store-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/webhooks/pancake/:orgId",
+      "file": "order-store/order-webhook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/webhooks/kiotviet/:orgId/:token",
+      "file": "order-store/order-webhook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/privacy/otp/status",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/privacy/otp/request",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/privacy/otp/verify",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/privacy/lock",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/privacy/status",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/privacy/my-nicks",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/zalo-accounts/:id/privacy-mode",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/privacy/reset-lock/:userId",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/privacy/audit",
+      "file": "privacy/privacy-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/products",
+      "file": "products/product-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/products",
+      "file": "products/product-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/products/:id",
+      "file": "products/product-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/products/:id",
+      "file": "products/product-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/products/source",
+      "file": "products/product-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/products/import",
+      "file": "products/product-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/products/sync/settings",
+      "file": "products/product-sync-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/products/sync/settings",
+      "file": "products/product-sync-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/products/sync/run",
+      "file": "products/product-sync-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/products/sync/runs",
+      "file": "products/product-sync-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/products/:id/${action}",
+      "file": "products/product-sync-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/products/ignore-all",
+      "file": "products/product-sync-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pricebook/options",
+      "file": "quotes/pricebook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pricebook",
+      "file": "quotes/pricebook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/pricebook/items",
+      "file": "quotes/pricebook-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/pricebook/items/:id",
+      "file": "quotes/pricebook-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/pricebook/items/:id",
+      "file": "quotes/pricebook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/pricebook",
+      "file": "quotes/public-pricebook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quotes/:id/pdf",
+      "file": "quotes/quote-pdf-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quotes/:id/send-zalo",
+      "file": "quotes/quote-pdf-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quotes",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quotes/approvals/pending",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quotes/:id",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quotes",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/quotes/:id",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quotes/:id/version",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quotes/:id/send",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quotes/:id/${action}",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quotes/:id/${action}",
+      "file": "quotes/quote-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/departments",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/departments",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/departments/:id",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/departments/:id",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/departments/:id/members",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/departments/:id/members/:userId",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/departments/:id/members-tree",
+      "file": "rbac/department-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/permission-groups",
+      "file": "rbac/permission-group-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/permission-groups/meta",
+      "file": "rbac/permission-group-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/permission-groups/:id",
+      "file": "rbac/permission-group-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/permission-groups",
+      "file": "rbac/permission-group-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/permission-groups/:id",
+      "file": "rbac/permission-group-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/permission-groups/:id",
+      "file": "rbac/permission-group-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/rbac/users",
+      "file": "rbac/user-assignment-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/rbac/users/:id/permission-group",
+      "file": "rbac/user-assignment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/rbac/seed-default-groups",
+      "file": "rbac/user-assignment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/rbac/migrate-legacy-users",
+      "file": "rbac/user-assignment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/rbac/create-test-users",
+      "file": "rbac/user-assignment-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/scoring/config",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/scoring/config",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/scoring/rules",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/scoring/stage-transitions",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/scoring/stuck-thresholds",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/scoring/nba-templates",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/scoring/seed-defaults",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads/stuck",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/leads/stuck/scan",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/scoring/recompute-all",
+      "file": "scoring/scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/search",
+      "file": "search/search-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ai/agent-hands",
+      "file": "service-api/agent-hands-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/agent-hands",
+      "file": "service-api/agent-hands-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/ai/agent-hands",
+      "file": "service-api/agent-hands-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/agent-hands/rotate",
+      "file": "service-api/agent-hands-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ai/agent-hands/autonomy",
+      "file": "service-api/agent-hands-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/agent-hands/sync-tools",
+      "file": "service-api/agent-hands-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/birthdays/due",
+      "file": "service-api/service-birthday-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/birthday-runs/preview",
+      "file": "service-api/service-birthday-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/birthday-runs",
+      "file": "service-api/service-birthday-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/products",
+      "file": "service-api/service-catalog-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/products/:id",
+      "file": "service-api/service-catalog-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/pricebook",
+      "file": "service-api/service-catalog-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/contacts",
+      "file": "service-api/service-contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/contacts/:id",
+      "file": "service-api/service-contact-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/service-credentials",
+      "file": "service-api/service-credential-admin-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/service-credentials",
+      "file": "service-api/service-credential-admin-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/service-credentials/:id/rotate",
+      "file": "service-api/service-credential-admin-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/service-credentials/:id/revoke",
+      "file": "service-api/service-credential-admin-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/contacts",
+      "file": "service-api/service-crm-mutation-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/service/v1/contacts/:id",
+      "file": "service-api/service-crm-mutation-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/contacts/:contactId/notes",
+      "file": "service-api/service-crm-mutation-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/appointments",
+      "file": "service-api/service-crm-mutation-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/contacts/:contactId/notes",
+      "file": "service-api/service-crm-tracking-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/appointments",
+      "file": "service-api/service-crm-tracking-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/events",
+      "file": "service-api/service-event-feed-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/friend-lookups",
+      "file": "service-api/service-friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/friend-requests/preview",
+      "file": "service-api/service-friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/friend-requests",
+      "file": "service-api/service-friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/friend-requests/:id",
+      "file": "service-api/service-friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/friend-requests/:id/cancel",
+      "file": "service-api/service-friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/integrations",
+      "file": "service-api/service-integrations-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/lead-assignments/:contactId",
+      "file": "service-api/service-lead-assignment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/lead-assignments/:contactId",
+      "file": "service-api/service-lead-assignment-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/service-operations/:id/approve",
+      "file": "service-api/service-message-approval-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/service-operations/:id/reject",
+      "file": "service-api/service-message-approval-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/messages/preview",
+      "file": "service-api/service-message-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/messages/send",
+      "file": "service-api/service-message-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/conversations",
+      "file": "service-api/service-messaging-health-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/conversations/:conversationId/messages",
+      "file": "service-api/service-messaging-health-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/zalo-accounts",
+      "file": "service-api/service-messaging-health-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/zalo-accounts/:id/health",
+      "file": "service-api/service-messaging-health-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/operations/:id",
+      "file": "service-api/service-operation-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/quotes",
+      "file": "service-api/service-sales-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/quotes/:id",
+      "file": "service-api/service-sales-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/deals",
+      "file": "service-api/service-sales-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/deals/:id",
+      "file": "service-api/service-sales-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/contacts/:id/score",
+      "file": "service-api/service-sales-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/deals",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/service/v1/deals/:id",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/deals/:id/notes",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/quotes",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/service/v1/quotes/:id",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/deals/:id/transition",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/service/v1/deals/:id/lines",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/deals/:id/win_propose",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/deals/:id/lose_propose",
+      "file": "service-api/service-sales-write-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/scoring/config",
+      "file": "service-api/service-scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/leads/:id/score",
+      "file": "service-api/service-scoring-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/service/v1/scoring/config",
+      "file": "service-api/service-scoring-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/scoring/recompute",
+      "file": "service-api/service-scoring-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/webhook-subscriptions",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/webhook-subscriptions",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/webhook-subscriptions/:id",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/service/v1/webhook-subscriptions/:id",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/webhook-subscriptions/:id/rotate-secret",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/webhook-deliveries",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/v1/webhook-deliveries/:id/replay",
+      "file": "service-api/service-webhook-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/v1/whoami",
+      "file": "service-api/service-whoami-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system-notifications/settings",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/system-notifications/settings/sender",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system-notifications/unanswered-reminder-settings",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/system-notifications/unanswered-reminder-settings",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system-notifications/recipients",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system-notifications/recipients/health",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/recipients/:userId/check-live",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/recipients/recheck-all",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/test",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system-notifications/org-config",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/compile-template",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/system-notifications/org-config",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/welcome-image",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/preview-welcome",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/system-notifications/logs",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/system-notifications/logs/:id/retry",
+      "file": "system-notifications/system-notify-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/check-zalo-by-phone",
+      "file": "system-notifications/user-create-with-zalo-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/create-with-zalo",
+      "file": "system-notifications/user-create-with-zalo-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/:userId/resend-credentials",
+      "file": "system-notifications/user-create-with-zalo-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/zalo-accounts",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/:id",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/:id",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/merge",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/:id/tags",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/:id/tags",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/:id/tags/:tagId",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/:id/crm-tags",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/:id/crm-tags",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/:id/crm-tags/:tagId",
+      "file": "tags/tag-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/provision",
+      "file": "users/user-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/work-items",
+      "file": "work-items/work-items-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/work-items/:id",
+      "file": "work-items/work-items-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/work-items/:id",
+      "file": "work-items/work-items-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-items/:id/comments",
+      "file": "work-items/work-items-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/export",
+      "file": "zalo/credential-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/egress",
+      "file": "zalo/egress-admin-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/egress/proxies",
+      "file": "zalo/egress-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}-db",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/friends-db/all-nicks",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}-db/sync",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/find",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/lookup-by-phone",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/online",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/recommendations",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/aliases",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/requests/sent",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/requests/:userId/status",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/requests",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/requests/:userId/accept",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/requests/:userId/reject",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "${BASE}/requests/:userId",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "${BASE}/:userId",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "${BASE}/:userId/alias",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "${BASE}/:userId/alias",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/:userId/block",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "${BASE}/:userId/block",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/:userId/block-feed",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "${BASE}/:userId/block-feed",
+      "file": "zalo/friend-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/last-online/:userId",
+      "file": "zalo/profile-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "${BASE}/avatars",
+      "file": "zalo/profile-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "${BASE}/avatar",
+      "file": "zalo/profile-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "${BASE}/avatars/:avatarId",
+      "file": "zalo/profile-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "${BASE}/avatars/:avatarId/reuse",
+      "file": "zalo/profile-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "${BASE}/status",
+      "file": "zalo/profile-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/:id/access",
+      "file": "zalo/zalo-access-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:id/access",
+      "file": "zalo/zalo-access-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/zalo-accounts/:id/access/:accessId",
+      "file": "zalo/zalo-access-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/zalo-accounts/:id/access/:accessId",
+      "file": "zalo/zalo-access-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/stats",
+      "file": "zalo/zalo-dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/enriched",
+      "file": "zalo/zalo-dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/sdk-limits",
+      "file": "zalo/zalo-dashboard-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/zalo-accounts/sdk-limits/org",
+      "file": "zalo/zalo-dashboard-routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/zalo-accounts/:id/sdk-limits",
+      "file": "zalo/zalo-dashboard-routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/zalo-accounts/:id/sdk-limits",
+      "file": "zalo/zalo-dashboard-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/:id/labels",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/labels-overview",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:id/labels/sync",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:id/labels/touch",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:id/labels/assign-thread",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/friends/:friendId/zalo-label",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/zalo-accounts/:id/labels/:labelId",
+      "file": "zalo/zalo-labels-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts",
+      "file": "zalo/zalo-routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/zalo-accounts/archived",
+      "file": "zalo/zalo-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:id/sync-contacts",
+      "file": "zalo/zalo-sync-routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/zalo-accounts/:id/sync-history",
+      "file": "zalo/zalo-sync-routes.ts"
+    }
+  ]
+}
