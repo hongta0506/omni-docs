@@ -98,15 +98,33 @@ internal/<bc>/
 ---
 
 ### BC 2: `Channel & Gateway BC` (`internal/channel`) — 95 Endpoints
-*Chịu trách nhiệm: Quản lý danh sách Nick Zalo, Quét nhóm Zalo, Nhãn Zalo, Egress Proxy Pool, Kênh phụ (OA, Bot, Telegram).*
+*Chịu trách nhiệm: Quản lý danh sách Nick Zalo, Telegram cá nhân, WhatsApp, Zalo OA, Zalo Bot, và Egress Proxy Pool.*
 
-- **Thư mục con**:
-  - `domain/`: `ChannelAccount`, `ZaloGroup`, `ZaloLabel`, `EgressBinding`, `ChannelSession`
-  - `application/commands/`: `ConnectAccount`, `DisconnectAccount`, `ScanGroupMembers`, `SyncLabels`, `RotateProxy`
-  - `application/queries/`: `ListAccounts`, `GetAccountStatus`, `ListGroups`, `ListLabels`, `ListProxies`
-  - `infrastructure/postgres/`: `channel_account_repo.go`, `zalo_ext_repo.go`, `proxy_repo.go`
+- **Thư mục con theo chuẩn DDD phân rã theo từng Sub-channel**:
+  - `domain/`:
+    - `channel_account.go` (Aggregate Root chung: status, token, limits, proxy_binding)
+    - `zalo/` (ZaloGroup, ZaloLabel, ZaloFriend, QRSession)
+    - `telegram/` (TelegramAccount, TelegramSession, MTProtoConfig)
+    - `whatsapp/` (WhatsAppAccount, WABASession)
+    - `proxy/` (EgressProxy, ProxyBinding, RotationPolicy)
+  - `application/`:
+    - `router/` (InboundEventForwarder, OutboundMessageRouter)
+    - `zalo/` (Commands: ScanGroup, SyncLabels, QRLogin | Queries: ListZaloAccounts, ListGroups)
+    - `telegram/` (Commands: StartTeleLogin, VerifyTeleCode, RotateTeleProxy | Queries: ListTeleAccounts)
+    - `whatsapp/` (Commands: ConnectWhatsApp, SendWhatsAppMessage)
+    - `proxy/` (Commands: BindProxy, RotateProxy | Queries: ListProxies)
+  - `infrastructure/`:
+    - `postgres/` (models/, channel_account_repo.go, zalo_repo.go, telegram_repo.go, proxy_repo.go)
+    - `redis/` (qr_session_store.go, telegram_session_store.go)
+    - `telegram/` (mtproto_client.go, tele_gateway_adapter.go)
+    - `whatsapp/` (grpc_client.go, event_subscriber.go)
+    - `zalo/` (zalo_client.go)
   - `interfaces/http/`:
-    - `zalo_account_handler.go`: `/zalo-accounts/*`, `/privacy/*`, `/friends/*`
+    - `zalo/`: `/zalo-accounts/*`, `/privacy/*`, `/friends/*`, `/zalo-groups/*`, `/zalo-labels/*`, `/account-folders/*`
+    - `telegram/`: `/telegram-personal/*`, `/telegram-bridge/*`
+    - `integrations/`: `/integrations/zalo-oa/*`, `/integrations/zalo-bot/*`
+    - `egress/`: `/admin/egress/*`
+    - `whatsapp/`: `/webhook/whatsapp`
     - `zalo_group_handler.go`: `/zalo-groups/*`, `/zalo-labels/*`, `/account-folders/*`
     - `integration_handler.go`: `/integrations/zalo-oa/*`, `/integrations/zalo-bot/*`
     - `telegram_handler.go`: `/telegram-personal/*`, `/telegram-bridge/*`
