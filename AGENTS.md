@@ -16,7 +16,7 @@ Tên biến, hàm, class, file path, git command, JSON/YAML/Protobuf schema gi�
 
 ### 1.1 Nguyên Tắc "Docs-First" (Đọc Tài Liệu Trước Tiên)
 Mọi agent khi nhận nhiệm vụ liên quan đến phân rã Bounded Context, thiết kế kiến trúc hoặc triển khai code đều phải đọc tài liệu chuẩn từ `omni-docs` theo thứ tự:
-1. `omni-docs/architecture/FULL-615-ENDPOINTS-DDD-ARCHITECTURE.md`: Bản đồ toàn diện 615 endpoints và quy chuẩn phân chia 8 Bounded Contexts.
+1. `omni-docs/architecture/MASTER-ARCHITECTURE-BLUEPRINT.md`: Bản đồ toàn diện 615 endpoints và quy chuẩn phân chia 8 Bounded Contexts.
 2. `omni-docs/architecture/NEXTGEN-GOLANG-DDD-SPEC.md`: Đặc tả kỹ thuật Go Clean DDD + Connect-RPC.
 3. `omni-docs/migration/DDD-MIGRATION-MASTER-PLAN.md`: Kế hoạch tổng thể chuyển đổi 7 Bounded Contexts.
 4. `omni-docs/migration/mapping-service-api-and-analytics.md`: Chi tiết ánh xạ cho Service-API, Analytics & Ops Radar.
