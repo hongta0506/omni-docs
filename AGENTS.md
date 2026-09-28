@@ -104,9 +104,9 @@ internal/<bc_name>/
 
 ---
 
-## 3. Five Mandatory Golang Performance & Anti-Pattern Rules
+## 3. Mandatory Golang Performance, Anti-Pattern & Resilience Rules
 
-Detailed guide: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`.
+Detailed guide: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md` and `omni-docs/architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md`.
 
 1. **Memory & GC Hygiene**:
    - No unbounded `go func()`. Use managed worker pools or bounded buffered channels with backpressure.
@@ -126,6 +126,11 @@ Detailed guide: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`.
    - Define interfaces in the consumer package.
    - No `I*` prefixes or `*Impl` suffixes.
    - Do NOT create single-implementation interfaces unless needed for mock injection.
+6. **Observability, Structured Logging & Exception Standards (MANDATORY FOR ALL BCS)**:
+   - **Logging**: Always use `pkg/logger`. Never use `fmt.Println` or `log.Printf` in production code. All logs must emit Structured JSON to `stdout` containing `trace_id`, `tenant_id`, `bounded_context`, and `submodule` for Grafana Loki ingestion.
+   - **Exceptions**: Always use `pkg/errors`. Never return anonymous `errors.New("raw string")`. Every domain error must be classified into `ClassificationTransient`, `ClassificationTerminal`, or `ClassificationSecurityPolicy`.
+   - **Third-Party I/O Resilience**: All external API calls (Zalo, Meta, Telegram, Webhooks, external HTTP) must execute through `pkg/resilience.ExecuteWithRetry` or Circuit Breaker.
+   - **Dead Letter Queue (DLQ)**: Failed critical async outbound jobs (messages, order sync, webhooks) that exhaust retries must persist to `system_outbound_dlq` for manual redrive.
 
 ---
 
@@ -164,58 +169,66 @@ gh pr create --base staging --title "[BC-name] <type>: <description>" --body "..
      ```
 
 ### 4.4 Standard Issue Specification & Anti-Pattern Locking (MANDATORY)
-Mọi GitHub Issue tạo mới trên `omni-core` hoặc phân công cho AI Agent bắt buộc phải tuân theo cấu trúc chuẩn gồm 7 phần, đặc biệt là phần khóa các bẫy Go DDD và ranh giới cách ly file chống conflict:
+Every GitHub Issue created on `omni-core` or assigned to an AI Agent must strictly follow the standard structure below. Furthermore, every functional issue MUST explicitly define the **Observability, Logging & Exception Contract** extending `pkg/logger`, `pkg/errors`, and `pkg/resilience` so that implementing agents automatically adhere to system-wide observability without drift:
 
 ```markdown
 ## Context & Goal
-Mô tả mục tiêu nghiệp vụ, Bounded Context, submodule cần giải quyết.
+Describe business goal, target Bounded Context, and submodule.
 
 ## Affected Submodule & Strict File Boundaries
-> **QUY TẮC CÁCH LY CHỐNG CONFLICT (CRITICAL FOR MULTI-AGENT CONCURRENCY):**
-> AI Agent nhận task này CHỈ ĐƯỢC làm việc trong phạm vi các file/thư mục được chỉ định. TUYỆT ĐỐI KHÔNG sửa các file ngoài phạm vi.
+> **MULTI-AGENT FILE ISOLATION (CRITICAL FOR CONCURRENT WORK):**
+> AI Agents working on this task MUST strictly operate within designated paths. Modifying files outside the boundary is strictly prohibited.
 
 - **Domain Layer:** `internal/<bc>/domain/<submodule>/`
 - **Application Layer:** `internal/<bc>/application/<submodule>/`
 - **Infrastructure Layer:** `internal/<bc>/infrastructure/<submodule>/`
 - **Interfaces Layer:** `internal/<bc>/interfaces/http/<submodule>_handler.go`
-- **Forbidden Area:** Danh sách các file / submodule đang có agent khác làm, cấm chỉnh sửa.
+- **Forbidden Area:** List files / submodules currently assigned to other agents or outside this scope.
 
 ## Source Docs & Reference (Master Branch)
 - Architecture Blueprint: [MASTER-ARCHITECTURE-BLUEPRINT.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/MASTER-ARCHITECTURE-BLUEPRINT.md)
-- Subdomain Mapping: Link tài liệu mapping chi tiết trong `contexts/`
+- Subdomain Mapping: Detailed context documentation in `contexts/`
 - Resilience & Error Handling: [CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md)
 - Performance & Anti-Patterns: [GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md)
-- Legacy Reference: File code gốc Node.js/Fastify
+- Legacy Reference: Original Fastify/Prisma source files
 
 ## Domain Invariants
-Liệt kê các quy tắc bất biến (invariants) mà Aggregate Root và Value Objects phải bảo vệ.
+List invariant rules that Aggregate Root and Value Objects must enforce.
 
-## Resilience & Error Handling Mapping (MANDATORY FOR ALL ISSUES)
-> Khi tạo Issue, bắt buộc phải định nghĩa bảng ánh xạ lỗi và chiến lược tự phục hồi. Khi code, bắt buộc phải hiện thực hóa đầy đủ tầng này bằng `pkg/errors` và `pkg/resilience`.
+## Observability, Logging & Exception Contract (EXTENDS SPRINT 7 RESILIENCE STANDARD)
+> **MANDATORY CODING RULES FOR IMPLEMENTING AGENTS:**
+> 1. **Structured Logging:** Use `pkg/logger` to stream JSON to `stdout` for Grafana Loki ingestion. Include `trace_id`, `tenant_id`, `bounded_context`, `submodule`, `action_taken`, and `duration_ms`. NEVER use `fmt.Println` or stdlib `log.Printf`.
+> 2. **Error Taxonomy:** Map every technical/domain failure to `pkg/errors` with classification (`Transient`, `Terminal`, `SecurityPolicy`). NEVER return unclassified raw errors.
+> 3. **External I/O Resilience:** Wrap any 3rd-party or external network call in `pkg/resilience.ExecuteWithRetry` or Circuit Breaker.
+> 4. **DLQ Persistence:** Route unrecoverable outbound messages / async jobs to `system_outbound_dlq`.
 
-| Nhóm Ngoại Lệ | Danh Sách Lỗi Kỹ Thuật / Domain | Hành Động Xử Lý Bắt Buộc | Retry / Circuit Breaker / DLQ |
+| Exception Group | Technical / Domain Error List | System Action | Resilience Strategy (Retry / Circuit Breaker / DLQ) |
 |---|---|---|---|
-| **Transient** | Lỗi mạng, 429 RateLimit, Timeout, DB Deadlock | Tự động thử lại | Exponential Backoff with Jitter (Base 500ms-2s, Max 3 lần) |
-| **Terminal** | Lỗi Validation, Không tìm thấy Entity, Blocked | Hủy ngay, không retry | Lưu vào `system_outbound_dlq` nếu là tác vụ gửi tin/đơn hàng |
-| **Security/Policy** | Hết hạn Token, Bị khóa nick, Checkpoint, Ban | Ngắt kết nối, chuyển trạng thái | Chuyển Circuit Breaker sang `OPEN`, gửi cảnh báo Admin/Ops |
+| **Transient** | Network timeout, 429 RateLimit, DB deadlock | Auto retry | Exponential Backoff with Jitter (Base 500ms-2s, Max 3 retries) |
+| **Terminal** | Validation failure, Entity not found, Recipient blocked | Abort immediately | Log Terminal error, route to `system_outbound_dlq` if outbound job |
+| **Security/Policy** | Token expired, Account checkpointed, Session banned | Disconnect session | Open Circuit Breaker, trigger Admin/Ops alert |
 
-- **Audit Log Schema:** Bắt buộc ghi log Structured JSON ra `stdout` cho Grafana Loki (`trace_id`, `tenant_id`, `exception_classification`, `action_taken`, `duration_ms`).
+- **Log Event Names & Action Taken:**
+  - Success event: `<SUBMODULE>_SUCCESS` (e.g. `CUSTOMER_TIMELINE_QUERIED`, `ORDER_SYNCED`)
+  - Warning/Retry event: `<SUBMODULE>_RETRIED`
+  - Failure/DLQ event: `<SUBMODULE>_FAILED`, `<SUBMODULE>_SENT_TO_DLQ`
 
 ## Go DDD Performance & Anti-Pattern Checklist (MANDATORY)
-> AI Agent bắt buộc đối soát theo `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`:
+> AI Agent must verify against `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`:
 
-- [ ] **Small Aggregate (Pitfall 3):** Aggregate Root CHỈ chứa identity, metadata và summary metrics; KHÔNG embed slices lớn trong RAM.
-- [ ] **Pragmatic CQRS (Pitfall 2):** Các Query scan trực tiếp từ DB vào Read Projection DTOs, KHÔNG hydrate qua Domain Aggregate.
-- [ ] **No N+1 (Pitfall 3):** Truy vấn danh sách/quan hệ bằng SQL JOIN hoặc `bun.In()`, KHÔNG query trong vòng lặp `for`.
-- [ ] **Idiomatic Go (Pitfall 5):** Accept interfaces, return structs. Không đặt tên `I*` hay `*Impl`.
-- [ ] **Pagination Chuẩn (Shared Kernel):** Embed `pkg/pagination.PaginationParam`, chuẩn hóa bằng `Normalize()` và trả về `PageResult[T]`.
-- [ ] **Context Lifecycle (Pitfall 4):** Không truyền trực tiếp `r.Context()` vào async goroutine nếu có background task.
-- [ ] **Resilience & Error Handling (Bắt Buộc MVP):** Phân loại đúng `Transient / Terminal / SecurityPolicy`, áp dụng retry/circuit breaker và log JSON chuẩn cho Grafana Loki.
+- [ ] **Small Aggregate (Pitfall 3):** Aggregate Root ONLY stores identity, metadata, and summary metrics; NO large slices in RAM.
+- [ ] **Pragmatic CQRS (Pitfall 2):** Queries scan directly from DB into Read Projection DTOs, NEVER hydrating full Domain Aggregates.
+- [ ] **No N+1 (Pitfall 3):** Batch fetch via SQL JOIN or `bun.In()`, NEVER query in a loop.
+- [ ] **Idiomatic Go (Pitfall 5):** Accept interfaces, return structs. No `I*` prefix or `*Impl` suffix.
+- [ ] **Standard Pagination (Shared Kernel):** Embed `pkg/pagination.PaginationParam`, normalize via `Normalize()`, and return `PageResult[T]`.
+- [ ] **Context Lifecycle (Pitfall 4):** Never pass `r.Context()` to async goroutines without detaching via `context.WithoutCancel()`.
+- [ ] **Resilience & Observability (Mandatory for MVP):** Use `pkg/logger` (JSON stdout), classify errors via `pkg/errors`, and apply retry/circuit breaker via `pkg/resilience`.
 
 ## Acceptance Criteria
-- [ ] Checklist các endpoints HTTP / RPC
-- [ ] Unit tests cho Domain Invariants & Value Objects
-- [ ] Repository integration test với Bun ORM / pgx
+- [ ] HTTP / Connect-RPC endpoints checklist
+- [ ] Unit tests for Domain Invariants & Value Objects
+- [ ] Repository integration tests with Bun ORM / pgx
+- [ ] Observability tests verifying Structured JSON log output and error classification
 
 ## Git Workflow
 ```bash
