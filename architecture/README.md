@@ -34,3 +34,9 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 
 ### 5. [ZALOCRM-FUNCTIONAL-CATALOG.md](./ZALOCRM-FUNCTIONAL-CATALOG.md) (Tham Chiếu Nghiệp Vụ ZaloCRM)
 - Danh mục tra cứu 792 API endpoints và 27 background workers của hệ thống cũ.
+
+### 6. [GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md](./GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md) (Quy Chuẩn Hiệu Năng & Chống Anti-Patterns Go DDD)
+- Ngăn chặn 5 cạm bẫy thực chiến: Rò rỉ Memory/GC, Phình to kiến trúc, N+1 Query & Aggregate quá tải, Vòng đời Concurrency/Context, Tư duy Java/C# trong Go.
+- Chiến lược Pragmatic CQRS: Read model chiếu thẳng DTO không re-hydrate Aggregate.
+- Checklist kiểm tra bắt buộc cho mọi AI Coding Agent trước khi mở PR.
+
