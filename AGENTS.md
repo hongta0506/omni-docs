@@ -22,10 +22,11 @@ Mọi agent khi nhận nhiệm vụ liên quan đến phân rã Bounded Context,
 4. `omni-docs/migration/mapping-service-api-and-analytics.md`: Chi tiết ánh xạ cho Service-API, Analytics & Ops Radar.
 
 ### 1.2 Nguyên Tắc "Skill Preload" (Nạp Kỹ Năng Bắt Buộc)
-Agent phải tự động nạp và kiểm tra các kỹ năng DDD trước khi viết tài liệu kiến trúc hoặc triển khai code:
-- **Phân tích nghiệp vụ & Bounded Context**: `ForceInjection/domain-driven-design-skills` (`/ddd-contexts`, `/ddd-aggregates`, `/ddd-domain-interactions`).
+Mọi agent khi làm việc trong `omni-docs` BẮT BUỘC phải nạp và kích hoạt kỹ năng phân tích nghiệp vụ đầu tiên:
+- **Phân tích nghiệp vụ & Đặc tả yêu cầu (BẮT BUỘC LOAD ĐẦU TIÊN TẠI DOCS)**: `business-analyst` (`/business-analyst`). Áp dụng "Jobs-to-Be-Done", "5 Whys", chuẩn hóa Ubiquitous Language, viết User Stories với BDD Acceptance Criteria (Given/When/Then), xác định rõ phạm vi Tenant/Role/Plan trước khi bàn giao cho Engineering thiết kế kỹ thuật.
+- **Phân tích miền nghiệp vụ & Bounded Context**: `ForceInjection/domain-driven-design-skills` (`/ddd-scope`, `/ddd-contexts`, `/ddd-aggregates`, `/ddd-domain-interactions`).
 - **Hiện thực Go DDD**: `joeyave/golang-ddd-skills` (`/golang-ddd`, `/golang-ddd-architecture`, `/golang-ddd-cqrs`, `/golang-ddd-infrastructure`).
-- **Kỷ luật chất lượng**: `addyosmani/agent-skills` (`/test-driven-development`, `/code-review-and-quality`).
+- **Kỷ luật chất lượng & Rà soát**: `addyosmani/agent-skills` (`/test-driven-development`, `/code-review-and-quality`, `/spec-driven-development`).
 
 ---
 
