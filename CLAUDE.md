@@ -63,7 +63,7 @@ Hệ thống được chia thành 8 Bounded Contexts cốt lõi tại `omni-core
    - Phạm vi: Public API cho agent bên ngoài (GoClaw Daemon, external bots), HMAC authentication, Webhook receivers, Analytics SLA.
    - Endpoints: `/api/v1/service/*` (`whoami`, `messages/send`, `leads/assign`), `/api/v1/analytics/*`.
 
-Mỗi BC luôn tổ chức chuẩn 4 tầng: `domain/` -> `application/` -> `infrastructure/` -> `interfaces/`.
+Mỗi BC luôn tổ chức chuẩn 4 tầng: `domain/` -> `application/` -> `infrastructure/` -> `interfaces/` (Multi-Protocol Delivery: `http/` RESTful JSON ServeMux cho Web/SPA Frontend, `grpc/` Connect-RPC/gRPC cho RPC/Inter-service, `ws/` WebSocket cho Chat realtime, `stream/` SSE cho AI streaming).
 
 ---
 
