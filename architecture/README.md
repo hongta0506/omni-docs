@@ -46,4 +46,10 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 - Cơ chế Exponential Backoff with Jitter, Sliding Window Circuit Breaker, và Dead Letter Queue (DLQ).
 - Quy chuẩn 3 lớp Observability: Metric Prometheus, Structured JSON stream ra stdout cho Grafana Loki, và lưu DB PostgreSQL cho nút Redrive trên giao diện Web.
 
+### 8. [PROTOBUF-CONNECT-RPC-SPEC.md](./PROTOBUF-CONNECT-RPC-SPEC.md) (Quy Chuẩn Protobuf & Connect-RPC)
+- Chuẩn hóa quy trình thiết kế Protobuf schema cho 8 Bounded Contexts.
+- Cấu hình công cụ Buf CLI (`buf.yaml`, `buf.gen.yaml`), linting và breaking change prevention.
+- Cơ chế sinh mã tự động cho Go và Connect-RPC client/server.
+- Quy chuẩn ánh xạ mã lỗi giữa domain `pkg/errors` và `connect.Code`.
+
 
