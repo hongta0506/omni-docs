@@ -19,8 +19,8 @@
 
 ## 1. Module Chat & Tin Nhắn Đa Kênh (39 Endpoints)
 
-| HTTP Method | Route Cũ (Fastify) | Go HTTP Handler (`interfaces/http/`) | Go Application CQRS | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
-|---|---|---|---|---|---|
+| HTTP Method | Route Cũ (Fastify) | Go Handler (CQRS) | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
+|---|---|---|---|---|
 | `GET` | `/api/v1/conversations` | `queries.ListConversationsHandler` | `ConversationService.ListConversations` | Lấy danh sách hội thoại theo bộ lọc (kênh, chưa đọc, tag, folder) |
 | `POST` | `/api/v1/conversations` | `commands.CreateConversationHandler` | `ConversationService.CreateConversation` | Khởi tạo cuộc hội thoại mới với khách hàng |
 | `GET` | `/api/v1/conversations/:id` | `queries.GetConversationHandler` | `ConversationService.GetConversation` | Xem chi tiết cuộc hội thoại và thông tin profile khách |

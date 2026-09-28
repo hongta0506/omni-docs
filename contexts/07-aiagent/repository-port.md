@@ -89,3 +89,18 @@ type OpsRadarSignalModel struct {
 	CreatedAt   time.Time  `bun:"created_at,notnull,default:current_timestamp"`
 }
 ```
+
+---
+
+## 3. Query Tối Ưu & Chỉ Mục Bắt Buộc
+
+```sql
+-- Cấu hình AI Agent theo tenant và trạng thái
+CREATE INDEX IF NOT EXISTS idx_ai_agents_tenant_active 
+ON ai_agent_configs (org_id, is_active);
+
+-- Tra cứu nhanh tín hiệu Radar chưa xử lý
+CREATE INDEX IF NOT EXISTS idx_ops_radar_unresolved 
+ON ops_radar_signals (org_id, severity, created_at) 
+WHERE is_resolved = false;
+```
