@@ -27,16 +27,19 @@
 | [`PRODUCTION-GAP-ANALYSIS.md`](./PRODUCTION-GAP-ANALYSIS.md) | Phân tích chênh lệch Production | Đối chiếu 177 routes core ban đầu vs 615 routes production thực tế. Định vị 438 routes thiếu hụt và danh sách Issue A–H. |
 | [`DETAILED-MIGRATION-WBS.md`](./DETAILED-MIGRATION-WBS.md) | Phân rã cấu trúc công việc (WBS) | 8 Epics lớn, khớp chi tiết từng module ZaloCRM sang Go package, route controller và technical specs. |
 
-### 2.2 Tài Liệu Ánh Xạ Chi Tiết Theo Bounded Context (Mapping Specs)
+### 2.2 Tài Liệu Ánh Xạ Chi Tiết Theo Bounded Context (Đã chuyển sang `contexts/`)
+> Chi tiết xem tại mục lục tổng hợp: [`../contexts/README.md`](../contexts/README.md)
 
-| File | Bounded Context | Modules cũ | Số routes |
+| Bounded Context | Thư Mục Spec | Modules Cũ | Số Routes |
 |---|---|---|:---:|
-| [`customer-api-mapping.md`](./customer-api-mapping.md) | Customer & Lead | `contacts` (core) | 16 |
-| [`mapping-customer-ext.md`](./mapping-customer-ext.md) | Customer & Lead (Extended) | `contacts`, `lead-pool`, `customer-lists`, `appointments`, `notes` | 78 |
-| [`mapping-deals-and-orders.md`](./mapping-deals-and-orders.md) | Deal & E-commerce | `deals`, `quotes`, `products`, `pricebook`, `order-store`, `pancake` | 69 |
-| [`mapping-marketing-and-channels.md`](./mapping-marketing-and-channels.md) | Marketing & Channel Extensions | `campaign`, `tags`, `zalo` (quản lý nhóm, egress proxy) | 179 |
-| [`mapping-ai-agent-and-goclaw-bridge.md`](./mapping-ai-agent-and-goclaw-bridge.md) | AI Agent & Knowledge | `goclaw-providers`, `ai-agents`, `knowledge`, `radar` | 65 |
-| [`mapping-service-api-and-analytics.md`](./mapping-service-api-and-analytics.md) | Service API & Gateway | `service-api` (68), `analytics` + `ops-radar` (45) | 113 |
+| **1. Identity & Settings** | [`../contexts/01-identity/`](../contexts/01-identity/) | `auth`, `users`, `departments`, `settings` | 72 |
+| **2. Channel & Gateway** | [`../contexts/02-channel/`](../contexts/02-channel/) | `zalo`, `telegram`, `egress` | 95 |
+| **3. Customer & Lead** | [`../contexts/03-customer/`](../contexts/03-customer/) | `contacts`, `lead-pool`, `customer-lists`, `appointments`, `notes` | 92 |
+| **4. Conversation & Media** | [`../contexts/04-conversation/`](../contexts/04-conversation/) | `chat`, `media`, `system-notifications` | 82 |
+| **5. Deal & E-commerce** | [`../contexts/05-deal/`](../contexts/05-deal/) | `deals`, `quotes`, `products`, `pricebook`, `order-store`, `pancake` | 85 |
+| **6. Marketing & Automation** | [`../contexts/06-marketing/`](../contexts/06-marketing/) | `campaign`, `tags`, `automation` | 84 |
+| **7. AI Agent & Knowledge** | [`../contexts/07-aiagent/`](../contexts/07-aiagent/) | `goclaw-providers`, `ai-agents`, `knowledge`, `radar` | 65 |
+| **8. Service API & Gateway** | [`../contexts/08-serviceapi/`](../contexts/08-serviceapi/) | `service-api`, `analytics` | 40 |
 
 ### 2.3 Dữ Liệu Kiểm Toán (Audit Data)
 

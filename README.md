@@ -28,7 +28,27 @@
 | [`CHANNEL-GATEWAYS-ARCHITECTURE.md`](./architecture/CHANNEL-GATEWAYS-ARCHITECTURE.md) | Kiến trúc cổng kết nối đa kênh (Channel Gateways) | Zalo Personal QR State Machine, Telegram MTProto/Bot, WhatsApp Gateway (WPPConnect/Baileys), Egress Proxy Pool (xoay vòng IP dân cư, chống checkpoint). |
 | [`ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | Danh mục chức năng nghiệp vụ chi tiết | 792 endpoints & 27 workers phân tích từ mã nguồn Fastify, catalog 34 modules nghiệp vụ nguyên bản. |
 
-### 2.2 Kế Hoạch & Lộ Trình Di Trú (`migration/`)
+### 2.2 Đặc Tả 8 Bounded Contexts (`contexts/`)
+> Thư mục chi tiết: [`contexts/README.md`](./contexts/README.md)
+
+| Bounded Context | Thư Mục | Endpoints | Nội Dung Chính |
+|---|---|:---:|---|
+| **1. Identity & Settings** | [`contexts/01-identity/`](./contexts/01-identity/) | 72 | User, RBAC, Department, Device Session, Invariants & Repo Port |
+| **2. Channel & Gateway** | [`contexts/02-channel/`](./contexts/02-channel/) | 95 | Zalo personal, Groups, Telegram MTProto, Egress proxy pool |
+| **3. Customer & Lead** | [`contexts/03-customer/`](./contexts/03-customer/) | 92 | Contact Golden Record, Lead pool, Lists, Appointments, Repo Port |
+| **4. Conversation & Media** | [`contexts/04-conversation/`](./contexts/04-conversation/) | 82 | Chat inbox, Messages, Presets, Folders, Media assets, Invariants |
+| **5. Deal & E-commerce** | [`contexts/05-deal/`](./contexts/05-deal/) | 85 | Deals pipeline, Quotes báo giá, Products, Order store Pancake |
+| **6. Marketing & Automation** | [`contexts/06-marketing/`](./contexts/06-marketing/) | 84 | Tags, Broadcast campaigns, Sequences nuôi dưỡng, Automation |
+| **7. AI Agent & Knowledge** | [`contexts/07-aiagent/`](./contexts/07-aiagent/) | 65 | Providers, AI Agents, RAG Knowledge base, Ops Radar |
+| **8. Service API & Gateway** | [`contexts/08-serviceapi/`](./contexts/08-serviceapi/) | 40 | Public API daemons, HMAC auth, Webhooks, SLA Analytics |
+
+### 2.3 Đặc Tả Background Workers (`workers/`)
+> Thư mục chi tiết: [`workers/README.md`](./workers/README.md)
+
+* Chi tiết **27 Background Workers** (Queue workers, Cron jobs, Realtime sync, Cleanup tasks).
+* Bảng tham số: Tần suất (Schedule), Cơ chế kích hoạt (NSQ / Cron / Redis stream), Batch size, Concurrency lock.
+
+### 2.4 Kế Hoạch & Lộ Trình Di Trú (`migration/`)
 > Thư mục chi tiết: [`migration/README.md`](./migration/README.md)
 
 | Nhóm | Tài liệu | Mô tả |
@@ -37,27 +57,15 @@
 | | [`SPRINT-MIGRATION-ROADMAP.md`](./migration/SPRINT-MIGRATION-ROADMAP.md) | Lộ trình chuyển đổi 6 Sprints từ bản production `release/orbstack-mini-20260924`. |
 | | [`PRODUCTION-GAP-ANALYSIS.md`](./migration/PRODUCTION-GAP-ANALYSIS.md) | Phân tích chênh lệch: 177 routes core ban đầu vs 615 routes production (thiếu 438 routes, Issues A–H). |
 | | [`DETAILED-MIGRATION-WBS.md`](./migration/DETAILED-MIGRATION-WBS.md) | Phân rã công việc (WBS) gồm 8 Epics lớn, chi tiết module, route và technical specs. |
-| **Ánh xạ chi tiết (Mapping Specs)** | [`customer-api-mapping.md`](./migration/customer-api-mapping.md) | Ánh xạ Customer BC core: 16 endpoints `contacts` → Go CQRS & Connect-RPC. |
-| | [`mapping-customer-ext.md`](./migration/mapping-customer-ext.md) | Ánh xạ Customer Extended: 78 endpoints (Lead Pool, Lists, Notes, Appointments, Scoring). |
-| | [`mapping-deals-and-orders.md`](./migration/mapping-deals-and-orders.md) | Ánh xạ Deal & E-commerce: 69 endpoints (Deals, Quotes, Products, Pricebook, Order Store, Pancake). |
-| | [`mapping-marketing-and-channels.md`](./migration/mapping-marketing-and-channels.md) | Ánh xạ Marketing & Channel Ext: 179 endpoints (Tags, Campaigns, Sequences, Zalo groups, Egress proxy). |
-| | [`mapping-ai-agent-and-goclaw-bridge.md`](./migration/mapping-ai-agent-and-goclaw-bridge.md) | Ánh xạ AI Agent & GoClaw Bridge: 65 endpoints (Providers, Agents, Knowledge, Radar). |
-| | [`mapping-service-api-and-analytics.md`](./migration/mapping-service-api-and-analytics.md) | Ánh xạ Service API & Analytics: 113 endpoints (Public API cho daemon ngoài, SLA, Ops Radar). |
 | **Dữ liệu kiểm toán** | [`PROD-ROUTES-AUDIT.json`](./migration/PROD-ROUTES-AUDIT.json) | Dữ liệu thô quét tự động 792 routes từ codebase Fastify. |
 
-### 2.3 Repository Ports (`repository-ports/`)
-
-| Tài liệu | Mô tả |
-|---|---|
-| [`customer-repository-port.md`](./repository-ports/customer-repository-port.md) | Đặc tả kỹ thuật Repository Port cho Customer Bounded Context (`ValidatedContact`, Two-ledger logic, Bun ORM query signatures). |
-
-### 2.4 Scripts Công Cụ (`scripts/`)
+### 2.5 Scripts Công Cụ (`scripts/`)
 
 | File | Mô tả |
 |---|---|
 | [`scan-prod-routes.ts`](./scripts/scan-prod-routes.ts) / `.js` | Script TypeScript/Node.js quét tự động toàn bộ Fastify routes, HTTP methods và controllers từ codebase monolith ZaloCRM. |
 
-### 2.5 Quy Chuẩn & Quy Trình Phát Triển
+### 2.6 Quy Chuẩn & Quy Trình Phát Triển
 
 | File | Mô tả |
 |---|---|
