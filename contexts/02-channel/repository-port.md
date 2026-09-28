@@ -107,6 +107,14 @@ type EgressProxyModel struct {
 CREATE INDEX IF NOT EXISTS idx_zalo_accounts_org_owner 
 ON zalo_accounts (org_id, owner_user_id, status) WHERE archived_at IS NULL;
 
+-- Tìm kiếm Channel Accounts đa kênh (Zalo, Telegram, WhatsApp)
+CREATE INDEX IF NOT EXISTS idx_channel_accounts_lookup
+ON channel_accounts (org_id, channel_type, account_uid);
+
+-- Độc nhất tài khoản trên mỗi loại kênh trong cùng một Tenant
+CREATE UNIQUE INDEX IF NOT EXISTS uq_channel_accounts_tenant_uid
+ON channel_accounts (org_id, channel_type, account_uid) WHERE archived_at IS NULL;
+
 -- Độc nhất UID theo Tenant
 CREATE UNIQUE INDEX IF NOT EXISTS uq_zalo_account_uid 
 ON zalo_accounts (org_id, zalo_uid) WHERE zalo_uid IS NOT NULL AND archived_at IS NULL;
