@@ -54,6 +54,10 @@ internal/<bc_name>/
 │
 └── interfaces/                # 4. INTERFACES LAYER (Đa giao thức truy cập)
     ├── http/                  # RESTful API handlers (ServeMux Go 1.22+)
+    │   ├── handler.go         # Router chung & shared handler
+    │   └── <subchannel>/      # ĐẶC THÙ CHANNEL BC: Các sub-channel độc lập (zalo, telegram, integrations)
+    │                          # được phép có package riêng để đảm bảo cô lập hoàn toàn lỗi, DTO và error handling.
+    │                          # Các BC thông thường (Customer, Deal...) bắt buộc dùng flat files per resource.
     ├── grpc/                  # Connect-RPC / gRPC service servers
     └── ws/                    # WebSocket Hub streaming
 ```
