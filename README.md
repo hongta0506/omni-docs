@@ -29,6 +29,7 @@
 | [`MODULAR-MONOLITH-TO-MICROSERVICES.md`](./architecture/MODULAR-MONOLITH-TO-MICROSERVICES.md) | Chiến lược phân rã Microservices | Đánh giá độ sẵn sàng phân rã (90%), điều kiện kích hoạt, checklist gỡ coupling (DB per service, Connect-RPC, NSQ) và runbook 4 bước bốc service độc lập. |
 | [`GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`](./architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md) | Quy chuẩn hiệu năng & chống 5 anti-patterns Go DDD | Khắc phục rò rỉ Memory/GC, N+1 query, Aggregate phình to, Context lifecycle và tư duy OOP sai lầm trong Go. |
 | [`CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md`](./architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md) | Quản trị lỗi, ngoại lệ & khả năng chống chịu xuyên suốt 8 BCs | Phân loại Exception Taxonomy (Transient, Terminal, Security/Policy), Circuit Breaker, Exponential Backoff, DLQ & 3 tầng Observability (Loki/Prometheus/Postgres). |
+| [`PROTOBUF-CONNECT-RPC-SPEC.md`](./architecture/PROTOBUF-CONNECT-RPC-SPEC.md) | Quy chuẩn Protobuf & Connect-RPC RPC Delivery | Chuẩn hóa schema protobuf, cấu hình Buf CLI, sinh mã nguồn Go và ánh xạ mã lỗi Connect-RPC. |
 | [`ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | Danh mục chức năng nghiệp vụ chi tiết | 792 endpoints & 27 workers phân tích từ mã nguồn Fastify, catalog 34 modules nghiệp vụ nguyên bản. |
 
 ### 2.2 Đặc Tả 8 Bounded Contexts (`contexts/`)
@@ -69,7 +70,15 @@
 |---|---|
 | [`scan-prod-routes.ts`](./scripts/scan-prod-routes.ts) / `.js` | Script TypeScript/Node.js quét tự động toàn bộ Fastify routes, HTTP methods và controllers từ codebase monolith ZaloCRM. |
 
-### 2.6 Quy Chuẩn & Quy Trình Phát Triển
+### 2.6 Vận Hành & Hạ Tầng Cục Bộ (`operations/`)
+
+| File | Mô tả | Trọng tâm |
+|---|---|---|
+| [`ENV-CONFIG-SPEC.md`](./operations/ENV-CONFIG-SPEC.md) | Đặc tả biến môi trường toàn diện | Chuẩn hóa 12-factor cấu hình runtime cho Postgres, Redis, NSQ, SOCKS5 pool, R2/S3 storage và AI providers. |
+| [`LOCAL-DEV-AND-DOCKER.md`](./operations/LOCAL-DEV-AND-DOCKER.md) | Hướng dẫn môi trường phát triển cục bộ & Docker stack | Docker Compose setup Postgres 16 (extensions: uuid, unaccent, pg_trgm), Redis 7, NSQ, Loki & Grafana. |
+| [`DATABASE-MIGRATION-SPEC.md`](./operations/DATABASE-MIGRATION-SPEC.md) | Quy chuẩn migration & seeding dữ liệu gốc | Quản lý schema qua Bun ORM, quy tắc advisory lock, zero-downtime expand-contract, và seeding dữ liệu baseline. |
+
+### 2.7 Quy Chuẩn & Quy Trình Phát Triển
 
 | File | Mô tả |
 |---|---|
