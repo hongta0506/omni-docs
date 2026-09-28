@@ -4,10 +4,23 @@
 
 ---
 
+## 0. Phân Bổ Tầng Giao Thức (Multi-Protocol Delivery)
+
+- **`interfaces/http/` (REST ServeMux Go 1.22+)**: Flat HTTP Handlers per resource (`/api/v1/auth/*`, `/api/v1/users/*`, `/api/v1/departments/*`, `/api/v1/rbac/*`, `/api/v1/settings/*`):
+  - `auth_handler.go`: Đăng nhập, đăng ký, refresh token, thu hồi phiên làm việc, MFA.
+  - `users_handler.go`: CRUD người dùng, phân bổ phòng ban, reset mật khẩu nhân viên.
+  - `departments_handler.go`: Cây cơ cấu tổ chức và phòng ban.
+  - `rbac_handler.go`: Vai trò (roles), nhóm quyền hạn (permission groups), ma trận quyền.
+  - `privacy_handler.go`: Mặt nạ dữ liệu khách hàng (data masking rules).
+  - `settings_handler.go`: Cấu hình hệ thống Tenant.
+- **`interfaces/grpc/` (Connect-RPC)**: Expose service `IdentityService` cho Inter-service token verification và RPC callers.
+
+---
+
 ## 1. Module Auth & Phiên Đăng Nhập (35 Endpoints)
 
-| HTTP Method | Route Cũ (Fastify) | Go Handler (CQRS) | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
-|---|---|---|---|---|
+| HTTP Method | Route Cũ (Fastify) | Go HTTP Handler (`interfaces/http/`) | Go Application CQRS | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
+|---|---|---|---|---|---|
 | `POST` | `/api/v1/auth/login` | `commands.LoginHandler` | `IdentityService.Login` | Đăng nhập bằng Email/Password, cấp JWT Access + Refresh token |
 | `POST` | `/api/v1/auth/register` | `commands.RegisterHandler` | `IdentityService.Register` | Đăng ký tài khoản và khởi tạo Tenant mới |
 | `POST` | `/api/v1/auth/refresh-token` | `commands.RefreshTokenHandler` | `IdentityService.RefreshToken` | Cấp mới access token bằng refresh token (xoay vòng token) |
