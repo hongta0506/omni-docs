@@ -70,7 +70,7 @@ Verify which Bounded Context owns the feature, what submodules are involved, and
 ## 3. Plan-First & Issue-First Workflow (SDLC Mandatory)
 
 Before writing any production code:
-1. **GitHub Issue**: Create via `gh issue create` with title `[BC-name] <type>: <description>`. Include Context, Invariants, and Acceptance Criteria checklist.
+1. **GitHub Issue**: Create via `gh issue create` with title `[BC-name] <type>: <description>`. Phải tuân thủ cấu trúc chuẩn 7 phần (xem `AGENTS.md` §4.4): Context & Goal, Affected Submodule & Strict File Boundaries (cách ly chống conflict), Source Docs Reference, Domain Invariants, **Go DDD Performance & Anti-Pattern Checklist (MANDATORY)**, Acceptance Criteria, Git Workflow.
 2. **Sprint Board Automation & Concurrency Control (MANDATORY)**:
    - Project: **Omni Core — Backend DDD Sprint Board** (ID: `PVT_kwHOD3RGJc4Bkgl_`)
    - Field: `PVTSSF_lAHOD3RGJc4Bkgl_zhjQ8L0`

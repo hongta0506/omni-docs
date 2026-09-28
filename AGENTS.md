@@ -159,3 +159,52 @@ gh pr create --base staging --title "[BC-name] <type>: <description>" --body "..
      gh project item-edit --project-id PVT_kwHOD3RGJc4Bkgl_ --id <ITEM_ID> \
        --field-id PVTSSF_lAHOD3RGJc4Bkgl_zhjQ8L0 --single-select-option-id 98236657
      ```
+
+### 4.4 Standard Issue Specification & Anti-Pattern Locking (MANDATORY)
+Mọi GitHub Issue tạo mới trên `omni-core` hoặc phân công cho AI Agent bắt buộc phải tuân theo cấu trúc chuẩn gồm 7 phần, đặc biệt là phần khóa các bẫy Go DDD và ranh giới cách ly file chống conflict:
+
+```markdown
+## Context & Goal
+Mô tả mục tiêu nghiệp vụ, Bounded Context, submodule cần giải quyết.
+
+## Affected Submodule & Strict File Boundaries
+> **QUY TẮC CÁCH LY CHỐNG CONFLICT (CRITICAL FOR MULTI-AGENT CONCURRENCY):**
+> AI Agent nhận task này CHỈ ĐƯỢC làm việc trong phạm vi các file/thư mục được chỉ định. TUYỆT ĐỐI KHÔNG sửa các file ngoài phạm vi.
+
+- **Domain Layer:** `internal/<bc>/domain/<submodule>/`
+- **Application Layer:** `internal/<bc>/application/<submodule>/`
+- **Infrastructure Layer:** `internal/<bc>/infrastructure/<submodule>/`
+- **Interfaces Layer:** `internal/<bc>/interfaces/http/<submodule>_handler.go`
+- **Forbidden Area:** Danh sách các file / submodule đang có agent khác làm, cấm chỉnh sửa.
+
+## Source Docs & Reference (Master Branch)
+- Architecture Blueprint: [MASTER-ARCHITECTURE-BLUEPRINT.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/MASTER-ARCHITECTURE-BLUEPRINT.md)
+- Subdomain Mapping: Link tài liệu mapping chi tiết trong `contexts/`
+- Performance & Anti-Patterns: [GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md)
+- Legacy Reference: File code gốc Node.js/Fastify
+
+## Domain Invariants
+Liệt kê các quy tắc bất biến (invariants) mà Aggregate Root và Value Objects phải bảo vệ.
+
+## Go DDD Performance & Anti-Pattern Checklist (MANDATORY)
+> AI Agent bắt buộc đối soát theo `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`:
+
+- [ ] **Small Aggregate (Pitfall 3):** Aggregate Root CHỈ chứa identity, metadata và summary metrics; KHÔNG embed slices lớn trong RAM.
+- [ ] **Pragmatic CQRS (Pitfall 2):** Các Query scan trực tiếp từ DB vào Read Projection DTOs, KHÔNG hydrate qua Domain Aggregate.
+- [ ] **No N+1 (Pitfall 3):** Truy vấn danh sách/quan hệ bằng SQL JOIN hoặc `bun.In()`, KHÔNG query trong vòng lặp `for`.
+- [ ] **Idiomatic Go (Pitfall 5):** Accept interfaces, return structs. Không đặt tên `I*` hay `*Impl`.
+- [ ] **Pagination Chuẩn (Shared Kernel):** Embed `pkg/pagination.PaginationParam`, chuẩn hóa bằng `Normalize()` và trả về `PageResult[T]`.
+- [ ] **Context Lifecycle (Pitfall 4):** Không truyền trực tiếp `r.Context()` vào async goroutine nếu có background task.
+
+## Acceptance Criteria
+- [ ] Checklist các endpoints HTTP / RPC
+- [ ] Unit tests cho Domain Invariants & Value Objects
+- [ ] Repository integration test với Bun ORM / pgx
+
+## Git Workflow
+```bash
+git checkout staging && git pull origin staging
+git checkout -b <type>/<issue-number>-<short-kebab-desc>
+```
+```
+
