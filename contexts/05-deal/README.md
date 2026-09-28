@@ -34,3 +34,21 @@
    - Khi Quote `Accepted`, tự động cập nhật giá trị Deal và trigger event tạo đơn hàng nháp.
 3. **Pancake POS Sync**:
    - Webhook từ Pancake tự động đối soát SĐT với Customer BC để liên kết đơn hàng với Golden Record.
+
+---
+
+## 4. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 4.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/deal/domain/errors.go`: Sentinel errors (`ErrDealNotFound`, `ErrInvalidDealStageTransition`, `ErrQuoteExpired`, `ErrNegativeAmount`).
+- `internal/deal/application/common/`:
+  - `money_calculator.go`: Tiện ích tính toán chiết khấu, thuế VAT và tổng tiền cho các submodules (deal, quote, order).
+  - `pagination.go`: DealFilter, QuoteFilter, ProductFilter, OrderFilter DTOs.
+  - `stage_validator.go`: Validator kiểm tra điều kiện chuyển đổi trạng thái phễu bán hàng.
+
+### 4.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/context/`: TenantID, UserID context extraction.
+- `pkg/events/`: Publish Domain Events (`DealWonEvent`, `DealLostEvent`, `QuoteAcceptedEvent`, `OrderCreatedEvent`). Lắng nghe `ContactCreatedEvent` từ Customer BC.
+- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+
