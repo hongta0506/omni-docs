@@ -22,6 +22,9 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`mapping-service-api-and-analytics.md`](./mapping-service-api-and-analytics.md) | Ánh xạ chi tiết endpoints Service API (whoami, send message, assign leads, contact search), xác thực HMAC và chỉ số Analytics SLA. |
+| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & BDD Scenarios (Given-When-Then): HMAC-SHA256, Anti-Replay, IP Whitelist, Webhook Backoff, SLA Breach Engine. |
+| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: Sequence HMAC Ingestion, Sequence Webhook Outbound Retry, State Machine SLA First Response Time. |
+| [`test-matrix.md`](./test-matrix.md) | Ma trận kiểm thử bảo mật: Constant-Time Compare chống Timing Attack, Token Bucket Rate Limiting và kiểm thử dung sai Timestamp. |
 
 ---
 

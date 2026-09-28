@@ -21,6 +21,11 @@
 
 | Tài liệu | Mô tả |
 |---|---|
+| [`social-channels-matrix.md`](./social-channels-matrix.md) | **Đặc tả 2 Hướng Official vs Unofficial**: Ma trận đối soát Zalo (OA vs Personal), WhatsApp (Cloud vs Baileys), Telegram (Bot vs MTProto), Facebook (Graph vs Profile), Instagram (Graph vs Private API). |
+| [`channel-error-handling-and-exceptions.md`](./channel-error-handling-and-exceptions.md) | **Quản Lý Lỗi & Ngoại Lệ Kênh**: Bảng tra cứu Error Codes (Meta, Zalo, Telegram), Phân loại ngoại lệ (Transient, Terminal, Security/Policy), Cơ chế Retry/DLQ, Circuit Breaker và Structured JSON Audit Log. |
+| [`usecases.md`](./usecases.md) | **Đặc tả SDLC & BDD**: Danh sách User Stories (`Given / When / Then`), Đăng nhập đa giao thức, Sticky Proxy, Giới hạn tốc độ gửi tin, Điều phối kép Official/Unofficial. |
+| [`workflows.md`](./workflows.md) | **Sơ đồ luồng & UML**: Sequence Diagram điều phối tin nhắn Inbound/Outbound, State Machine phiên kết nối, Flowchart phân luồng Official vs Unofficial. |
+| [`test-matrix.md`](./test-matrix.md) | **Ma trận kiểm thử**: Test Scenarios từ Sticky Proxy Binding, Token Bucket Rate Limiting, HMAC Verification, đến Jitter Outbound Delay. |
 | [`architecture/CHANNEL-GATEWAYS-ARCHITECTURE.md`](../../architecture/CHANNEL-GATEWAYS-ARCHITECTURE.md) | Kiến trúc chi tiết các Channel Gateways: Zalo Personal sidecar, Telegram MTProto, WhatsApp Gateway, Egress Proxy Pool. |
 
 ---
