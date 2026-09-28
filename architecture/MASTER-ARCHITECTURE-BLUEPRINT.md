@@ -661,17 +661,18 @@ internal/<bc>/
 
 ---
 
-## 3. Bản Đồ 7 Bounded Contexts & Phân Bổ Giao Thức
+## 3. Bản Đồ 8 Bounded Contexts & Phân Bổ Giao Thức (Multi-Protocol Delivery)
 
-| Bounded Context | Tầng `interfaces/http` (REST) | Tầng `interfaces/grpc` (Connect/gRPC) | Tầng Realtime Stream (WS) |
+| Bounded Context | Tầng `interfaces/http` (RESTful JSON cho Frontend) | Tầng `interfaces/grpc` (Connect/gRPC cho RPC & Inter-service) | Tầng Realtime Stream (`interfaces/ws` & `stream`) |
 |---|---|---|---|
-| **Identity** | Auth Login, Refresh, Logout, Profile, Tenants, RBAC Departments & Groups | `IdentityService` Connect-RPC | Token expiry alerts |
-| **Customer** | Contacts, Profiles, Notes, Appointments, Activities, Lead Scoring | `CustomerService`, `CustomerExtService` | Contact timeline events |
-| **Conversation**| Conversations, Messages, Folders, Presets, Media Uploads | `ConversationService`, `ConversationExtService`| Realtime Chat Socket Hub |
-| **Deal & Orders**| Deals, Pipeline 6 Stages, Orders, Quotes, Products | `DealService` Connect-RPC | Order status push |
-| **Channel** | Zalo Accounts, Group Scans, Labels Sync, Proxy Pool | `ZaloPersonalService`, `ChannelZaloExtService` | Inbound Message Stream |
-| **Marketing & Tagging** | Tags, Groups, Broadcast Campaigns, ZNS, Triggers | `TaggingService`, `MarketingService` | Campaign progress |
-| **Analytics** | SLA Response Times (FRT/ART), Radar Signals | `AnalyticsService` Connect-RPC | Breach radar alerts |
+| **Identity & Settings** | Auth Login, Refresh, Profile, Users, Tenants, Departments, Roles | `IdentityService` Connect-RPC | Token expiry alerts |
+| **Channel & Gateway** | Zalo Accounts, Group Scans, Labels Sync, Telegram, Proxy Pool | `ZaloPersonalService`, `ChannelZaloExtService` | Inbound Message Stream |
+| **Customer & Lead** | Contacts, Profiles, Notes, Appointments, Lead Pool, Scoring | `CustomerService`, `CustomerExtService` | Contact timeline events |
+| **Conversation & Media**| Conversations, Messages, Presets, Media Uploads, Watermarks | `ConversationService`, `ConversationExtService`| Realtime Chat WebSocket Hub |
+| **Deal & E-commerce**| Deals, Pipeline Stages, Orders, Quotes, Products, Pancake | `DealService` Connect-RPC | Order status push |
+| **Marketing & Automation** | Tags, Groups, Broadcast Campaigns, Sequences, Automation | `TaggingService`, `MarketingService` | Campaign progress |
+| **AI Agent & Knowledge** | Agents, Providers, Knowledge Bases, Hands, Radar Signals | `AIAgentService`, `OpsRadarService` | SSE Token Stream (`text/event-stream`) |
+| **Service API & Gateway** | Service whoami, Message dispatch, Lead assign, Analytics API | `ServiceAPIService`, `AnalyticsService` | System alert stream |
 
 ---
 

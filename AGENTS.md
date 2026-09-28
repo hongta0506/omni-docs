@@ -52,14 +52,15 @@ internal/<bc_name>/
 │   ├── postgres/              # SQL / pgx / Bun ORM models & Repository implementations
 │   └── client/                # HTTP/gRPC external clients (nếu có)
 │
-└── interfaces/                # 4. INTERFACES LAYER (Đa giao thức truy cập)
-    ├── http/                  # RESTful API handlers (ServeMux Go 1.22+)
-    │   ├── handler.go         # Router chung & shared handler
+└── interfaces/                # 4. INTERFACES LAYER (Multi-Protocol Delivery)
+    ├── http/                  # RESTful API handlers (ServeMux Go 1.22+) - Giao diện chính cho Frontend Web/SPA (/api/v1/...)
+    │   ├── handler.go         # Router chung & RegisterRoutes(mux *http.ServeMux)
     │   └── <subchannel>/      # ĐẶC THÙ CHANNEL BC: Các sub-channel độc lập (zalo, telegram, integrations)
     │                          # được phép có package riêng để đảm bảo cô lập hoàn toàn lỗi, DTO và error handling.
     │                          # Các BC thông thường (Customer, Deal...) bắt buộc dùng flat files per resource.
-    ├── grpc/                  # Connect-RPC / gRPC service servers
-    └── ws/                    # WebSocket Hub streaming
+    ├── grpc/                  # Connect-RPC / gRPC service servers (Protobuf HTTP/2) cho Inter-service & Workers
+    ├── ws/                    # WebSocket Hub streaming cho Chat hội thoại & Thông báo tức thời
+    └── stream/                # SSE (Server-Sent Events) cho AI Token streaming (`text/event-stream`)
 ```
 
 ### 2.2 Bản Đồ 8 Bounded Contexts & Phân Chia Endpoint Tương Ứng
