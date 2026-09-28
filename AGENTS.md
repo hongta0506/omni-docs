@@ -27,6 +27,9 @@ Before touching code or architecture, read documentation in order:
 - **Go DDD Implementation**: `joeyave/golang-ddd-skills` (`/golang-ddd`, `/golang-ddd-architecture`, `/golang-ddd-cqrs`, `/golang-ddd-infrastructure`).
 - **Testing & Quality Rigor**: `addyosmani/agent-skills` (`/test-driven-development`, `/code-review-and-quality`, `/spec-driven-development`).
 
+### 1.3 Rules Chuẩn Khi Tạo/Cập Nhật Issue GitHub (MANDATORY)
+Mọi GitHub Issue tạo mới hoặc cập nhật trên `omni-core` phục vụ AI Agent bắt buộc phải có cấu trúc 7 phần, khóa 5 bẫy Go DDD và ranh giới cách ly file chống conflict. Chi tiết quy chuẩn xem mục [4.4 Standard Issue Specification & Anti-Pattern Locking](#44-standard-issue-specification--anti-pattern-locking-mandatory).
+
 ---
 
 ## 2. Bounded Context & Submodule Directory Standards
