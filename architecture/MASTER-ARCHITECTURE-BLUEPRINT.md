@@ -125,16 +125,16 @@ Dựa trên phân tích 508 route controllers và 600+ endpoint thực tế ở 
 #### B. Danh mục Endpoints Tham Chiếu
 | Method | Endpoint | Chức năng nghiệp vụ | Legacy Controller (ZaloCRM) |
 |---|---|---|---|
-| `GET` | `/api/v1/accounts` | Danh sách tài khoản Zalo cá nhân đang kết nối | `modules/accounts/account-routes.ts` |
-| `POST` | `/api/v1/accounts/qr` | Khởi tạo phiên quét mã QR đăng nhập Zalo | `modules/zalo/zalo-routes.ts` |
-| `GET` | `/api/v1/accounts/qr/:sessionId` | Long-polling / SSE trạng thái quét mã QR | `modules/zalo/zalo-routes.ts` |
-| `POST` | `/api/v1/accounts/:id/sync` | Kích hoạt quét đồng bộ danh bạ bạn bè từ Zalo | `modules/zalo/zalo-sync-routes.ts` |
-| `GET` | `/api/v1/accounts/:id/labels` | Lấy danh sách nhãn phân loại nội bộ của Zalo | `modules/zalo/zalo-labels-routes.ts` |
-| `POST` | `/api/v1/accounts/:id/labels` | Tạo nhãn đồng bộ lên Zalo Server | `modules/zalo/zalo-labels-routes.ts` |
-| `GET` | `/api/v1/accounts/:id/groups` | Danh sách nhóm chat Zalo mà nick tham gia | `modules/zalo/group-routes.ts` |
-| `POST` | `/api/v1/accounts/:id/groups/scan` | Quét phân tích thành viên trong nhóm Zalo | `modules/zalo/group-scan-routes.ts` |
-| `PATCH`| `/api/v1/accounts/:id/status` | Tạm ngưng hoặc bật kết nối tài khoản | `modules/accounts/account-routes.ts` |
-| `DELETE`| `/api/v1/accounts/:id` | Đăng xuất và gỡ bỏ tài khoản khỏi hệ thống | `modules/accounts/account-routes.ts` |
+| `GET` | `/api/v1/zalo-accounts` | Danh sách tài khoản Zalo cá nhân đang kết nối | `modules/zalo/account-routes.ts` |
+| `POST` | `/api/v1/zalo-accounts/qr` | Khởi tạo phiên quét mã QR đăng nhập Zalo | `modules/zalo/zalo-routes.ts` |
+| `GET` | `/api/v1/zalo-accounts/qr/:sessionId` | Long-polling / SSE trạng thái quét mã QR | `modules/zalo/zalo-routes.ts` |
+| `POST` | `/api/v1/zalo-accounts/:id/sync` | Kích hoạt quét đồng bộ danh bạ bạn bè từ Zalo | `modules/zalo/zalo-sync-routes.ts` |
+| `GET` | `/api/v1/zalo-accounts/:id/labels` | Lấy danh sách nhãn phân loại nội bộ của Zalo | `modules/zalo/zalo-labels-routes.ts` |
+| `POST` | `/api/v1/zalo-accounts/:id/labels` | Tạo nhãn đồng bộ lên Zalo Server | `modules/zalo/zalo-labels-routes.ts` |
+| `GET` | `/api/v1/zalo-accounts/:id/groups` | Danh sách nhóm chat Zalo mà nick tham gia | `modules/zalo/group-routes.ts` |
+| `POST` | `/api/v1/zalo-accounts/:id/groups/scan` | Quét phân tích thành viên trong nhóm Zalo | `modules/zalo/group-scan-routes.ts` |
+| `PATCH`| `/api/v1/zalo-accounts/:id/status` | Tạm ngưng hoặc bật kết nối tài khoản | `modules/zalo/account-routes.ts` |
+| `DELETE`| `/api/v1/zalo-accounts/:id` | Đăng xuất và gỡ bỏ tài khoản khỏi hệ thống | `modules/zalo/account-routes.ts` |
 | `GET` | `/api/v1/telegram-personal` | Danh sách tài khoản Telegram cá nhân kết nối | `modules/integrations/providers/telegram-personal/routes.ts` |
 | `POST` | `/api/v1/telegram-personal/login` | Gửi mã xác thực đăng nhập qua số điện thoại | `modules/integrations/providers/telegram-personal/routes.ts` |
 | `POST` | `/api/v1/telegram-personal/verify`| Nhập mã SMS / OTP Telegram để lưu session | `modules/integrations/providers/telegram-personal/routes.ts` |
@@ -161,6 +161,7 @@ Dựa trên phân tích 508 route controllers và 600+ endpoint thực tế ở 
 #### A. Nghiệp vụ & Giao diện Frontend
 * **Frontend Screens:** 
   * **Customer Hub:** Danh bạ khách hàng (`/contacts`), Chi tiết khách hàng 360 độ (`/contacts/:id`), Lịch hẹn tương tác (`/contacts/:id/appointments`), Dòng thời gian lịch sử hoạt động (`/contacts/:id/timeline`).
+  * **B2B Accounts (Khách hàng Doanh nghiệp):** Danh sách tổ chức/doanh nghiệp (`/accounts`), Chi tiết doanh nghiệp 360 độ (`/accounts/:id`), Liên kết người liên hệ đại diện (Account Contacts).
   * **Lead Pool (Kho Lead):** Sàn nhận Lead tự do (`/lead-pool`), Bảng thống kê phân phối lead cho sale (`/lead-pool/stats`), Cấu hình quy tắc chia chìa khóa trao tay (`/lead-pool/config`).
   * **Chat Console (Trung tâm tin nhắn):** Màn hình Chat đa kênh (`/chat`), Bộ lọc hội thoại nâng cao (`/chat/folders`), Thư viện tin nhắn mẫu (`/chat/presets`), Xử lý tệp đính kèm và gắn watermark chống lộ dữ liệu (`/chat/media`).
 * **Trọng tâm nghiệp vụ:** 
@@ -171,6 +172,13 @@ Dựa trên phân tích 508 route controllers và 600+ endpoint thực tế ở 
 #### B. Danh mục Endpoints Tham Chiếu
 | Method | Endpoint | Chức năng nghiệp vụ | Legacy Controller (ZaloCRM) |
 |---|---|---|---|
+| `GET` | `/api/v1/accounts` | Danh sách khách hàng doanh nghiệp (B2B Accounts) kèm phân trang, tìm kiếm | `modules/accounts/account-routes.ts` |
+| `POST` | `/api/v1/accounts` | Tạo mới khách hàng doanh nghiệp | `modules/accounts/account-routes.ts` |
+| `GET` | `/api/v1/accounts/:id` | Thông tin chi tiết hồ sơ doanh nghiệp, mã số thuế, website | `modules/accounts/account-routes.ts` |
+| `PUT`  | `/api/v1/accounts/:id` | Cập nhật thông tin doanh nghiệp, địa chỉ, người đại diện | `modules/accounts/account-routes.ts` |
+| `DELETE`| `/api/v1/accounts/:id` | Xóa doanh nghiệp (khi không còn Deal hoặc hợp đồng hoạt động) | `modules/accounts/account-routes.ts` |
+| `GET` | `/api/v1/accounts/:id/contacts` | Danh sách người liên hệ (Contact) thuộc doanh nghiệp | `modules/accounts/account-routes.ts` |
+| `POST` | `/api/v1/accounts/:id/contacts` | Gán người liên hệ vào doanh nghiệp | `modules/accounts/account-routes.ts` |
 | `GET` | `/api/v1/contacts` | Danh sách khách hàng kèm phân trang, tìm kiếm đa tiêu chí | `modules/contacts/contact-routes.ts` |
 | `POST` | `/api/v1/contacts` | Tạo mới khách hàng thủ công | `modules/contacts/contact-routes.ts` |
 | `GET` | `/api/v1/contacts/:id` | Thông tin chi tiết hồ sơ 360 độ của một khách hàng | `modules/contacts/contact-routes.ts` |
@@ -199,8 +207,11 @@ Dựa trên phân tích 508 route controllers và 600+ endpoint thực tế ở 
 | `GET` | `/api/v1/chat/folders` | Cây thư mục quản lý hội thoại theo nhóm/phòng | `modules/chat/folder-routes.ts` |
 
 #### C. Dữ liệu Liên quan & Phụ thuộc
-* **Bảng Database Postgres:** `contacts`, `contact_identities` (mapping Zalo/Phone), `contact_notes`, `appointments`, `lead_pool_items`, `lead_assignments`, `customer_lists`, `conversations`, `messages`, `chat_presets`.
+* **Bảng Database Postgres:** `contacts`, `accounts`, `account_contacts`, `contact_identities` (mapping Zalo/Phone), `contact_notes`, `appointments`, `lead_pool_items`, `lead_assignments`, `customer_lists`, `conversations`, `messages`, `chat_presets`.
 * **Ràng buộc Invariants:**
+  * Doanh nghiệp (`Account`) bắt buộc có tên không rỗng; Mã số thuế (nếu có) phải đúng định dạng chuẩn 10 hoặc 13 chữ số.
+  * Không cho phép xóa cứng hoặc xóa mềm Doanh nghiệp nếu còn Deal đang ở trạng thái mở (`Open`/`In Progress`).
+  * Một Contact chỉ có thể thuộc tối đa 1 Doanh nghiệp tại một thời điểm (`account_id` trên `contacts`).
   * Số điện thoại của Contact phải được chuẩn hóa theo chuẩn E.164 (ví dụ `+8490...`).
   * Một Lead trong Lead Pool tại một thời điểm chỉ cho phép 1 Sale duy nhất giữ quyền Claim (bảo vệ bằng Distributed Lock qua Redis hoặc Postgres `FOR UPDATE SKIP LOCKED`).
   * Khi 2 Contact được hợp nhất (`MergeContact`), toàn bộ tin nhắn, ghi chú, lịch hẹn và Deal cũ đều được trỏ về Contact mới, đồng thời gắn cờ `is_merged = true` ở bản ghi cũ.
