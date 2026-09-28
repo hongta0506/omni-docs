@@ -21,6 +21,9 @@
 
 | Tài liệu | Mô tả |
 |---|---|
+| [`usecases.md`](./usecases.md) | **Đặc tả SDLC & BDD**: Danh sách User Stories (`Given / When / Then`), Token Rotation & Replay Protection, Phân cấp cây phòng ban, RBAC động. |
+| [`workflows.md`](./workflows.md) | **Sơ đồ luồng & UML**: Sequence Diagram xoay vòng Refresh Token, Cây quyết định thẩm định phân quyền RBAC, Sơ đồ kiểm tra chống vòng lặp phòng ban. |
+| [`test-matrix.md`](./test-matrix.md) | **Ma trận kiểm thử**: Test Scenarios từ Multi-Tenant Claims, Stress Test Replay Attack, đến Invariant Boundary Tests. |
 | [`api-mapping.md`](./api-mapping.md) | Ánh xạ toàn bộ 72 endpoints từ Fastify (`auth`, `rbac`, `privacy`, `users`, `departments`, `settings`) sang Go Handlers & Connect-RPC. |
 | [`repository-port.md`](./repository-port.md) | Đặc tả Interface Repository tầng Domain: `ValidatedUser`, `ValidatedRole`, `TenantContext` và Bun ORM implementations. |
 

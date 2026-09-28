@@ -183,11 +183,23 @@ Mô tả mục tiêu nghiệp vụ, Bounded Context, submodule cần giải quy�
 ## Source Docs & Reference (Master Branch)
 - Architecture Blueprint: [MASTER-ARCHITECTURE-BLUEPRINT.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/MASTER-ARCHITECTURE-BLUEPRINT.md)
 - Subdomain Mapping: Link tài liệu mapping chi tiết trong `contexts/`
+- Resilience & Error Handling: [CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md)
 - Performance & Anti-Patterns: [GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md](https://github.com/hongta0506/omni-docs/blob/master/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md)
 - Legacy Reference: File code gốc Node.js/Fastify
 
 ## Domain Invariants
 Liệt kê các quy tắc bất biến (invariants) mà Aggregate Root và Value Objects phải bảo vệ.
+
+## Resilience & Error Handling Mapping (MANDATORY FOR ALL ISSUES)
+> Khi tạo Issue, bắt buộc phải định nghĩa bảng ánh xạ lỗi và chiến lược tự phục hồi. Khi code, bắt buộc phải hiện thực hóa đầy đủ tầng này bằng `pkg/errors` và `pkg/resilience`.
+
+| Nhóm Ngoại Lệ | Danh Sách Lỗi Kỹ Thuật / Domain | Hành Động Xử Lý Bắt Buộc | Retry / Circuit Breaker / DLQ |
+|---|---|---|---|
+| **Transient** | Lỗi mạng, 429 RateLimit, Timeout, DB Deadlock | Tự động thử lại | Exponential Backoff with Jitter (Base 500ms-2s, Max 3 lần) |
+| **Terminal** | Lỗi Validation, Không tìm thấy Entity, Blocked | Hủy ngay, không retry | Lưu vào `system_outbound_dlq` nếu là tác vụ gửi tin/đơn hàng |
+| **Security/Policy** | Hết hạn Token, Bị khóa nick, Checkpoint, Ban | Ngắt kết nối, chuyển trạng thái | Chuyển Circuit Breaker sang `OPEN`, gửi cảnh báo Admin/Ops |
+
+- **Audit Log Schema:** Bắt buộc ghi log Structured JSON ra `stdout` cho Grafana Loki (`trace_id`, `tenant_id`, `exception_classification`, `action_taken`, `duration_ms`).
 
 ## Go DDD Performance & Anti-Pattern Checklist (MANDATORY)
 > AI Agent bắt buộc đối soát theo `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`:
@@ -198,6 +210,7 @@ Liệt kê các quy tắc bất biến (invariants) mà Aggregate Root và Value
 - [ ] **Idiomatic Go (Pitfall 5):** Accept interfaces, return structs. Không đặt tên `I*` hay `*Impl`.
 - [ ] **Pagination Chuẩn (Shared Kernel):** Embed `pkg/pagination.PaginationParam`, chuẩn hóa bằng `Normalize()` và trả về `PageResult[T]`.
 - [ ] **Context Lifecycle (Pitfall 4):** Không truyền trực tiếp `r.Context()` vào async goroutine nếu có background task.
+- [ ] **Resilience & Error Handling (Bắt Buộc MVP):** Phân loại đúng `Transient / Terminal / SecurityPolicy`, áp dụng retry/circuit breaker và log JSON chuẩn cho Grafana Loki.
 
 ## Acceptance Criteria
 - [ ] Checklist các endpoints HTTP / RPC

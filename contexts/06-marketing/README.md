@@ -22,6 +22,9 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`mapping-marketing-and-channels.md`](./mapping-marketing-and-channels.md) | Ánh xạ chi tiết endpoints Tags, Campaigns, Sequences, Broadcast schedules và Channel dispatching. |
+| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & BDD Scenarios (Given-When-Then): Anti-Ban Broadcast, Rate Limiter Jitter, Drip Sequence, Auto-Exit on Reply. |
+| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: Sequence Broadcast Jitter Dispatcher, State Machine Sequence Drip, Flowchart Automation Engine. |
+| [`test-matrix.md`](./test-matrix.md) | Ma trận kiểm thử: Cơ chế chống khóa tài khoản (15-30s delay), Ngắt kịch bản tự động khi có tương tác và Hủy chiến dịch Graceful. |
 
 ---
 

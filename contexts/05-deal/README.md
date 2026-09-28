@@ -22,6 +22,9 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`mapping-deals-and-orders.md`](./mapping-deals-and-orders.md) | Ánh xạ chi tiết toàn bộ endpoints: Deals, Quotes, Products, Pricebook, Order Store và Pancake webhook integration. |
+| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & BDD Scenarios (Given-When-Then): Kanban Deal Pipeline, Quote Snapshot, Chiết khấu phê duyệt, Đồng bộ Pancake. |
+| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: State Machine Deal Pipeline, Sequence Pancake POS Order Sync, State Machine Quote Lifecycle. |
+| [`test-matrix.md`](./test-matrix.md) | Ma trận kiểm thử: Invariant Deal Won/Lost, Triệt tiêu sai số tiền tệ `MoneyVO (int64)` và Optimistic Lock trên Kanban. |
 
 ---
 
