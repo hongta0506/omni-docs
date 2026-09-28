@@ -11,15 +11,17 @@ Tên biến, hàm, endpoint, commands, file paths, JSON/Protobuf schemas giữ n
 
 ---
 
-## 1. Nguyên Tắc Docs-First & Kích Hoạt Skills
+## 1. Nguyên Tắc Docs-First & Kích Hoạt Skills Bắt Buộc
 
 Trước khi thiết kế, viết tài liệu hoặc hướng dẫn triển khai cho bất kỳ tính năng nào:
-1. **Đọc tài liệu gốc tại `omni-docs/architecture/` và `omni-docs/migration/`**:
+1. **Kích hoạt Skill Phân Tích Nghiệp Vụ (BẮT BUỘC LOAD ĐẦU TIÊN)**:
+   - `/business-analyst`: Khảo sát nhu cầu (Jobs-to-Be-Done, 5 Whys), chuẩn hóa Ubiquitous Language, viết User Stories và BDD Acceptance Criteria (Given/When/Then), phân định Tenant scope / Role permission trước khi vào kỹ thuật.
+2. **Đọc tài liệu gốc tại `omni-docs/architecture/` và `omni-docs/migration/`**:
    - `MASTER-ARCHITECTURE-BLUEPRINT.md`
    - `NEXTGEN-GOLANG-DDD-SPEC.md`
    - `DDD-MIGRATION-MASTER-PLAN.md`
    - `mapping-service-api-and-analytics.md`
-2. **Kích hoạt Skills DDD tương ứng**:
+3. **Kích hoạt Skills DDD & Kiến Trúc**:
    - Khảo sát & Bounded Context: `/ddd-scope`, `/ddd-contexts`, `/ddd-aggregates`
    - Cấu trúc Go DDD: `/golang-ddd`, `/golang-ddd-architecture`, `/golang-ddd-cqrs`
 
