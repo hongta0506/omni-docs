@@ -10,6 +10,7 @@
 - **`interfaces/http/` (REST ServeMux Go 1.22+)**: Cung cấp API trực tiếp cho Frontend Web/SPA (Vue 3, Admin Portal). Đặc thù Bounded Context Channel cho phép chia các subpackage:
   - `interfaces/http/zalo/`: Các route riêng cho Zalo Personal (`/api/v1/zalo-accounts/*`, `/api/v1/zalo-groups/*`, `/api/v1/zalo-labels/*`).
   - `interfaces/http/telegram/`: Các route riêng cho Telegram Personal MTProto.
+  - `interfaces/http/whatsapp/`: Các route riêng cho WhatsApp Personal (QR/Session daemon) và WhatsApp Official (WABA Webhook & Cloud API).
   - `interfaces/http/integrations/`: Facebook OAuth, Webhook receiver.
   - `interfaces/http/egress/`: Admin Egress Proxy Pool quản trị IP.
 - **`interfaces/grpc/` (Connect-RPC)**: Expose service `ChannelGatewayService` phục vụ inter-service RPC giữa Node.js Gateway Sidecar và Go Core Application.
@@ -67,3 +68,12 @@
 | `POST` | `/api/v1/telegram-personal/login/code` | `telegram/auth_handler.go:VerifyCode`| `commands.VerifyTelegramAuthCode`| `VerifyTelegramAuthCode` |
 | `GET` | `/api/v1/integrations/facebook/oauth` | `integrations/fb_handler.go:OAuth` | `queries.GetFacebookOAuthURL` | `GetFacebookOAuthURL` |
 | `POST` | `/api/v1/integrations/facebook/callback`| `integrations/fb_handler.go:Callback`| `commands.ProcessFacebookOAuth` | `ProcessFacebookOAuth` |
+| `GET` | `/api/v1/whatsapp-personal/accounts` | `whatsapp/personal_handler.go:List` | `queries.ListWhatsAppPersonalAccounts` | `ListWhatsAppAccounts` |
+| `POST` | `/api/v1/whatsapp-personal/qr` | `whatsapp/personal_handler.go:CreateQR` | `commands.InitWhatsAppQRSession` | `InitWhatsAppQR` |
+| `GET` | `/api/v1/whatsapp-personal/:id/qr-status` | `whatsapp/personal_handler.go:QRStatus` | `queries.GetWhatsAppQRStatus` | `GetWhatsAppQRStatus` |
+| `POST` | `/api/v1/whatsapp-personal/:id/reconnect` | `whatsapp/personal_handler.go:Reconnect` | `commands.ReconnectWhatsAppPersonal` | `ReconnectWhatsApp` |
+| `DELETE`| `/api/v1/whatsapp-personal/:id` | `whatsapp/personal_handler.go:Disconnect` | `commands.DisconnectWhatsAppPersonal` | `DisconnectWhatsApp` |
+| `GET` | `/api/v1/whatsapp-official/webhook` | `whatsapp/official_handler.go:Verify` | `queries.VerifyWhatsAppWebhook` | `VerifyWebhook` |
+| `POST` | `/api/v1/whatsapp-official/webhook` | `whatsapp/official_handler.go:Receive` | `commands.HandleWhatsAppWebhookEvent` | `ReceiveWebhookEvent` |
+| `POST` | `/api/v1/whatsapp-official/templates/sync`| `whatsapp/official_handler.go:SyncTemplates` | `commands.SyncWhatsAppTemplates` | `SyncTemplates` |
+| `POST` | `/api/v1/whatsapp-official/messages/send-template` | `whatsapp/official_handler.go:SendTemplate` | `commands.SendWhatsAppTemplateMessage` | `SendTemplateMessage` |
