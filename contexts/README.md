@@ -64,11 +64,11 @@ Mỗi context trong thư mục này cung cấp:
 
 ```
 omni-core/
-├── pkg/                                # CẤP 2: CROSS-BC SHARED KERNEL (Toàn hệ thống)
-│   ├── auth/                           # JWT verification, Role/Permission claims
+├── pkg/                                # CẤP 2: CROSS-BC SHARED KERNEL (Toàn hệ thống, sẵn sàng tách module)
+│   ├── auth/                           # JWT verification, Role/Permission claims, Context User/Tenant
 │   ├── context/                        # TenantID, UserID, RequestID extraction
 │   ├── events/                         # Event Envelope, Outbox interface, Message Broker
-│   ├── pagination/                     # Standard Page/Limit/Cursor DTOs
+│   ├── pagination/                     # Generic PaginationParam (Page, PageSize, Cursor, Offset) & PageResult[T]
 │   ├── errors/                         # System Error Codes & Connect-RPC/HTTP mappers
 │   └── logger/                         # Structured JSON logging
 │
@@ -76,7 +76,7 @@ omni-core/
     ├── domain/errors.go                # CẤP 1A: Domain Errors dùng chung trong nội bộ BC
     ├── application/common/             # CẤP 1B: INTERNAL BC COMMON (Chỉ dùng trong BC này)
     │   ├── context.go                  # Context helper trích xuất thông tin nghiệp vụ riêng
-    │   ├── pagination.go               # Filter & Sort DTOs dùng chung giữa các submodules
+    │   ├── filters.go                  # Filter & Sort DTOs nghiệp vụ (EMBED/EXTEND pkg/pagination.PaginationParam)
     │   └── errors.go                   # Application error handling nội bộ
     └── interfaces/http/
         └── middleware/                 # Middleware kiểm tra quyền / logic riêng của BC (nếu có)
@@ -87,12 +87,13 @@ omni-core/
 1. **Cấp 1 — Dùng chung nội bộ Bounded Context (`internal/<bc>/application/common/`)**:
    - Chỉ được import và sử dụng bởi các submodules bên trong chính Bounded Context đó (`internal/<bc>/application/<submodule>/`, `internal/<bc>/interfaces/`).
    - Tuyệt đối không export ra ngoài cho các Bounded Context khác sử dụng.
-   - Chứa: DTO phân trang đặc thù, search criteria filter, context accessor chuyên biệt của BC, sentinel domain errors (`domain/errors.go`).
+   - Chứa: DTO nghiệp vụ tìm kiếm (`filters.go`), ví dụ `UserFilter`, `ContactFilter`, `DealFilter`. Các filter này **bắt buộc nhúng (embed) `pkg/pagination.PaginationParam`** để tái sử dụng toàn bộ tính toán `Offset`, `PageSize`, `Cursor`, không viết lại thủ công các trường phân trang. Chứa context accessor chuyên biệt của BC và sentinel domain errors (`domain/errors.go`).
 
-2. **Cấp 2 — Dùng chung toàn hệ thống (`pkg/` — Shared Kernel)**:
+2. **Cấp 2 — Dùng chung toàn hệ thống (`pkg/` — Cross-BC Shared Kernel)**:
    - Các tiện ích generic kỹ thuật, hoàn toàn phi nghiệp vụ (infrastructure/platform level).
    - Mọi Bounded Context đều được phép import.
-   - Chứa: Quản lý Tenant/User context chuẩn, JWT middleware, Base pagination query/response, Event bus contracts.
+   - Chứa: Quản lý Tenant/User context chuẩn, JWT middleware, Base generic pagination (`pkg/pagination`), Event bus contracts.
+   - **Xóa bỏ `internal/shared/`**: Di chuyển toàn bộ các tiện ích generic còn sót tại `internal/shared/common/` sang `pkg/` (`pkg/pagination/`, `pkg/errors/`, `pkg/auth/`) để phục vụ chuẩn hóa Monorepo hoặc tách Private Module khi phân rã Microservices, tránh mập mờ giữa `internal/shared` và `pkg/`.
 
 ### 4.2 Các Bất Biến Ranh Giới Bắt Buộc (Boundary Invariants)
 
