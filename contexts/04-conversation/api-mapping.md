@@ -4,10 +4,23 @@
 
 ---
 
+## 0. Phân Bổ Tầng Giao Thức (Multi-Protocol Delivery)
+
+- **`interfaces/http/` (REST ServeMux Go 1.22+)**: Flat HTTP Handlers per resource (`/api/v1/conversations/*`, `/api/v1/messages/*`, `/api/v1/media/*`):
+  - `conversations_handler.go`: CRUD hội thoại, lọc trạng thái, gán tư vấn viên.
+  - `messages_handler.go`: Lịch sử tin nhắn cursor-based, gửi tin, thu hồi tin nhắn.
+  - `chat_presets_handler.go`: Quản lý tin nhắn mẫu (quick replies / snippets).
+  - `chat_folders_handler.go`: Quản lý thư mục phân loại hội thoại.
+  - `media_handler.go`: Upload tập tin, quản lý thư mục media, watermark ảnh.
+- **`interfaces/grpc/` (Connect-RPC)**: Expose service `ConversationService` cho Channel Daemons, Outbox Workers và AI Agent.
+- **`interfaces/ws/` (WebSocket Hub)**: Endpoint `/ws/v1/chat` full-duplex stream tin nhắn và trạng thái realtime.
+
+---
+
 ## 1. Module Chat & Tin Nhắn Đa Kênh (39 Endpoints)
 
-| HTTP Method | Route Cũ (Fastify) | Go Handler (CQRS) | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
-|---|---|---|---|---|
+| HTTP Method | Route Cũ (Fastify) | Go HTTP Handler (`interfaces/http/`) | Go Application CQRS | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
+|---|---|---|---|---|---|
 | `GET` | `/api/v1/conversations` | `queries.ListConversationsHandler` | `ConversationService.ListConversations` | Lấy danh sách hội thoại theo bộ lọc (kênh, chưa đọc, tag, folder) |
 | `POST` | `/api/v1/conversations` | `commands.CreateConversationHandler` | `ConversationService.CreateConversation` | Khởi tạo cuộc hội thoại mới với khách hàng |
 | `GET` | `/api/v1/conversations/:id` | `queries.GetConversationHandler` | `ConversationService.GetConversation` | Xem chi tiết cuộc hội thoại và thông tin profile khách |

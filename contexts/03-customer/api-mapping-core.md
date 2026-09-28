@@ -5,27 +5,24 @@
 
 ---
 
-## 1. Chiến lược tương thích Frontend (Zero Frontend Breakage)
+## 1. Phân Bổ Tầng Giao Thức (Multi-Protocol Delivery)
 
-Connect-RPC của Go hỗ trợ cả 3 giao thức trên cùng một port HTTP:
-1. **gRPC** (HTTP/2 binary Protobuf)
-2. **gRPC-Web** (dành cho browser client)
-3. **Connect Protocol** (HTTP/1.1 hoặc HTTP/2 JSON)
-
-Để giữ cấu trúc API frontend cũ (`/api/v1/...` qua Axios), ta sử dụng **Connect-RPC HTTP Mapping** hoặc một HTTP Handler Gateway mỏng:
-- Endpoint Frontend cũ gọi: `GET /api/v1/contacts`
-- Sẽ được ánh xạ vào `queries.ListContactsHandler` của Go.
+- **`interfaces/http/` (REST ServeMux Go 1.22+)**: Flat handlers per resource phục vụ Frontend Web/SPA (`/api/v1/contacts/*`):
+  - `contacts_handler.go`: CRUD, phân trang, lọc bộ nhớ đệm, tìm kiếm nhanh danh bạ.
+  - `contact_merge_handler.go`: Hợp nhất thông minh duplicate profile & chuyển đơn hàng.
+  - `contact_export_handler.go`: Xuất danh bạ ra Excel/CSV theo stream.
+- **`interfaces/grpc/` (Connect-RPC)**: Expose service `CustomerService` cho inter-service communication (Deal, Marketing, Service-API).
 
 ---
 
 ## 2. Bảng Ánh Xạ Chi Tiết: Legacy API ➔ Go DDD
 
-| # | Phương thức & URL Cũ | Node.js Fastify Handler & Prisma Model | Go Application Handler | Go Repository Port | Connect-RPC Proto Equivalent |
-|---|---|---|---|---|---|
-| **1** | `GET /api/v1/contacts` | `contact-routes.ts`<br>`prisma.contact.findMany({ skip, take, where })` | `queries.ListContactsHandler` | `repo.ListContacts(ctx, params)` | `rpc ListContacts(ListContactsRequest) returns (ListContactsResponse)` |
-| **2** | `GET /api/v1/contacts/:id` | `contact-routes.ts`<br>`prisma.contact.findUnique({ where: { id } })` | `queries.GetContactHandler` | `repo.FindByID(ctx, id)` | `rpc GetContact(GetContactRequest) returns (GetContactResponse)` |
-| **3** | `POST /api/v1/contacts` | `contact-routes.ts`<br>`prisma.contact.create({ data })` | `commands.CreateContactHandler` | `repo.FindByPhone(...)`<br>`repo.Save(ctx, vc)` | `rpc CreateContact(CreateContactRequest) returns (CreateContactResponse)` |
-| **4** | `POST /api/v1/contacts/:id/merge-into` | `contact-routes.ts`<br>`prisma.$transaction([...])` | `commands.MergeContactHandler` | `repo.FindByID(...)`<br>`repo.Save(ctx, vsource)`<br>`repo.Save(ctx, vtarget)` | `rpc MergeContact(MergeContactRequest) returns (MergeContactResponse)` |
+| # | Phương thức & URL Cũ | Node.js Fastify Handler & Prisma Model | Go HTTP Handler (`interfaces/http/`) | Go Application CQRS | Go Repository Port | Connect-RPC Proto Equivalent |
+|---|---|---|---|---|---|---|
+| **1** | `GET /api/v1/contacts` | `contact-routes.ts`<br>`prisma.contact.findMany({ skip, take, where })` | `contacts_handler.go:List` | `queries.ListContactsHandler` | `repo.ListContacts(ctx, params)` | `rpc ListContacts(ListContactsRequest) returns (ListContactsResponse)` |
+| **2** | `GET /api/v1/contacts/:id` | `contact-routes.ts`<br>`prisma.contact.findUnique({ where: { id } })` | `contacts_handler.go:Get` | `queries.GetContactHandler` | `repo.FindByID(ctx, id)` | `rpc GetContact(GetContactRequest) returns (GetContactResponse)` |
+| **3** | `POST /api/v1/contacts` | `contact-routes.ts`<br>`prisma.contact.create({ data })` | `contacts_handler.go:Create` | `commands.CreateContactHandler` | `repo.FindByPhone(...)`<br>`repo.Save(ctx, vc)` | `rpc CreateContact(CreateContactRequest) returns (CreateContactResponse)` |
+| **4** | `POST /api/v1/contacts/:id/merge-into` | `contact-routes.ts`<br>`prisma.$transaction([...])` | `contact_merge_handler.go:Merge` | `commands.MergeContactHandler` | `repo.FindByID(...)`<br>`repo.Save(ctx, vc)` | `rpc MergeContact(MergeContactRequest) returns (MergeContactResponse)` |br>`repo.Save(ctx, vsource)`<br>`repo.Save(ctx, vtarget)` | `rpc MergeContact(MergeContactRequest) returns (MergeContactResponse)` |
 | **5** | `POST /api/v1/contacts/:id/profiles` | `contact-routes.ts`<br>`prisma.friend.update({ contactId })` | `commands.LinkChannelProfileHandler` | `repo.FindByID(...)`<br>`repo.Save(ctx, vc)` | `rpc LinkProfile(LinkProfileRequest) returns (LinkProfileResponse)` |
 | **6** | `GET /api/v1/contacts/by-zalo-uid/:uid` | `contact-sub-resource-routes.ts`<br>`prisma.friend.findFirst({ where: { zaloUid } })` | `queries.GetContactByChannelQuery` | `repo.FindByChannelProfile(ctx, ChannelZalo, accountID, uid)` | `rpc GetContactByProfile(...)` |
 
