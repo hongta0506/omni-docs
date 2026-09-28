@@ -34,34 +34,66 @@ Mọi agent khi làm việc trong `omni-docs` BẮT BUỘC phải nạp và kíc
 
 Tất cả các endpoint và logic nghiệp vụ phải được quy hoạch chuẩn xác vào đúng Bounded Context (BC). Không được tạo package tùy tiện hay đặt sai tầng.
 
-### 2.1 Cấu Trúc Thư Mục Tiêu Chuẩn Trong Mỗi Bounded Context (`internal/<bc_name>/`)
+### 2.1 Cấu Trúc Phân Rã Sub-module Bắt Buộc Trên Cả 4 Tầng (`internal/<bc_name>/`)
+
+Khi một Bounded Context có nhiều nhóm nghiệp vụ/Aggregates, **NGHIÊM CẤM** để phẳng toàn bộ file ở thư mục gốc của các tầng. Bắt buộc tổ chức phân cấp đồng bộ theo **Sub-module** trên cả 4 tầng:
+
 ```
 internal/<bc_name>/
-├── domain/                    # 1. DOMAIN LAYER (Zero external dependencies)
-│   ├── <aggregate_root>.go    # Aggregate Root, Entities, Invariant business logic
-│   ├── <value_objects>.go     # Value Objects (bất biến, tự validate)
-│   ├── events.go              # Domain Events
-│   ├── repository.go          # Repository Ports (Chỉ nhận *Validated<Aggregate>)
-│   └── validation.go          # Validated<Aggregate> wrapper
+├── domain/                         # 1. DOMAIN LAYER (Zero external dependencies)
+│   ├── <submodule_a>/              # Tách riêng từng Sub-domain / Aggregate cluster
+│   │   ├── <aggregate_root>.go     # Aggregate Root, Entities, Invariant business logic
+│   │   ├── <value_objects>.go      # Value Objects (bất biến, tự validate)
+│   │   ├── events.go               # Domain Events của submodule
+│   │   ├── repository.go           # Repository Port interface (Chỉ nhận *Validated<Aggregate>)
+│   │   └── validation.go           # Validated<Aggregate> wrapper
+│   ├── <submodule_b>/
+│   │   ├── <aggregate_root>.go
+│   │   ├── <value_objects>.go
+│   │   └── repository.go
+│   └── errors.go                   # Lỗi Domain dùng chung trong toàn BC
 │
-├── application/               # 2. APPLICATION LAYER (CQRS điều phối nghiệp vụ)
-│   ├── commands/              # Write side (Handlers thay đổi trạng thái)
-│   └── queries/               # Read side (Handlers truy vấn tối ưu DTO)
+├── application/                    # 2. APPLICATION LAYER (CQRS điều phối nghiệp vụ)
+│   ├── <submodule_a>/              # Đồng bộ cấu trúc theo Sub-module của Domain
+│   │   ├── commands/               # Handlers thay đổi trạng thái
+│   │   │   ├── create_handler.go
+│   │   │   └── update_handler.go
+│   │   └── queries/                # Handlers truy vấn tối ưu DTO
+│   │       ├── get_handler.go
+│   │       └── list_handler.go
+│   └── <submodule_b>/
+│       ├── commands/
+│       └── queries/
 │
-├── infrastructure/            # 3. INFRASTRUCTURE LAYER (Persistence, Clients, Cache)
-│   ├── postgres/              # SQL / pgx / Bun ORM models & Repository implementations
-│   └── client/                # HTTP/gRPC external clients (nếu có)
+├── infrastructure/                 # 3. INFRASTRUCTURE LAYER (Persistence, Adapters, External)
+│   ├── <submodule_a>/              # Repository implementation & DB adapters cho submodule A
+│   │   ├── postgres_repository.go  # Bun ORM / sqlc / pgx repository thực thi Port
+│   │   └── models.go               # DB Table schemas & mapping
+│   ├── <submodule_b>/
+│   │   ├── postgres_repository.go
+│   │   └── models.go
+│   └── client/                     # External HTTP/gRPC SDK clients (nếu có)
 │
-└── interfaces/                # 4. INTERFACES LAYER (Multi-Protocol Delivery)
-    ├── http/                  # RESTful API handlers (ServeMux Go 1.22+) - Giao diện chính cho Frontend Web/SPA (/api/v1/...)
-    │   ├── handler.go         # Router chung & RegisterRoutes(mux *http.ServeMux)
-    │   └── <subchannel>/      # ĐẶC THÙ CHANNEL BC: Các sub-channel độc lập (zalo, telegram, integrations)
-    │                          # được phép có package riêng để đảm bảo cô lập hoàn toàn lỗi, DTO và error handling.
-    │                          # Các BC thông thường (Customer, Deal...) bắt buộc dùng flat files per resource.
-    ├── grpc/                  # Connect-RPC / gRPC service servers (Protobuf HTTP/2) cho Inter-service & Workers
-    ├── ws/                    # WebSocket Hub streaming cho Chat hội thoại & Thông báo tức thời
-    └── stream/                # SSE (Server-Sent Events) cho AI Token streaming (`text/event-stream`)
+└── interfaces/                     # 4. INTERFACES LAYER (Multi-Protocol Delivery)
+    ├── http/                       # RESTful API handlers (ServeMux Go 1.22+)
+    │   ├── handler.go              # Router chung & đăng ký RegisterRoutes(mux *http.ServeMux)
+    │   ├── <submodule_a>_handler.go# Flat handlers per resource (hoặc subfolder <submodule>/ nếu độc lập hoàn toàn)
+    │   └── <submodule_b>_handler.go
+    ├── grpc/                       # Connect-RPC / gRPC service servers theo từng Sub-module Protobuf
+    │   ├── <submodule_a>_service.go
+    │   └── <submodule_b>_service.go
+    ├── ws/                         # WebSocket streaming Hub & handlers
+    └── stream/                     # Server-Sent Events (SSE) streaming (AI token, realtime events)
 ```
+
+#### Quy Chuẩn Cụ Thể Từng Tầng:
+1. **Domain Layer (`domain/<submodule>/`)**: Mỗi Aggregate Root quản lý Invariant riêng nằm trong sub-module riêng (ví dụ: `identity/domain/tenant`, `domain/user`, `domain/group`, `domain/permission`). Zero dependencies (chỉ stdlib và `uuid`).
+2. **Application Layer (`application/<submodule>/`)**: CQRS Commands và Queries phân bổ rõ theo sub-module tương ứng để tránh Application Service bị phình to.
+3. **Infrastructure Layer (`infrastructure/<submodule>/`)**: SQL models, migrations và code thực thi Repository Ports được cô lập theo sub-module.
+4. **Interfaces Layer (`interfaces/`)**:
+   - HTTP REST: Handlers gọi application CQRS tương ứng theo sub-module. Với Channel BC, các gateway Zalo/Telegram/WhatsApp có package con riêng (`interfaces/http/zalo/`, `interfaces/http/whatsapp/`). Với các BC khác, tổ chức file handler rõ ràng theo resource.
+   - gRPC / Connect-RPC: Phân tách service implementation file theo từng protobuf service của sub-module.
+
 
 ### 2.2 Bản Đồ 8 Bounded Contexts & Phân Chia Endpoint Tương Ứng
 
