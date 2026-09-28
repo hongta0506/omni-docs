@@ -71,11 +71,48 @@ Hệ thống Omni Core hỗ trợ đa kênh (Zalo Personal, Zalo OA, Telegram, W
 
 ---
 
-## 3. WhatsApp Gateway Integration (gRPC & Baileys / WPPConnect)
+## 3. WhatsApp Dual-Channel Integration (Personal vs Official WABA)
 
-### 3.1 Mô Hình Tích Hợp
+Tương tự Zalo (Zalo Personal vs Zalo OA), WhatsApp được phân rã thành hai hình thái hoạt động độc lập về giao thức, rủi ro và cơ chế định tuyến:
 
-WhatsApp Personal/Business Unofficial được quản lý thông qua microservice WhatsApp Gateway (Node.js/Baileys hoặc Go/whatsmeow), kết nối với Go Core qua gRPC hai chiều (Bi-directional gRPC Streaming).
+```
+                                  ┌────────────────────────┐
+                                  │   Inbound Router       │
+                                  └───────────┬────────────┘
+                                              │
+                    ┌─────────────────────────┴─────────────────────────┐
+                    │                                                   │
+         ┌──────────▼──────────┐                             ┌──────────▼──────────┐
+         │  WhatsApp Personal  │                             │  WhatsApp Official  │
+         │   (Unofficial)      │                             │     (Cloud API)     │
+         └──────────┬──────────┘                             └──────────┬──────────┘
+                    │                                                   │
+         ┌──────────▼──────────┐                             ┌──────────▼──────────┐
+         │ Baileys / whatsmeow │                             │ Meta Graph API v19+ │
+         │ WebSocket Daemon    │                             │ Cloud Webhooks      │
+         └──────────┬──────────┘                             └──────────┬──────────┘
+                    │                                                   │
+         ┌──────────▼──────────┐                             ┌──────────▼──────────┐
+         │ QR Code Pairing     │                             │ WABA Embedded Signup│
+         │ Multi-Device Sync   │                             │ Template Messages   │
+         │ Proxy Egress Pool   │                             │ 24h Service Window  │
+         └─────────────────────┘                             └─────────────────────┘
+```
+
+### 3.1 So Sánh Hai Mô Hình WhatsApp
+
+| Đặc tính | WhatsApp Personal (Unofficial) | WhatsApp Official (Cloud API / WABA) |
+|---|---|---|
+| **Cơ chế xác thực** | Quét QR Code qua Web Multidevice (Baileys / whatsmeow) | Meta System User Token / WABA OAuth Signup |
+| **Giao thức vận hành** | gRPC Daemon Sidecar + Noise Protocol over WS | HTTPS REST Meta Graph API + Webhook Inbound |
+| **Chi phí gửi tin** | Miễn phí (chỉ tốn chi phí hạ tầng / Proxy) | Trả phí theo phiên hội thoại Meta (Conversation-based) |
+| **Rủi ro vận hành** | Nguy cơ bị khóa số nếu gửi spam hoặc thiếu Proxy xoay IP | Không rủi ro khóa số, tuân thủ chính sách Meta |
+| **Mẫu tin nhắn** | Gửi tự do văn bản, media không cần duyệt | Bắt buộc đăng ký và duyệt Template trước khi gửi |
+| **Cửa sổ gửi tin** | Không giới hạn thời gian phản hồi | Giới hạn 24h kể từ tin nhắn cuối của khách hàng |
+
+### 3.2 WhatsApp Personal Daemon (gRPC & Baileys / whatsmeow)
+
+WhatsApp Personal được quản lý qua microservice daemon (Node.js/Baileys hoặc Go/whatsmeow), kết nối với Go Core qua gRPC hai chiều (Bi-directional gRPC Streaming):
 
 ```
 [ Go Core: omni-core ]
@@ -93,7 +130,7 @@ WhatsApp Personal/Business Unofficial được quản lý thông qua microservic
 [ Frontend: omni-web ] (Hiển thị QR để người dùng quét)
 ```
 
-### 3.2 Protobuf Service Contract
+#### Protobuf Service Contract (Personal Daemon)
 
 ```protobuf
 syntax = "proto3";
@@ -121,6 +158,19 @@ message WhatsAppEvent {
   bytes payload = 3;
 }
 ```
+
+### 3.3 WhatsApp Official Cloud API (WABA)
+
+Dành cho doanh nghiệp sử dụng WhatsApp Business Account chính thống:
+1. **Webhook Inbound Receiver**:
+   - Xác thực Webhook qua Meta Token Challenge (`hub.verify_token`, `hub.challenge`).
+   - Ký mã bảo mật payload qua `X-Hub-Signature-256` bằng App Secret.
+   - Chuẩn hóa payload sự kiện sang `InboundEventDTO` chung của hệ thống.
+2. **Outbound Cloud API Router**:
+   - Tự động kiểm tra `24h Customer Service Window`: nếu quá 24h, bắt buộc sử dụng Template Message (`template_name`, `language`, `components`).
+   - Gửi tin nhắn qua endpoint: `https://graph.facebook.com/v19.0/{phone_number_id}/messages`.
+3. **Template Management**:
+   - Đồng bộ danh sách mẫu tin WABA (APPROVED, REJECTED, PENDING).
 
 ---
 

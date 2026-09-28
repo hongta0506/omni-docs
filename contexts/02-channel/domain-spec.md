@@ -21,11 +21,12 @@ import (
 
 type ChannelType string
 const (
-	ChannelZaloPersonal ChannelType = "zalo_personal"
-	ChannelZaloOA       ChannelType = "zalo_oa"
-	ChannelTelegram     ChannelType = "telegram"
-	ChannelWhatsApp     ChannelType = "whatsapp"
-	ChannelFacebook     ChannelType = "facebook"
+	ChannelZaloPersonal     ChannelType = "zalo_personal"
+	ChannelZaloOA           ChannelType = "zalo_oa"
+	ChannelTelegram         ChannelType = "telegram"
+	ChannelWhatsAppPersonal ChannelType = "whatsapp_personal" // Unofficial Baileys / QR daemon
+	ChannelWhatsAppOfficial ChannelType = "whatsapp_official" // Official WABA Cloud API
+	ChannelFacebook         ChannelType = "facebook"
 )
 
 type AccountStatus string
@@ -69,8 +70,9 @@ type ChannelAccount struct {
 1. **Uniqueness per Provider**: Không thể tồn tại 2 `ChannelAccount` cùng `(channelType, accountUID)` trong cùng một Tenant.
 2. **Disconnect Semantics**: Khi sale bấm ngắt kết nối chủ động (`DisconnectManual`), cấm background daemon tự động kích hoạt `Relogin`. Chỉ tự động reconnect khi `disconnectReason == DisconnectPassive`.
 3. **Session Encryption**: Toàn bộ session credentials (cookies, imei, zpw_sek) bắt buộc phải được mã hóa AES-256-GCM trước khi lưu xuống persistent storage.
-4. **Proxy Binding Rule**: Mỗi Zalo account khi đăng nhập phải được gắn với một SOCKS5 proxy hợp lệ trong Egress Pool để tránh tình trạng nhảy IP dẫn đến khóa nick (Checkpoint).
-5. **Tenant Isolation**: Mọi truy vấn và lệnh cập nhật tài khoản bắt buộc phải mang `tenantID`.
+4. **Proxy Binding Rule**: Mỗi tài khoản cá nhân không chính thức (`zalo_personal`, `whatsapp_personal`) khi đăng nhập phải được gắn với một SOCKS5/HTTP proxy hợp lệ trong Egress Pool để tránh tình trạng nhảy IP dẫn đến khóa nick (Checkpoint/Ban). Tài khoản Official (`zalo_oa`, `whatsapp_official`) không sử dụng Proxy daemon mà giao tiếp trực tiếp qua Webhook/Cloud API.
+5. **WhatsApp Service Window Invariant**: Đối với `whatsapp_official`, hệ thống chỉ được phép gửi tin nhắn tự do dạng văn bản/media trong vòng 24 giờ kể từ thời điểm nhận tin nhắn gần nhất của người dùng (`last_customer_message_at`). Sau 24 giờ, bắt buộc phải dùng Tin nhắn Mẫu (Template Message).
+6. **Tenant Isolation**: Mọi truy vấn và lệnh cập nhật tài khoản bắt buộc phải mang `tenantID`.
 
 ---
 
