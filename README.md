@@ -1,74 +1,120 @@
-# Omni — Architecture & Migration Documentation
+# Omni Docs — Omni-Channel CRM Architecture & Documentation
 
-Tài liệu thiết kế kiến trúc, catalog nghiệp vụ và lộ trình chuyển đổi **Omni** (nền tảng CRM đa kênh: Zalo, Facebook Messenger, WhatsApp, Telegram, và các kênh nhắn tin khác) từ Fastify/Node.js sang **Golang Clean Architecture + DDD + Connect-RPC**.
-
----
-
-## 1. Mục lục tài liệu
-
-| Thư mục / File | Mô tả |
-|---|---|
-| [`architecture/CURRENT-ARCHITECTURE-AUDIT.md`](./architecture/CURRENT-ARCHITECTURE-AUDIT.md) | Báo cáo kiểm toán kiến trúc Node.js hiện tại (Anemic Model, đánh giá mức độ DDD) — baseline từ ZaloCRM v1 (Zalo-only) |
-| [`architecture/NEXTGEN-GOLANG-DDD-SPEC.md`](./architecture/NEXTGEN-GOLANG-DDD-SPEC.md) | Đặc tả kiến trúc Go Core + Clean/DDD + Connect-RPC + Dual-System AI (Jev + LangChainGo) |
-| [`architecture/STORAGE-STRATEGY-AND-ORM.md`](./architecture/STORAGE-STRATEGY-AND-ORM.md) | Quyết định kiến trúc: Chọn Bun ORM cho CRM, chiến lược lưu trữ message phân cấp & pgvector AI |
-| [`architecture/ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | 442 API endpoints & 13 background workers — catalog đầy đủ từ source code ZaloCRM v1 |
-| [`migration/DDD-MIGRATION-MASTER-PLAN.md`](./migration/DDD-MIGRATION-MASTER-PLAN.md) | Kế hoạch tổng thể: Bounded Contexts, database strategy, proto contract, lộ trình 4 giai đoạn |
-| [`diagrams/`](./diagrams/) | Sơ đồ hệ thống, data model, backend modules (Mermaid, Excalidraw, PNG, SVG) |
+> Tài liệu thiết kế kiến trúc, catalog nghiệp vụ, đặc tả kỹ thuật và kế hoạch di trú cho hệ thống **Omni** — Nền tảng CRM đa kênh thế hệ mới (Zalo, Telegram, WhatsApp, Facebook Messenger, ...) từ Fastify/Node.js sang **Golang Clean Architecture + DDD + Connect-RPC**.
 
 ---
 
-## 2. Tầm nhìn Omni: Đa Kênh (Multi-Channel)
+## 1. Số Liệu Quy Chuẩn Hệ Thống
 
-ZaloCRM v1 chỉ hỗ trợ Zalo. **Omni** mở rộng sang toàn bộ kênh nhắn tin, thống nhất dưới một nghiệp vụ CRM duy nhất:
-
-| Kênh | Gateway Service | Trạng thái |
+| Chỉ số | Giá trị | Giải thích |
 |---|---|---|
-| **Zalo** (cá nhân) | `zalo-gateway` (Node.js + zca-js) | Hiện tại — Phase 1 di trú |
-| **Facebook Messenger** | `fb-gateway` (Node.js / Go + Graph API) | Kế hoạch — Phase 4+ |
-| **WhatsApp** | `wa-gateway` (Go + Meta Cloud API) | Kế hoạch — Phase 4+ |
-| **Telegram** | `tg-gateway` (Go + Bot API) | Kế hoạch — Phase 4+ |
-
-**Nguyên tắc cốt lõi**: Go Core **không biết** đang nói chuyện với Zalo hay Facebook. Mọi kênh đều được bọc thành một `ChannelGateway` service thống nhất giao tiếp qua gRPC với interface chung (`gateway.proto`).
-
----
-
-## 3. Tóm tắt định hướng kiến trúc
-
-```
-[Web / Mobile Client]
-        │ Connect-RPC (HTTP/2 hoặc JSON)
-        ▼
-┌──────────────────────────────────────────┐
-│  Go Core (DDD Monolith — stateless)      │
-│  ├── Identity & Access BC                │
-│  ├── Customer & Relationship BC          │
-│  ├── Conversation & Messaging BC         │
-│  ├── Growth & Engagement BC              │
-│  ├── Intelligence & AI BC               │
-│  └── Reporting & Platform BC            │
-└────────────────────┬─────────────────────┘
-                     │ gRPC (internal network)
-        ┌────────────┼────────────┬────────────┐
-        ▼            ▼            ▼            ▼
-  [Zalo GW]   [FB Messenger  [WhatsApp   [Telegram
-  (Node.js)    GW (Go)]       GW (Go)]    GW (Go)]
-```
-
-- **Go Core**: Clean Architecture + Rich Domain Model (Aggregates, Value Objects, Domain Events). Stateless, scale ngang sau Load Balancer.
-- **Channel Gateways**: Mỗi kênh là 1 sidecar service độc lập. Go Core giao tiếp với tất cả qua interface gRPC chuẩn hóa.
-- **Connect-RPC & Protobuf**: Contract duy nhất xuyên suốt hệ thống.
-- **Dual-System AI**:
-  - System 1 (Jev): Phân loại, routing, spam filter (70-200ms, 0 token LLM).
-  - System 2 (LLM qua LangChainGo & GOSO Gateway): Tóm tắt, RAG, sinh câu trả lời có Approval Gate.
+| **Tổng routes thô (Raw Scan)** | **792** | Quét tự động từ toàn bộ codebase Fastify/Node.js production (bao gồm biến thể params, internal, dev routes). |
+| **Routes nghiệp vụ chuẩn hóa** | **615** | Phạm vi di trú chính thức, phân bổ trên 8 Bounded Contexts. |
+| **Background Workers** | **27** | Queue workers, cron jobs, đồng bộ dữ liệu và webhooks. |
+| **Bounded Contexts (BC)** | **8** | Phân rã độc lập theo chuẩn DDD Clean Architecture tại `omni-core/internal/`. |
+| **Giao thức hỗ trợ** | **Multi-Protocol** | Connect-RPC (HTTP/2 Protobuf), RESTful JSON (ServeMux Go 1.22+), SSE Stream, WebSocket Hub. |
 
 ---
 
-## 4. Repository liên quan
+## 2. Mục Lục Tài Liệu Toàn Diện
 
-| Repo | Mô tả |
+### 2.1 Kiến Trúc Hệ Thống (`architecture/`)
+> Thư mục chi tiết: [`architecture/README.md`](./architecture/README.md)
+
+| Tài liệu | Mô tả | Trọng tâm |
+|---|---|---|
+| [`MASTER-ARCHITECTURE-BLUEPRINT.md`](./architecture/MASTER-ARCHITECTURE-BLUEPRINT.md) | Bản thiết kế kiến trúc tổng thể toàn diện | Phân bổ 615 endpoints vào 8 Bounded Contexts, ma trận di trú, chiến lược ORM (Bun ORM + pgx/v5), RBAC 4 cấp, Transactional Outbox, Multi-protocol interfaces. |
+| [`NEXTGEN-GOLANG-DDD-SPEC.md`](./architecture/NEXTGEN-GOLANG-DDD-SPEC.md) | Đặc tả kỹ thuật Go Clean DDD | Chuẩn hóa tầng Domain (Zero external deps, ValidatedAggregate, Rich invariants), Application CQRS, Connect-RPC Protobuf contracts, SSE/WebSocket streaming. |
+| [`CHANNEL-GATEWAYS-ARCHITECTURE.md`](./architecture/CHANNEL-GATEWAYS-ARCHITECTURE.md) | Kiến trúc cổng kết nối đa kênh (Channel Gateways) | Zalo Personal QR State Machine, Telegram MTProto/Bot, WhatsApp Gateway (WPPConnect/Baileys), Egress Proxy Pool (xoay vòng IP dân cư, chống checkpoint). |
+| [`ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | Danh mục chức năng nghiệp vụ chi tiết | 792 endpoints & 27 workers phân tích từ mã nguồn Fastify, catalog 34 modules nghiệp vụ nguyên bản. |
+
+### 2.2 Kế Hoạch & Lộ Trình Di Trú (`migration/`)
+> Thư mục chi tiết: [`migration/README.md`](./migration/README.md)
+
+| Nhóm | Tài liệu | Mô tả |
+|---|---|---|
+| **Chiến lược tổng thể** | [`DDD-MIGRATION-MASTER-PLAN.md`](./migration/DDD-MIGRATION-MASTER-PLAN.md) | Kế hoạch tổng thể di trú Strangler Fig 4 pha, mô hình "2 cuốn sổ" (`Contact` + `ChannelProfile`), zero-downtime DB. |
+| | [`SPRINT-MIGRATION-ROADMAP.md`](./migration/SPRINT-MIGRATION-ROADMAP.md) | Lộ trình chuyển đổi 6 Sprints từ bản production `release/orbstack-mini-20260924`. |
+| | [`PRODUCTION-GAP-ANALYSIS.md`](./migration/PRODUCTION-GAP-ANALYSIS.md) | Phân tích chênh lệch: 177 routes core ban đầu vs 615 routes production (thiếu 438 routes, Issues A–H). |
+| | [`DETAILED-MIGRATION-WBS.md`](./migration/DETAILED-MIGRATION-WBS.md) | Phân rã công việc (WBS) gồm 8 Epics lớn, chi tiết module, route và technical specs. |
+| **Ánh xạ chi tiết (Mapping Specs)** | [`customer-api-mapping.md`](./migration/customer-api-mapping.md) | Ánh xạ Customer BC core: 16 endpoints `contacts` → Go CQRS & Connect-RPC. |
+| | [`mapping-customer-ext.md`](./migration/mapping-customer-ext.md) | Ánh xạ Customer Extended: 78 endpoints (Lead Pool, Lists, Notes, Appointments, Scoring). |
+| | [`mapping-deals-and-orders.md`](./migration/mapping-deals-and-orders.md) | Ánh xạ Deal & E-commerce: 69 endpoints (Deals, Quotes, Products, Pricebook, Order Store, Pancake). |
+| | [`mapping-marketing-and-channels.md`](./migration/mapping-marketing-and-channels.md) | Ánh xạ Marketing & Channel Ext: 179 endpoints (Tags, Campaigns, Sequences, Zalo groups, Egress proxy). |
+| | [`mapping-ai-agent-and-goclaw-bridge.md`](./migration/mapping-ai-agent-and-goclaw-bridge.md) | Ánh xạ AI Agent & GoClaw Bridge: 65 endpoints (Providers, Agents, Knowledge, Radar). |
+| | [`mapping-service-api-and-analytics.md`](./migration/mapping-service-api-and-analytics.md) | Ánh xạ Service API & Analytics: 113 endpoints (Public API cho daemon ngoài, SLA, Ops Radar). |
+| **Dữ liệu kiểm toán** | [`PROD-ROUTES-AUDIT.json`](./migration/PROD-ROUTES-AUDIT.json) | Dữ liệu thô quét tự động 792 routes từ codebase Fastify. |
+
+### 2.3 Repository Ports (`repository-ports/`)
+
+| Tài liệu | Mô tả |
 |---|---|
-| `ZaloCRM` | Codebase Node.js Fastify hiện tại — Zalo-only (legacy, dần thay thế) |
-| `omni-go` (tạo mới) | Go Core DDD — engine nghiệp vụ đa kênh |
-| `zalocrm-zalo-gateway` (tách từ ZaloCRM) | Node.js Zalo Gateway (zca-js sidecar) |
-| `goso` | AI Gateway — Agent runtime, LLM routing, Approval Gate |
-| `omni-docs` | **Repo này** — tài liệu kiến trúc & migration |
+| [`customer-repository-port.md`](./repository-ports/customer-repository-port.md) | Đặc tả kỹ thuật Repository Port cho Customer Bounded Context (`ValidatedContact`, Two-ledger logic, Bun ORM query signatures). |
+
+### 2.4 Scripts Công Cụ (`scripts/`)
+
+| File | Mô tả |
+|---|---|
+| [`scan-prod-routes.ts`](./scripts/scan-prod-routes.ts) / `.js` | Script TypeScript/Node.js quét tự động toàn bộ Fastify routes, HTTP methods và controllers từ codebase monolith ZaloCRM. |
+
+### 2.5 Quy Chuẩn & Quy Trình Phát Triển
+
+| File | Mô tả |
+|---|---|
+| [`AGENTS.md`](./AGENTS.md) | Hướng dẫn bắt buộc cho AI coding agents: Docs-First, Preload Skills (`business-analyst`, `ddd-*`, `golang-ddd-*`), Sprint Board automation, chuẩn layout thư mục 4 tầng DDD. |
+| [`CLAUDE.md`](./CLAUDE.md) | Quy định SDLC, phân chia 8 Bounded Contexts, quy trình Git branching (`staging` target, conventional commits) và tự động hóa trạng thái task trên GitHub Project Board. |
+
+---
+
+## 3. Bản Đồ 8 Bounded Contexts DDD
+
+Hệ thống được quy hoạch thành **8 Bounded Contexts** chuẩn Clean Architecture trong backend Go (`omni-core/internal/`):
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   OMNI CORE SYSTEM                                     │
+│                         (Golang DDD Clean Architecture Monolith)                       │
+├────────────────────┬────────────────────┬────────────────────┬─────────────────────────┤
+│ 1. Identity &      │ 2. Channel &       │ 3. Customer &      │ 4. Conversation &       │
+│    Settings        │    Gateway         │    Lead            │    Media                │
+│ internal/identity  │ internal/channel   │ internal/customer  │ internal/conversation   │
+│ (72 endpoints)     │ (95 endpoints)     │ (92 endpoints)     │ (82 endpoints)          │
+├────────────────────┼────────────────────┼────────────────────┼─────────────────────────┤
+│ 5. Deal &          │ 6. Marketing &     │ 7. AI Agent &      │ 8. Service API &        │
+│    E-commerce      │    Automation      │    Knowledge       │    Gateway              │
+│ internal/deal      │ internal/marketing │ internal/aiagent   │ internal/serviceapi     │
+│ (85 endpoints)     │ (84 endpoints)     │ (65 endpoints)     │ (40 endpoints)          │
+└────────────────────┴────────────────────┴────────────────────┴─────────────────────────┘
+```
+
+Mỗi Bounded Context tuân thủ nghiêm ngặt mô hình 4 tầng độc lập:
+1. **Domain (`domain/`)**: Zero external dependencies (chỉ dùng stdlib + `google/uuid`). Chứa Aggregates, Value Objects, Domain Events và Repository Ports (chỉ nhận `*Validated<Aggregate>`).
+2. **Application (`application/`)**: Tách biệt Command (write) và Query (read) theo mô hình lightweight CQRS. Điều phối domain và ports, không chứa business logic.
+3. **Infrastructure (`infrastructure/`)**: Triển khai persistence qua PostgreSQL (`Bun ORM` + `pgx/v5`), Redis stream, Transactional Outbox pattern, external clients.
+4. **Interfaces (`interfaces/`)**: Đa giao thức — Connect-RPC (`grpc/`), RESTful HTTP (`http/`), Realtime streaming (`ws/` hoặc `stream/`).
+
+---
+
+## 4. Tầm Nhìn Đa Kênh (Multi-Channel Routing)
+
+Omni Core là **Channel-Agnostic** (hoàn toàn không phụ thuộc vào một kênh cụ thể nào). Mọi tương tác kênh đều đi qua các gateway tương ứng:
+
+| Kênh | Cơ chế kết nối | Package / Service | Trạng thái |
+|---|---|---|---|
+| **Zalo Cá Nhân** | WebSocket + HTTP sidecar (zca-js) | `internal/channel/interfaces/http/zalo` | Đang hoạt động |
+| **Zalo OA / Bot** | Official API Webhook | `internal/channel/interfaces/http/integrations` | Đang hoạt động |
+| **Telegram Personal** | MTProto protocol | `internal/channel/interfaces/http/telegram` | Đang hoạt động |
+| **WhatsApp** | WPPConnect / Baileys Gateway RPC | `internal/channel/infrastructure/whatsapp` | Đang hoạt động (Issue #59) |
+| **Facebook Messenger** | Meta Graph API Webhook | Gateway sidecar | Kế hoạch tích hợp |
+| **Egress Proxy Pool** | Quản lý pool proxy dân cư chống khóa tài khoản | `internal/channel` | Đang hoạt động |
+
+---
+
+## 5. Repositories Liên Quan Trong Hệ Sinh Thái
+
+| Repo | Vai trò | Công nghệ |
+|---|---|---|
+| **`hongta0506/omni-core`** | Backend chính — Core Go DDD Clean Architecture đa kênh | Go 1.22+, Bun ORM, pgx/v5, Connect-RPC, NSQ |
+| **`hongta0506/omni-docs`** | **Repo này** — Tài liệu kiến trúc, specs, WBS và kế hoạch di trú | Markdown, JSON |
+| `ZaloCRM` | Codebase monolith cũ (Fastify/Node.js/Prisma) — cơ sở đối soát | Node.js, Fastify, Prisma |
+| `goso` | Gateway AI — Universal Harness, LLM router, Gate Approval | Go, Python |

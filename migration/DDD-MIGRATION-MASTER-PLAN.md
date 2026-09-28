@@ -1,5 +1,10 @@
 # Kế Hoạch Chuẩn Hóa DDD & Di Trú Omni Sang Golang (Master Plan)
 
+> ⚠️ **CHÚ Ý — Cập nhật kiến trúc (2026-09)**: Tài liệu này ghi lại phân tích gốc với 7 Bounded Contexts và 442 endpoints (giai đoạn đầu). Sau quá trình gap analysis và chuẩn hóa, hệ thống đã được điều chỉnh lên **8 Bounded Contexts** và **615 endpoints** (chuẩn hóa từ 792 routes thô). **Tài liệu chuẩn hiện hành:**
+> - Kiến trúc: [`architecture/MASTER-ARCHITECTURE-BLUEPRINT.md`](../architecture/MASTER-ARCHITECTURE-BLUEPRINT.md)
+> - Lộ trình sprint: [`SPRINT-MIGRATION-ROADMAP.md`](./SPRINT-MIGRATION-ROADMAP.md)
+> - Phân tích gap: [`PRODUCTION-GAP-ANALYSIS.md`](./PRODUCTION-GAP-ANALYSIS.md)
+
 > **Tầm nhìn Omni**: Xây dựng nền tảng CRM đa kênh thế hệ mới (Omni-channel CRM) hỗ trợ Zalo, Facebook Messenger, WhatsApp, Telegram và các nền tảng khác.  
 > **Mục tiêu**: Chuyển đổi toàn diện từ Node.js Modular Monolith (Fastify/Prisma - 442 API endpoints, 23 modules, chỉ hỗ trợ Zalo) sang **Golang Clean Architecture + Domain-Driven Design (DDD) + Connect-RPC**, đảm bảo **Zero Downtime**, **kiến trúc mở rộng cắm/rút kênh nhắn tin (Pluggable Channel Gateways)** và **bảo toàn dữ liệu**.
 
