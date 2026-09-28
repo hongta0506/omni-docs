@@ -26,6 +26,7 @@
 | [`MASTER-ARCHITECTURE-BLUEPRINT.md`](./architecture/MASTER-ARCHITECTURE-BLUEPRINT.md) | Bản thiết kế kiến trúc tổng thể toàn diện | Phân bổ 615 endpoints vào 8 Bounded Contexts, ma trận di trú, chiến lược ORM (Bun ORM + pgx/v5), RBAC 4 cấp, Transactional Outbox, Multi-protocol interfaces. |
 | [`NEXTGEN-GOLANG-DDD-SPEC.md`](./architecture/NEXTGEN-GOLANG-DDD-SPEC.md) | Đặc tả kỹ thuật Go Clean DDD | Chuẩn hóa tầng Domain (Zero external deps, ValidatedAggregate, Rich invariants), Application CQRS, Connect-RPC Protobuf contracts, SSE/WebSocket streaming. |
 | [`CHANNEL-GATEWAYS-ARCHITECTURE.md`](./architecture/CHANNEL-GATEWAYS-ARCHITECTURE.md) | Kiến trúc cổng kết nối đa kênh (Channel Gateways) | Zalo Personal QR State Machine, Telegram MTProto/Bot, WhatsApp Gateway (WPPConnect/Baileys), Egress Proxy Pool (xoay vòng IP dân cư, chống checkpoint). |
+| [`MODULAR-MONOLITH-TO-MICROSERVICES.md`](./architecture/MODULAR-MONOLITH-TO-MICROSERVICES.md) | Chiến lược phân rã Microservices | Đánh giá độ sẵn sàng phân rã (90%), điều kiện kích hoạt, checklist gỡ coupling (DB per service, Connect-RPC, NSQ) và runbook 4 bước bốc service độc lập. |
 | [`ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | Danh mục chức năng nghiệp vụ chi tiết | 792 endpoints & 27 workers phân tích từ mã nguồn Fastify, catalog 34 modules nghiệp vụ nguyên bản. |
 
 ### 2.2 Đặc Tả 8 Bounded Contexts (`contexts/`)
