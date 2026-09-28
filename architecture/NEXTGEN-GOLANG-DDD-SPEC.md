@@ -101,26 +101,49 @@ zalocrm-go/
 │   │   └── zalo_gateway/
 │   │       └── grpc_client.go      # Anti-corruption layer bọc gRPC client gọi Node
 │   └── interfaces/
-│       ├── connect/                # Connect-RPC handlers (cho Next.js / Web)
-│       │   ├── contact_service.go
-│       │   └── chat_service.go
-│       └── websocket/              # Real-time WebSocket hub cho web clients
+│       ├── http/                   # RESTful HTTP handlers (ServeMux Go 1.22+) cho Frontend Web/SPA
+│       │   ├── handler.go          # RegisterRoutes(mux *http.ServeMux)
+│       │   └── handler_test.go
+│       ├── grpc/                   # Connect-RPC / gRPC Server handlers (Protobuf) cho Inter-service
+│       │   └── server.go
+│       ├── ws/                     # Realtime WebSocket hub cho Chat/Notification streaming
+│       │   └── hub.go
+│       └── stream/                 # SSE (Server-Sent Events) cho AI Token streaming
+│           └── sse_handler.go
 ```
 
 ---
 
-## 4. Giao Thức Truyền Thông: Connect-RPC & gRPC
+## 4. Kiến Trúc Giao Tiếp Đa Giao Thức (Multi-Protocol Delivery Architecture)
 
-Thay vì REST + Swagger phân mảnh, toàn bộ hệ thống chuẩn hóa bằng Protobuf:
+Hệ thống triển khai mô hình **Multi-Protocol Delivery** linh hoạt, đáp ứng tối ưu từng loại client và tác vụ:
 
-1. **Next.js → Go Core**:
-   - Sử dụng `@connectrpc/connect` và `@connectrpc/connect-node`.
-   - Next.js Server Components / Actions gọi RPC trực tiếp với type safety 100%.
-   - Trình duyệt có thể gọi trực tiếp endpoint Connect-RPC qua POST HTTP/1.1 hoặc HTTP/2 JSON mà không cần Envoy proxy.
-2. **Go Core → Node.js Zalo Gateway**:
-   - gRPC tiêu chuẩn (HTTP/2 multiplexed streams).
-   - Node stream sự kiện tin nhắn mới (Server-streaming RPC) về Go core.
-   - Go gửi lệnh tương tác (Unary RPC: SendMessage, AddFriend) sang Node.
+### 4.1 RESTful HTTP JSON (Giao thức chính cho Frontend Web/SPA)
+- **Mục đích**: Giao thức chính cho Frontend (Vue 3, React, Next.js, Mobile App) thao tác toàn bộ các nghiệp vụ CRM qua các API chuẩn `/api/v1/...`.
+- **Cơ chế triển khai**:
+  - Tận dụng routing native của Go 1.22+ `net/http` `ServeMux` với method và path pattern (`POST /api/v1/auth/login`, `GET /api/v1/contacts/{id}`).
+  - Xử lý xác thực qua `AuthMiddleware` (JWT Bearer Token / HttpOnly Session Cookie), tự động trích xuất `tenant_id` và `user_id` gắn vào `context.Context`.
+  - Chuẩn hóa Request/Response JSON DTOs, bắt lỗi và trả về mã lỗi HTTP chuẩn (`200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `422 Unprocessable Entity`, `500 Internal Error`).
+  - Cấu trúc file HTTP Handler dạng phẳng (flat file per resource) trong `interfaces/http/` (ví dụ `contacts_handler.go`, `leadpool_handler.go`) tránh trùng tên với `net/http`.
+
+### 4.2 Connect-RPC & gRPC (Giao thức RPC hiệu năng cao & Inter-Service)
+- **Mục đích**: Giao thức RPC chuẩn hóa qua Protobuf schemas cho giao tiếp giữa các service nội bộ, background daemons (GoClaw Daemon), các microservice vệ tinh hoặc typed RPC clients.
+- **Cơ chế triển khai**:
+  - Định nghĩa hợp đồng trong `api/proto/` và sinh code Go / TypeScript tự động qua `buf`.
+  - Tương thích song song cả Connect protocol (HTTP/1.1 & HTTP/2 JSON/Protobuf) và gRPC truyền thống qua HTTP/2.
+  - Go Core kết nối với các Channel Gateways (Node.js Zalo Gateway, WhatsApp Gateway) qua gRPC streaming và unary RPCs.
+
+### 4.3 Real-time WebSocket Hub (Hội thoại & Thông báo tức thời)
+- **Mục đích**: Duy trì 1 kết nối song công (full-duplex) duy nhất giữa Frontend client và backend Omni Core.
+- **Cơ chế triển khai**:
+  - Đồng bộ trạng thái hội thoại đa kênh (Zalo, Telegram, WhatsApp), đẩy sự kiện tin nhắn mới (inbound/outbound), typing indicator, read receipt.
+  - Phân tán sự kiện giữa các Go replica thông qua Redis Pub/Sub stream.
+
+### 4.4 Server-Sent Events - SSE (Truyền dòng Token cho AI Agent)
+- **Mục đích**: Phục vụ tính năng AI Copilot, Chatbot trợ lý và RAG Knowledge streaming.
+- **Cơ chế triển khai**:
+  - Endpoint `interfaces/stream/sse_handler.go` stream từng token văn bản trực tiếp từ LLM providers (DeepSeek, OpenAI) xuống giao diện người dùng theo chuẩn `text/event-stream`.
+  - Giảm thiểu overhead so với việc mở WebSocket hai chiều cho các tác vụ chỉ cần luồng dữ liệu 1 chiều từ server.
 
 ---
 
