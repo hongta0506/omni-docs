@@ -9,11 +9,11 @@
 | Mục | Giá trị |
 |---|---|
 | **Package Go** | `omni-core/internal/customer` |
-| **Tổng số Endpoints** | **92** (16 Core + 76 Extended/Submodules) |
-| **Aggregate Roots** | `Contact` (Golden Record), `LeadPool`, `CustomerList` (Segment), `Appointment` |
+| **Tổng số Endpoints** | **92** (16 Core + 7 B2B Accounts + 69 Extended/Submodules) |
+| **Aggregate Roots** | `Contact` (Golden Record), `Account` (B2B Enterprise), `LeadPool`, `CustomerList` (Segment), `Appointment` |
 | **Entities con** | `ChannelProfile` (Zalo/Telegram/WhatsApp/FB profiles), `ContactNote`, `LeadScoreRule` |
-| **Value Objects** | `ContactID`, `TenantID`, `PhoneVO`, `EmailVO`, `LeadScoreVO`, `LifecycleStage` |
-| **Giao thức** | Connect-RPC (`customer.v1.CustomerService`), REST (`/api/v1/contacts/*`, `/api/v1/lead-pool/*`, ...) |
+| **Value Objects** | `ContactID`, `AccountID`, `TenantID`, `TaxCodeVO`, `PhoneVO`, `EmailVO`, `LeadScoreVO`, `LifecycleStage` |
+| **Giao thức** | Connect-RPC (`customer.v1.CustomerService`), REST (`/api/v1/contacts/*`, `/api/v1/accounts/*`, `/api/v1/lead-pool/*`, ...) |
 
 ---
 
@@ -22,7 +22,8 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`api-mapping-core.md`](./api-mapping-core.md) | Ánh xạ 16 endpoints cốt lõi `contacts`: CRUD, Filter, Search, Quick-create, Export, Profile timeline. |
-| [`mapping-customer-ext.md`](./mapping-customer-ext.md) | Ánh xạ 76 endpoints mở rộng: Lead Pool (Claim/Return/Reassign), Customer Lists (Dynamic Segments), Appointments, Notes, Scoring. |
+| [`mapping-accounts.md`](./mapping-accounts.md) | Ánh xạ 7 endpoints B2B `accounts`: Pháp nhân doanh nghiệp, thông tin thuế, gán liên kết danh bạ đại diện. |
+| [`mapping-customer-ext.md`](./mapping-customer-ext.md) | Ánh xạ các endpoints mở rộng: Lead Pool (Claim/Return/Reassign), Customer Lists (Dynamic Segments), Appointments, Notes, Scoring. |
 | [`repository-port.md`](./repository-port.md) | Đặc tả tầng Repository Port: `ValidatedContact`, mô hình 2 cuốn sổ, truy vấn Bun ORM và pgx/v5. |
 
 ---
