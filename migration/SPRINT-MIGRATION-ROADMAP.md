@@ -5,7 +5,7 @@
 
 ---
 
-## TỔNG QUAN 6 SPRINTS
+## TỔNG QUAN 7 SPRINTS
 
 ```
 [Sprint 1: Marketing & Automation (Spec 037b/061)]
@@ -36,6 +36,13 @@
 [Sprint 6: Service-API, Analytics & Ops Radar (Spec 032/046)]
    ├── Cổng API cho AI Agent/Goclaw (API key, replay protection, write policy)
    └── Thống kê SLA phản hồi chat trong giờ làm việc, phát hiện sentiment
+         │
+         ▼
+[Sprint 7: Cross-BC Resilience, Exception Handling & Observability]
+   ├── Engine tự phục hồi: pkg/resilience (Exponential Backoff, Circuit Breaker)
+   ├── Chuẩn hóa phân loại lỗi (Transient, Terminal, Security/Policy) 8 BCs
+   ├── Phục hồi Outbox lỗi, Dead Letter Queue (DLQ) & Nút Redrive trên Web CRM
+   └── Giám sát tập trung 3 tầng: Grafana Loki (stdout), Prometheus Metrics, PostgreSQL DLQ
 ```
 
 ---
@@ -175,13 +182,40 @@
 
 ---
 
+### SPRINT 7: [Cross-BC Resilience, Exception Handling & Observability] Tự Chữa Lành, Phục Hồi Lỗi & Giám Sát Tập Trung
+- **Module nguồn & Phạm vi**: `pkg/resilience`, `pkg/errors`, `internal/channel`, tất cả 8 Bounded Contexts.
+- **Tài liệu đặc tả kiến trúc**: `omni-docs/architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md` và `omni-docs/migration/MVP-RESILIENCE-SPRINT-PLAN.md`.
+- **Đặc tả nghiệp vụ (Business Rules & Invariants)**:
+  1. **Chuẩn Hóa Phân Loại Ngoại Lệ (Exception Taxonomy)**:
+     - Phân loại mọi lỗi thành 3 nhóm rõ rệt: `Transient` (thử lại tự động), `Terminal` (hủy, ghi nhận thất bại), `Security/Policy` (ngắt phiên, yêu cầu quét lại QR/đổi mật khẩu).
+  2. **Tự Động Phục Hồi & Chống Quá Tải**:
+     - Exponential Backoff with Full Jitter: $T(n) = \min(60s, 2s \times 2^{n-1}) + \text{jitter}$.
+     - Sliding Window Circuit Breaker: Tự động ngắt kết nối kênh/tài khoản khi lỗi $> 50\%$ hoặc 5 lỗi liên tiếp trong 60s, bảo vệ tài khoản mạng xã hội không bị cấm.
+  3. **Dead Letter Queue (DLQ) & Nút Thử Lại (Manual Redrive)**:
+     - Các lệnh gửi tin hoặc giao dịch thất bại sau 3 lần retry được lưu vào bảng `system_outbound_dlq`.
+     - Cung cấp API và quyền cho nhân viên Sales/Admin nhấn "Thử lại" sau khi sự cố mạng hoặc tài khoản đã được khắc phục.
+  4. **Quan Sát 3 Tầng Phục Vụ Grafana & Vận Hành**:
+     - **Tầng 1 (Loki)**: Stream Structured JSON log ra `stdout` cho Promtail gom về Loki, Grafana truy vấn LogQL theo `trace_id` và `error_classification`.
+     - **Tầng 2 (Prometheus)**: Cung cấp Metrics `/metrics` cho Circuit Breaker state changes và retry failures.
+     - **Tầng 3 (PostgreSQL DLQ)**: Chỉ lưu trữ các bản ghi cần can thiệp người dùng, tránh phình to database.
+
+- **Checklist bàn giao**:
+  - [ ] Shared Kernel: `pkg/resilience` (Backoff, CircuitBreaker, RetryRunner) & `pkg/errors` mở rộng.
+  - [ ] Kênh & Gateway: Tích hợp Retry, Circuit Breaker và Channel DLQ vào Outbound Router.
+  - [ ] Domain BCs: Idempotency keys, Outbox error dead-lettering cho 8 Bounded Contexts.
+  - [ ] Observability: Middleware Structured JSON Audit Log và REST API Redrive DLQ.
+
+---
+
 ## MA TRẬN PHÂN CHIA TRÁCH NHIỆM & THỨ TỰ THỰC HIỆN
 
 | Sprint | Bounded Context Go | Trọng Tâm Nghiệp Vụ | Mức Độ Ưu Tiên |
 |---|---|---|:---:|
-| **Sprint 1** | `internal/marketing` | Broadcast Campaign, ZNS, Template Engine (Spec 061) | **P0 (Làm ngay)** |
-| **Sprint 2** | `internal/customer` | Notes, Appointments, Pipeline, Smart Merge (Spec 057 P5) | **P1** |
+| **Sprint 1** | `internal/marketing` | Broadcast Campaign, ZNS, Template Engine (Spec 061) | **P0 (Xong)** |
+| **Sprint 2** | `internal/customer` | Notes, Appointments, Pipeline, Smart Merge (Spec 057 P5) | **P1 (Đang làm)** |
 | **Sprint 3** | `internal/deal`, `internal/order` | Deals, Kho đơn hàng KiotViet/Pancake, Báo giá PDF | **P1** |
 | **Sprint 4** | `internal/conversation`, `pkg/media` | Chat Folders, Presets, S3/R2 Media Storage | **P2** |
 | **Sprint 5** | `internal/channel` | Nhóm Zalo, Nhãn màu, Egress SOCKS5h Pool (Spec 056 P2c) | **P2** |
 | **Sprint 6** | `internal/serviceapi`, `internal/analytics` | Cổng Goclaw/AI (Spec 046), Radar SLA (Spec 032), Privacy | **P3** |
+| **Sprint 7** | `pkg/resilience`, All 8 BCs | Exception Taxonomy, Circuit Breaker, DLQ Redrive, Grafana Logs | **P1 (Bắt buộc MVP)** |
+
