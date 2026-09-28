@@ -104,7 +104,7 @@
 
 | HTTP Method | Route Cũ (Fastify) | Go Handler (CQRS) | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
 |---|---|---|---|---|
-| `GET` | `/api/v1/users` | `queries.ListUsersHandler` | `IdentityService.ListUsers` | Danh sách nhân viên trong tenant (tìm kiếm, lọc) |
+| `GET` | `/api/v1/users` | `queries.ListUsersHandler` | `IdentityService.ListUsers` | Danh sách nhân viên trong tenant (Query: `common.UserFilter` embed `PaginationParam`; Trả về `PageResult[*domain.User]`) |
 | `POST` | `/api/v1/users` | `commands.CreateUserHandler` | `IdentityService.CreateUser` | Thêm mới nhân viên, gửi email kích hoạt |
 | `GET` | `/api/v1/users/:id` | `queries.GetUserHandler` | `IdentityService.GetUser` | Chi tiết hồ sơ nhân viên, phòng ban, vai trò |
 | `PUT` | `/api/v1/users/:id` | `commands.UpdateUserHandler` | `IdentityService.UpdateUser` | Cập nhật chức danh, phòng ban, trạng thái |

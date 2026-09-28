@@ -85,14 +85,49 @@ Mô hình phân quyền đa cấp độ đảm bảo cách ly dữ liệu giữa
 - `internal/identity/domain/errors.go`: Sentinel errors cho Identity (`ErrUserNotFound`, `ErrEmailAlreadyExists`, `ErrInvalidPassword`, `ErrTenantSuspended`).
 - `internal/identity/application/common/`:
   - `claims.go`: Struct DTO claims trích xuất sau khi verify token nội bộ.
-  - `pagination.go`: UserFilter, TenantFilter, DepartmentFilter DTOs.
+  - `filters.go`: `UserFilter`, `TenantFilter`, `DepartmentFilter` DTOs nhúng `pkg/pagination.PaginationParam`.
   - `password.go`: Port PasswordHasher interface nội bộ.
 - `internal/identity/interfaces/http/middleware/`: AuthMiddleware, RequireRoleMiddleware, TenantExtractor nội bộ.
 
 ### 5.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
-- `pkg/auth/`: JWT token generator & validator, RBAC permission evaluator.
+- `pkg/auth/`: JWT token generator & validator, RBAC permission evaluator (`UserClaims`, `Role`, `TokenService`).
 - `pkg/context/`: TenantID, UserID context injection cho HTTP/RPC handlers.
 - `pkg/events/`: Publish các Domain Events (`UserCreatedEvent`, `UserPasswordChangedEvent`, `TenantSuspendedEvent`).
-- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
-- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+- `pkg/pagination/`: `PaginationParam`, `PageResult[T]` chuẩn hóa toàn hệ thống.
+- `pkg/errors/`: System error codes (`ErrorCode`, `AppError`) & HTTP/RPC status mapper.
+
+---
+
+## 6. Quy Chuẩn Phân Trang & Bộ Lọc (Pagination & Filter Specification)
+
+Tất cả các endpoint danh sách (GetList/Query) trong Identity Bounded Context tuân thủ quy chuẩn:
+
+1. **Bộ lọc tầng Application (`application/common/filters.go`)**:
+   - Mọi DTO lọc nghiệp vụ (`UserFilter`, `DepartmentFilter`, `TenantFilter`) **bắt buộc nhúng (embed)** `pagination.PaginationParam`.
+   - Cung cấp sẵn các phương thức `Offset()`, `Limit()`, `Normalize()`.
+
+2. **Query Handlers (`application/<submodule>/queries.go`)**:
+   - Struct Query nhúng Filter hoặc nhận trực tiếp Filter DTO:
+     ```go
+     type ListUsersQuery struct {
+         common.UserFilter
+     }
+     ```
+   - Handler tính `offset` và `limit` qua `q.Offset()`, `q.Limit()` sau khi `Normalize()`, không tính toán thủ công.
+   - Kết quả trả về dùng generic `pagination.PageResult[*domain.User]`.
+
+3. **HTTP Delivery (`interfaces/http/`)**:
+   - Query params chuẩn: `?page=1&limit=20&query=...&role=...`.
+   - Parse `page`, `limit` vào `PaginationParam` nhúng trong Filter.
+   - Response JSON cấu trúc đồng nhất:
+     ```json
+     {
+       "items": [...],
+       "total": 100,
+       "page": 1,
+       "pageSize": 20,
+       "totalPages": 5,
+       "hasNext": true
+     }
+     ```
 
