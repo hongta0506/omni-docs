@@ -19,8 +19,8 @@
 
 ## 1. Module Auth & Phiên Đăng Nhập (35 Endpoints)
 
-| HTTP Method | Route Cũ (Fastify) | Go HTTP Handler (`interfaces/http/`) | Go Application CQRS | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
-|---|---|---|---|---|---|
+| HTTP Method | Route Cũ (Fastify) | Go Handler (CQRS) | Connect-RPC Service & Method | Mô Tả Nghiệp Vụ |
+|---|---|---|---|---|
 | `POST` | `/api/v1/auth/login` | `commands.LoginHandler` | `IdentityService.Login` | Đăng nhập bằng Email/Password, cấp JWT Access + Refresh token |
 | `POST` | `/api/v1/auth/register` | `commands.RegisterHandler` | `IdentityService.Register` | Đăng ký tài khoản và khởi tạo Tenant mới |
 | `POST` | `/api/v1/auth/refresh-token` | `commands.RefreshTokenHandler` | `IdentityService.RefreshToken` | Cấp mới access token bằng refresh token (xoay vòng token) |

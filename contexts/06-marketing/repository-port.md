@@ -91,3 +91,22 @@ type CampaignModel struct {
 	CreatedAt        time.Time  `bun:"created_at,notnull,default:current_timestamp"`
 }
 ```
+
+---
+
+## 3. Query Tối Ưu & Chỉ Mục Bắt Buộc
+
+```sql
+-- Tìm tag theo tenant và group
+CREATE INDEX IF NOT EXISTS idx_tags_tenant_group 
+ON tags (org_id, group_id);
+
+-- Lookup tag khách hàng nhanh (join/filter danh bạ)
+CREATE INDEX IF NOT EXISTS idx_contact_tags_tag 
+ON contact_tags (org_id, tag_id, contact_id);
+
+-- Chiến dịch đang chạy hoặc theo lịch hẹn
+CREATE INDEX IF NOT EXISTS idx_campaigns_status_sched 
+ON campaigns (org_id, status, scheduled_at) 
+WHERE status IN ('scheduled', 'running');
+```
