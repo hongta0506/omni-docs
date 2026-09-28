@@ -4,7 +4,7 @@ Hệ thống tài liệu kiến trúc kỹ thuật của nền tảng **Omni Cor
 
 ---
 
-## Cấu Trúc Tài Liệu Tinh Gọn (4 Tài Liệu Chuẩn Hóa Duy Nhất)
+## Cấu Trúc Tài Liệu Chuẩn Hóa
 
 ### 1. [MASTER-ARCHITECTURE-BLUEPRINT.md](./MASTER-ARCHITECTURE-BLUEPRINT.md) (Tài liệu gốc toàn diện)
 Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổi:
@@ -26,5 +26,11 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 - Telegram MTProto & Inbound Event Forwarder / Outbound Message Router.
 - Quản lý Pool Proxy Egress và chống rate-limit.
 
-### 4. [ZALOCRM-FUNCTIONAL-CATALOG.md](./ZALOCRM-FUNCTIONAL-CATALOG.md) (Tham Chiếu Nghiệp Vụ ZaloCRM)
+### 4. [MODULAR-MONOLITH-TO-MICROSERVICES.md](./MODULAR-MONOLITH-TO-MICROSERVICES.md) (Chiến Lược Phân Rã Microservices)
+- Đánh giá hiện trạng Modular Monolith và độ sẵn sàng phân rã (90% Microservice-ready).
+- Điều kiện kích hoạt việc phân rã theo tải I/O (Channel) hoặc CPU/Memory (AIAgent).
+- Kỹ thuật tách Database-per-Service, Connect-RPC client, NSQ Event Broker và Outbox per service.
+- Quy trình 4 bước bốc một Bounded Context thành Microservice độc lập.
+
+### 5. [ZALOCRM-FUNCTIONAL-CATALOG.md](./ZALOCRM-FUNCTIONAL-CATALOG.md) (Tham Chiếu Nghiệp Vụ ZaloCRM)
 - Danh mục tra cứu 792 API endpoints và 27 background workers của hệ thống cũ.
