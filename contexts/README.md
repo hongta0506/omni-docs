@@ -55,3 +55,50 @@ Mỗi context trong thư mục này cung cấp:
 │ AI Agent(07) │                │ServiceAPI(08)│
 └──────────────┘                └──────────────┘
 ```
+
+---
+
+## 4. Cơ Chế Phân Định Thành Phần Dùng Chung (Internal Common vs Cross-BC Shared Kernel)
+
+Để tránh tình trạng phình to code trùng lặp hoặc vi phạm ranh giới Bounded Context (tight coupling), toàn bộ 8 Bounded Contexts tuân thủ cơ chế 2 cấp độ dùng chung:
+
+```
+omni-core/
+├── pkg/                                # CẤP 2: CROSS-BC SHARED KERNEL (Toàn hệ thống)
+│   ├── auth/                           # JWT verification, Role/Permission claims
+│   ├── context/                        # TenantID, UserID, RequestID extraction
+│   ├── events/                         # Event Envelope, Outbox interface, Message Broker
+│   ├── pagination/                     # Standard Page/Limit/Cursor DTOs
+│   ├── errors/                         # System Error Codes & Connect-RPC/HTTP mappers
+│   └── logger/                         # Structured JSON logging
+│
+└── internal/<bc_name>/
+    ├── domain/errors.go                # CẤP 1A: Domain Errors dùng chung trong nội bộ BC
+    ├── application/common/             # CẤP 1B: INTERNAL BC COMMON (Chỉ dùng trong BC này)
+    │   ├── context.go                  # Context helper trích xuất thông tin nghiệp vụ riêng
+    │   ├── pagination.go               # Filter & Sort DTOs dùng chung giữa các submodules
+    │   └── errors.go                   # Application error handling nội bộ
+    └── interfaces/http/
+        └── middleware/                 # Middleware kiểm tra quyền / logic riêng của BC (nếu có)
+```
+
+### 4.1 Quy Tắc Phân Cấp Dùng Chung
+
+1. **Cấp 1 — Dùng chung nội bộ Bounded Context (`internal/<bc>/application/common/`)**:
+   - Chỉ được import và sử dụng bởi các submodules bên trong chính Bounded Context đó (`internal/<bc>/application/<submodule>/`, `internal/<bc>/interfaces/`).
+   - Tuyệt đối không export ra ngoài cho các Bounded Context khác sử dụng.
+   - Chứa: DTO phân trang đặc thù, search criteria filter, context accessor chuyên biệt của BC, sentinel domain errors (`domain/errors.go`).
+
+2. **Cấp 2 — Dùng chung toàn hệ thống (`pkg/` — Shared Kernel)**:
+   - Các tiện ích generic kỹ thuật, hoàn toàn phi nghiệp vụ (infrastructure/platform level).
+   - Mọi Bounded Context đều được phép import.
+   - Chứa: Quản lý Tenant/User context chuẩn, JWT middleware, Base pagination query/response, Event bus contracts.
+
+### 4.2 Các Bất Biến Ranh Giới Bắt Buộc (Boundary Invariants)
+
+- **CẤM IMPORT CHÉO DOMAIN & APPLICATION**: Bounded Context `A` tuyệt đối **KHÔNG ĐƯỢC** import bất kỳ package nào từ `internal/B/domain` hoặc `internal/B/application`.
+- **GIAO TIẾP LIÊN CONTEXT DUY NHẤT**:
+  1. **Đồng bộ (Synchronous)**: Gọi qua Connect-RPC client do gRPC service của context đích cung cấp (`internal/<caller>/infrastructure/client/`).
+  2. **Bất đồng bộ (Asynchronous)**: Xuất bản và lắng nghe Domain Events qua Transactional Outbox / Message Broker (`pkg/events`).
+- **ZERO EXTERNAL DEPENDENCY TRONG DOMAIN**: Tầng `domain/` của mỗi BC chỉ import stdlib và `github.com/google/uuid`. Tuyệt đối không import `pkg/auth`, `net/http` hay bất kỳ thư viện framework nào.
+

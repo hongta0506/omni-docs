@@ -61,3 +61,22 @@
    - Mỗi tài khoản Zalo chỉ xử lý 1 outbound message request tại 1 thời điểm; delay tối thiểu giữa các lệnh gửi là 15 giây.
 3. **Session Auto-Refresh**:
    - Khi token phiên của Zalo hết hạn hoặc socket disconnect, gateway tự động kích hoạt backoff reconnect tối đa 3 lần trước khi đánh dấu tài khoản là `OFFLINE_AUTH_REQUIRED` và thông báo tới người dùng.
+
+---
+
+## 5. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 5.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/channel/domain/errors.go`: Sentinel errors (`ErrAccountDisconnected`, `ErrProxyUnavailable`, `ErrRateLimitExceeded`, `ErrSessionExpired`).
+- `internal/channel/application/common/`:
+  - `session_pool.go`: In-memory gateway session state pool cho goroutines quản lý kết nối Zalo/Telegram/WhatsApp.
+  - `rate_limiter.go`: Outbound throttle & jitter controller cho các tài khoản channel.
+  - `pagination.go`: AccountFilter, ProxyFilter DTOs.
+- `internal/channel/interfaces/http/`: Phân nhóm gateway riêng (`zalo/`, `telegram/`, `whatsapp/`, `admin/egress/`).
+
+### 5.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/context/`: TenantID context extraction.
+- `pkg/events/`: Publish Domain Events (`ChannelAccountConnectedEvent`, `ChannelMessageReceivedEvent`, `ChannelAccountDisconnectedEvent`) qua Outbox.
+- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+

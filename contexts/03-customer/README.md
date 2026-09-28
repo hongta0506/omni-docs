@@ -51,3 +51,33 @@
 │ - Alias / Tags  │   │ - Phone         │   │ - VerifiedName  │
 └─────────────────┘   └─────────────────┘   └─────────────────┘
 ```
+
+---
+
+## 4. Invariants & Nghiệp Vụ Cốt Lõi
+
+1. **Two-Ledger Contact Immutability**:
+   - Cuốn sổ mạng xã hội (Zalo/Telegram Profile) không được phép sửa đổi thủ công từ CRM. Chỉ cập nhật khi nhận sync event từ Gateway.
+   - Cuốn sổ CRM (CRM Ledger) do nhân viên kinh doanh quản trị, ghi đè hiển thị hợp nhất (Merged View).
+2. **SLA Auto-Revoke trong Lead Pool**:
+   - Lead phân bổ cho Sales nếu không phát sinh tương tác trong vòng cấu hình SLA (mặc định 24h) sẽ tự động thu hồi về Pool chung và phạt trừ quota của nhân viên.
+3. **Phone Uniqueness per Tenant**:
+   - Số điện thoại sau khi chuẩn hóa quốc tế (E.164 / +84) là duy nhất cho mỗi Contact trong cùng 1 Tenant.
+
+---
+
+## 5. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 5.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/customer/domain/errors.go`: Sentinel errors (`ErrContactNotFound`, `ErrPhoneInvalid`, `ErrLeadAlreadyAssigned`, `ErrLeadPoolCapacityExceeded`).
+- `internal/customer/application/common/`:
+  - `phone_normalizer.go`: Bộ chuẩn hóa số điện thoại E.164 dùng chung giữa các submodules (contact, leadpool).
+  - `pagination.go`: ContactFilter, LeadFilter, AppointmentFilter DTOs.
+  - `scoring_helper.go`: Helper tính toán thang điểm tiềm năng RFM nội bộ.
+
+### 5.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/context/`: TenantID, UserID context extraction.
+- `pkg/events/`: Publish Domain Events (`ContactCreatedEvent`, `LeadAssignedEvent`, `LeadRevokedEvent`). Lắng nghe `ChannelMessageReceivedEvent` để auto-create contact.
+- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+

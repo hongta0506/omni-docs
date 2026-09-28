@@ -33,3 +33,22 @@
    - Khi phát hiện khách hàng có sentiment tiêu cực hoặc yêu cầu gặp nhân viên tư vấn, AI Agent bắt buộc gán cờ `HandoffRequested = true` và dừng can thiệp tự động cho đến khi Agent con người giải phóng.
 3. **RAG Knowledge Embedding Boundary**:
    - Mọi tài liệu upload vào Knowledge Base phải được kiểm tra tenant isolation; các chunk vector được đánh dấu tenant metadata để không bao giờ bị rò rỉ dữ liệu giữa các doanh nghiệp.
+
+---
+
+## 4. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 4.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/aiagent/domain/errors.go`: Sentinel errors (`ErrAgentNotFound`, `ErrProviderTimeout`, `ErrKnowledgeChunkingFailed`, `ErrHandoffFailed`).
+- `internal/aiagent/application/common/`:
+  - `prompt_builder.go`: Tiện ích dựng prompt system & context injection nội bộ.
+  - `chunker.go`: Bộ băm nhỏ văn bản (chunking) và đếm token cho RAG.
+  - `pagination.go`: AIAgentFilter, ProviderFilter, KnowledgeFilter DTOs.
+- `internal/aiagent/interfaces/stream/`: SSE streaming handler phục vụ truyền tải token AI realtime.
+
+### 4.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/context/`: TenantID, UserID context extraction.
+- `pkg/events/`: Publish Domain Events (`AIHandoffTriggeredEvent`, `RadarAnomalyDetectedEvent`). Lắng nghe `MessageReceivedEvent` (Conversation BC) để AI tự động suy luận và sinh câu trả lời.
+- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+

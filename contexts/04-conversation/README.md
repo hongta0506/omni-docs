@@ -69,3 +69,22 @@ Mỗi cuộc hội thoại (`Conversation`) đại diện cho 1 luồng trao đ�
 2. **Realtime Broadcast Guarantee**: Mọi tin nhắn mới (cả gửi và nhận) sau khi ghi vào PostgreSQL Transaction thành công BẮT BUỘC phải phát tán ngay lập tức qua WebSocket Hub tới tất cả các client đang mở conversation đó.
 3. **Cursor-based Pagination**: Do khối lượng tin nhắn cực lớn, cấm tuyệt đối dùng `OFFSET / LIMIT` cho danh sách messages. Bắt buộc dùng Cursor theo `(sent_at, id)`.
 4. **Outbox Message Sending**: Khi nhân viên bấm gửi tin nhắn outbound, tin nhắn được tạo ở trạng thái `Pending` trong DB transaction kèm 1 bản ghi `outbox_events`. Worker nền sẽ gửi sang Channel Gateway tương ứng và cập nhật trạng thái `Sent`/`Failed`.
+
+---
+
+## 5. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 5.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/conversation/domain/errors.go`: Sentinel errors (`ErrConversationNotFound`, `ErrMessageNotFound`, `ErrInvalidMediaFormat`, `ErrMessageAlreadyProcessed`).
+- `internal/conversation/application/common/`:
+  - `cursor.go`: Tiện ích encode/decode Cursor phục vụ truy vấn tin nhắn hiệu năng cao.
+  - `media_validator.go`: Helper kiểm tra dung lượng file, MIME type và quét virus trước khi upload.
+  - `pagination.go`: ConversationFilter, MessageCursorQuery DTOs.
+- `internal/conversation/interfaces/ws/`: WebSocket Hub quản lý các client active streaming.
+
+### 5.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/context/`: TenantID, UserID context extraction.
+- `pkg/events/`: Publish Domain Events (`MessageReceivedEvent`, `MessageSentEvent`, `ConversationAssignedEvent`). Lắng nghe `ChannelMessageReceivedEvent` để ingest message.
+- `pkg/pagination/`: Chuẩn phân trang Cursor và Offset.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+
