@@ -94,6 +94,23 @@ internal/<bc_name>/
    - HTTP REST: Handlers gọi application CQRS tương ứng theo sub-module. Với Channel BC, các gateway Zalo/Telegram/WhatsApp có package con riêng (`interfaces/http/zalo/`, `interfaces/http/whatsapp/`). Với các BC khác, tổ chức file handler rõ ràng theo resource.
    - gRPC / Connect-RPC: Phân tách service implementation file theo từng protobuf service của sub-module.
 
+#### 2.1.1 Quy Chuẩn Tái Sử Dụng Shared Kernel & Common Helpers (Bắt Buộc Cho Mọi BC)
+Khi triển khai code tại bất kỳ BC nào, mọi agent **BẮT BUỘC** tái sử dụng các chuẩn chung:
+1. **Phân trang chuẩn (Pagination & Filtering)**:
+   - Các danh sách phẳng (`contacts`, `conversations`, `messages`, `deals`, `leads`, `tags`, `broadcasts`...) dùng `omni-core/pkg/pagination` (`pagination.PaginationParam`, `pagination.PageResult[T]`).
+   - Query struct tại Application nhúng `pagination.PaginationParam`.
+   - CQRS Query Handler chuẩn hóa bằng `norm := q.Normalize()`, lấy `norm.Limit()` và `norm.Offset()` cho Repository, trả về `*pagination.PageResult[*domain.<Entity>]`.
+   - HTTP REST trả payload thống nhất `{ "items": [...], "total": ..., "page": ..., "limit": ..., "totalPages": ..., "hasNext": ... }`.
+   - Connect-RPC gán `&commonv1.PaginationResponse{}`.
+   - Không áp dụng offset pagination cho dữ liệu cây phân cấp (`departments_tree`, `permission_groups_tree`, `settings`).
+2. **Phân loại mã lỗi (Error Classification)**:
+   - Dùng `omni-core/pkg/errors` (`CodeNotFound`, `CodeConflict`, `CodeInvalidInput`, `CodeUnauthorized`, `CodeForbidden`, `CodeInternal`). Map chính xác sang HTTP Status và Connect-RPC Code.
+3. **Identity & Tenant Claims**:
+   - Tái sử dụng `omni-core/pkg/auth`. Trích xuất an toàn `TenantID` và `UserID` từ `auth.UserClaimsFromContext(ctx)`. Không tin cậy ID từ client input nếu không khớp context.
+4. **Định danh UUID**:
+   - Dùng `omni-core/pkg/uid` (`uid.New()`, `uid.IsValid()`) hoặc `github.com/google/uuid`. Không tự chế chuỗi ID ngẫu nhiên.
+
+
 
 ### 2.2 Bản Đồ 8 Bounded Contexts & Phân Chia Endpoint Tương Ứng
 

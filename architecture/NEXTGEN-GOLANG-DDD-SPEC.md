@@ -264,3 +264,36 @@ Khi tích hợp:
 1. ZaloCRM Go Core expose MCP Server: `contact_search` (read), `message_send` (write + approval gate).
 2. GOSO đăng ký connector `zalocrm` với manifest tools.
 3. LangChainGo trong AI Agent Service dùng GOSO làm orchestrator thay vì tự chạy Agent loop.
+
+---
+
+## 8. Quy Chuẩn Tái Sử Dụng Shared Kernel & Delivery Conventions
+
+Để tránh việc các agent tự chế hoặc phân mảnh logic khi mở rộng 8 Bounded Contexts, toàn bộ codebase tuân thủ thống nhất các chuẩn sau:
+
+### 8.1 Phân Trang Chuẩn (Pagination & Filtering)
+- **Tập trung**: Sử dụng `omni-core/pkg/pagination`.
+- **Query CQRS**: Nhúng struct `pagination.PaginationParam` vào các struct Query danh sách.
+  ```go
+  type ListEntitiesQuery struct {
+      TenantID uuid.UUID
+      Query    string
+      pagination.PaginationParam
+  }
+  ```
+- **Handler CQRS**: Thực hiện `norm := q.Normalize()`, truyền `norm.Limit()` và `norm.Offset()` xuống Repository Port, đóng gói kết quả bằng `pagination.NewPageResult(items, total, norm)`.
+- **REST Delivery**: Trả payload `{ "items": [...], "total": ..., "page": ..., "limit": ..., "totalPages": ..., "hasNext": ... }`.
+- **Connect-RPC Delivery**: Trả về `commonv1.PaginationResponse`.
+- **Phạm vi áp dụng**: Mọi endpoint danh sách phẳng (`contacts`, `conversations`, `messages`, `deals`, `leads`, `tags`, `broadcasts`). Ngoại trừ các cây phân cấp (`departments_tree`, `permission_groups_tree`, `settings`).
+
+### 8.2 Chuẩn Hóa Lỗi (Error Classification)
+- Sử dụng `omni-core/pkg/errors` (`CodeNotFound`, `CodeConflict`, `CodeInvalidInput`, `CodeUnauthorized`, `CodeForbidden`, `CodeInternal`).
+- Không trả error string tùy tiện ra API; ánh xạ tường minh sang HTTP Status và Connect-RPC Code.
+
+### 8.3 Xác Thực & Ngữ Cảnh Người Dùng (Multi-Tenancy Context)
+- Tái sử dụng `omni-core/pkg/auth` và `internal/shared/auth/domain`.
+- Mọi thao tác truy xuất dữ liệu bắt buộc đọc `TenantID` và `UserID` từ `auth.UserClaimsFromContext(ctx)`. Không chấp nhận tenant ID do client tự chỉ định mà không có quyền.
+
+### 8.4 Chuẩn Hóa Định Danh (UUID)
+- Dùng `omni-core/pkg/uid` (`uid.New()`, `uid.IsValid()`) hoặc `github.com/google/uuid`. Không tự sinh string ID ngẫu nhiên.
+
