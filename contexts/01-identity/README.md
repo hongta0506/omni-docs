@@ -76,3 +76,23 @@ Mô hình phân quyền đa cấp độ đảm bảo cách ly dữ liệu giữa
 2. **SuperAdmin Immutable**: Không được phép xóa hoặc hạ quyền tài khoản `Owner` ban đầu của Tenant.
 3. **Session Revocation (Single Sign-On / Force Logout)**: Khi User đổi mật khẩu hoặc bị vô hiệu hóa, toàn bộ JWT token và `DeviceSession` đang lưu trong Redis phải bị revoke ngay lập tức (Blacklist qua Token JTI).
 4. **Data Masking (Quyền riêng tư)**: Nhân viên cấp Staff chỉ được thấy số điện thoại đã che (`0987***321`), trừ khi có quyền `privacy.unmask_phone` và hành động unmask phải được ghi `AuditLog`.
+
+---
+
+## 5. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 5.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/identity/domain/errors.go`: Sentinel errors cho Identity (`ErrUserNotFound`, `ErrEmailAlreadyExists`, `ErrInvalidPassword`, `ErrTenantSuspended`).
+- `internal/identity/application/common/`:
+  - `claims.go`: Struct DTO claims trích xuất sau khi verify token nội bộ.
+  - `pagination.go`: UserFilter, TenantFilter, DepartmentFilter DTOs.
+  - `password.go`: Port PasswordHasher interface nội bộ.
+- `internal/identity/interfaces/http/middleware/`: AuthMiddleware, RequireRoleMiddleware, TenantExtractor nội bộ.
+
+### 5.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/auth/`: JWT token generator & validator, RBAC permission evaluator.
+- `pkg/context/`: TenantID, UserID context injection cho HTTP/RPC handlers.
+- `pkg/events/`: Publish các Domain Events (`UserCreatedEvent`, `UserPasswordChangedEvent`, `TenantSuspendedEvent`).
+- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+

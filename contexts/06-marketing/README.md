@@ -33,3 +33,21 @@
    - Khi chiến dịch kích hoạt, truy vấn danh sách người nhận theo realtime dynamic tags và customer filter, không lưu static list quá 24h.
 3. **Sequence Drip Progression**:
    - Khách hàng đã phản hồi hoặc đạt mục tiêu (ví dụ đã tạo Deal) sẽ tự động thoát khỏi Sequence nuôi dưỡng (`AutoStopCondition`).
+
+---
+
+## 4. Thành Phần Dùng Chung & Phụ Thuộc (Shared & Dependencies)
+
+### 4.1 Thành phần dùng chung nội bộ (Internal BC Common)
+- `internal/marketing/domain/errors.go`: Sentinel errors (`ErrCampaignNotFound`, `ErrTagNotFound`, `ErrInvalidCronSchedule`, `ErrCampaignAlreadyRunning`).
+- `internal/marketing/application/common/`:
+  - `cron_parser.go`: Bộ phân tích và kiểm tra tính hợp lệ biểu thức Cron cho các chiến dịch.
+  - `segment_evaluator.go`: Tiện ích đánh giá tiêu chí phân tập động khách hàng theo Tag và hành vi.
+  - `pagination.go`: TagFilter, CampaignFilter, SequenceFilter DTOs.
+
+### 4.2 Thành phần phụ thuộc dùng chung toàn hệ thống (Cross-BC Shared Kernel)
+- `pkg/context/`: TenantID, UserID context extraction.
+- `pkg/events/`: Publish Domain Events (`CampaignStartedEvent`, `CampaignCompletedEvent`, `TagAssignedEvent`). Lắng nghe `DealWonEvent` (Deal BC) hoặc `MessageReceivedEvent` (Conversation BC) để dừng sequence tự động.
+- `pkg/pagination/`: PageRequest, PageResponse chuẩn hóa.
+- `pkg/errors/`: System error codes & HTTP/RPC status mapper.
+
