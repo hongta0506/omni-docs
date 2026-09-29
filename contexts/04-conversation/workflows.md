@@ -126,15 +126,15 @@ Minh họa cơ chế truy vấn Seek phân trang tin nhắn bằng B-Tree Index 
 
 ```mermaid
 flowchart TD
-    ClientReq[Client Request: GET /messages?cursor=Base64&limit=30] --> ParseCursor[Decode Base64 Cursor -> timestamp & id]
-    ParseCursor --> CheckCursor{Có cursor không?}
+    ClientReq["Client Request: GET /messages?cursor=Base64&limit=30"] --> ParseCursor["Decode Base64 Cursor -> timestamp & id"]
+    ParseCursor --> CheckCursor{"Có cursor không?"}
     
-    CheckCursor -- Không (Trang đầu tiên) --> Q1["SELECT * FROM messages<br/>WHERE conversation_id = :cid<br/>ORDER BY sent_at DESC, id DESC<br/>LIMIT 30"]
-    CheckCursor -- Có (Trang tiếp theo) --> Q2["SELECT * FROM messages<br/>WHERE conversation_id = :cid<br/>AND (sent_at, id) < (:sent_at, :last_id)<br/>ORDER BY sent_at DESC, id DESC<br/>LIMIT 30"]
+    CheckCursor -- "Không (Trang đầu tiên)" --> Q1["SELECT * FROM messages<br/>WHERE conversation_id = :cid<br/>ORDER BY sent_at DESC, id DESC<br/>LIMIT 30"]
+    CheckCursor -- "Có (Trang tiếp theo)" --> Q2["SELECT * FROM messages<br/>WHERE conversation_id = :cid<br/>AND (sent_at, id) < (:sent_at, :last_id)<br/>ORDER BY sent_at DESC, id DESC<br/>LIMIT 30"]
     
-    Q1 --> IndexScan[Sử dụng Index: idx_messages_cursor<br/>(conversation_id, sent_at DESC, id DESC)]
+    Q1 --> IndexScan["Sử dụng Index: idx_messages_cursor<br/>(conversation_id, sent_at DESC, id DESC)"]
     Q2 --> IndexScan
     
-    IndexScan --> ReturnData[Lấy 30 bản ghi & encode cursor từ phần tử cuối cùng]
-    ReturnData --> Resp[Trả về Client: items + next_cursor]
+    IndexScan --> ReturnData["Lấy 30 bản ghi & encode cursor từ phần tử cuối cùng"]
+    ReturnData --> Resp["Trả về Client: items + next_cursor"]
 ```
