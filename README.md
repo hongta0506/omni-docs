@@ -27,6 +27,9 @@
 | [`NEXTGEN-GOLANG-DDD-SPEC.md`](./architecture/NEXTGEN-GOLANG-DDD-SPEC.md) | Đặc tả kỹ thuật Go Clean DDD | Chuẩn hóa tầng Domain (Zero external deps, ValidatedAggregate, Rich invariants), Application CQRS, Connect-RPC Protobuf contracts, SSE/WebSocket streaming. |
 | [`CHANNEL-GATEWAYS-ARCHITECTURE.md`](./architecture/CHANNEL-GATEWAYS-ARCHITECTURE.md) | Kiến trúc cổng kết nối đa kênh (Channel Gateways) | Zalo Personal QR State Machine, Telegram MTProto/Bot, WhatsApp Gateway (WPPConnect/Baileys), Egress Proxy Pool (xoay vòng IP dân cư, chống checkpoint). |
 | [`MODULAR-MONOLITH-TO-MICROSERVICES.md`](./architecture/MODULAR-MONOLITH-TO-MICROSERVICES.md) | Chiến lược phân rã Microservices | Đánh giá độ sẵn sàng phân rã (90%), điều kiện kích hoạt, checklist gỡ coupling (DB per service, Connect-RPC, NSQ) và runbook 4 bước bốc service độc lập. |
+| [`GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`](./architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md) | Quy chuẩn hiệu năng & chống 5 anti-patterns Go DDD | Khắc phục rò rỉ Memory/GC, N+1 query, Aggregate phình to, Context lifecycle và tư duy OOP sai lầm trong Go. |
+| [`CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md`](./architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md) | Quản trị lỗi, ngoại lệ & khả năng chống chịu xuyên suốt 8 BCs | Phân loại Exception Taxonomy (Transient, Terminal, Security/Policy), Circuit Breaker, Exponential Backoff, DLQ & 3 tầng Observability (Loki/Prometheus/Postgres). |
+| [`PROTOBUF-CONNECT-RPC-SPEC.md`](./architecture/PROTOBUF-CONNECT-RPC-SPEC.md) | Quy chuẩn Protobuf & Connect-RPC RPC Delivery | Chuẩn hóa schema protobuf, cấu hình Buf CLI, sinh mã nguồn Go và ánh xạ mã lỗi Connect-RPC. |
 | [`ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | Danh mục chức năng nghiệp vụ chi tiết | 792 endpoints & 27 workers phân tích từ mã nguồn Fastify, catalog 34 modules nghiệp vụ nguyên bản. |
 
 ### 2.2 Đặc Tả 8 Bounded Contexts (`contexts/`)
@@ -55,7 +58,8 @@
 | Nhóm | Tài liệu | Mô tả |
 |---|---|---|
 | **Chiến lược tổng thể** | [`DDD-MIGRATION-MASTER-PLAN.md`](./migration/DDD-MIGRATION-MASTER-PLAN.md) | Kế hoạch tổng thể di trú Strangler Fig 4 pha, mô hình "2 cuốn sổ" (`Contact` + `ChannelProfile`), zero-downtime DB. |
-| | [`SPRINT-MIGRATION-ROADMAP.md`](./migration/SPRINT-MIGRATION-ROADMAP.md) | Lộ trình chuyển đổi 6 Sprints từ bản production `release/orbstack-mini-20260924`. |
+| | [`SPRINT-MIGRATION-ROADMAP.md`](./migration/SPRINT-MIGRATION-ROADMAP.md) | Lộ trình chuyển đổi 7 Sprints từ bản production `release/orbstack-mini-20260924` (Bao gồm Sprint 7: Resilience & Observability). |
+| | [`MVP-RESILIENCE-SPRINT-PLAN.md`](./migration/MVP-RESILIENCE-SPRINT-PLAN.md) | Kế hoạch triển khai Resilience & Error Handling cho MVP Release (Sprint 0 - Sprint 7, Loki/Prometheus/DLQ). |
 | | [`PRODUCTION-GAP-ANALYSIS.md`](./migration/PRODUCTION-GAP-ANALYSIS.md) | Phân tích chênh lệch: 177 routes core ban đầu vs 615 routes production (thiếu 438 routes, Issues A–H). |
 | | [`DETAILED-MIGRATION-WBS.md`](./migration/DETAILED-MIGRATION-WBS.md) | Phân rã công việc (WBS) gồm 8 Epics lớn, chi tiết module, route và technical specs. |
 | **Dữ liệu kiểm toán** | [`PROD-ROUTES-AUDIT.json`](./migration/PROD-ROUTES-AUDIT.json) | Dữ liệu thô quét tự động 792 routes từ codebase Fastify. |
@@ -65,8 +69,19 @@
 | File | Mô tả |
 |---|---|
 | [`scan-prod-routes.ts`](./scripts/scan-prod-routes.ts) / `.js` | Script TypeScript/Node.js quét tự động toàn bộ Fastify routes, HTTP methods và controllers từ codebase monolith ZaloCRM. |
+| [`scan-omni-web.js`](./scripts/scan-omni-web.js) | Quét tự động toàn bộ API endpoint calls và HTTP methods từ codebase frontend `omni-web`. |
+| [`compare-web-vs-core.js`](./scripts/compare-web-vs-core.js) | So khớp tự động giữa frontend calls (`omni-web`) và Go ServeMux routes (`omni-core`), phát hiện lệch 404/405. |
+| [`check-bp-count.js`](./scripts/check-bp-count.js) | Kiểm toán và đối soát số lượng endpoint table trong Master Architecture Blueprint với backend Go. |
 
-### 2.6 Quy Chuẩn & Quy Trình Phát Triển
+### 2.6 Vận Hành & Hạ Tầng Cục Bộ (`operations/`)
+
+| File | Mô tả | Trọng tâm |
+|---|---|---|
+| [`ENV-CONFIG-SPEC.md`](./operations/ENV-CONFIG-SPEC.md) | Đặc tả biến môi trường toàn diện | Chuẩn hóa 12-factor cấu hình runtime cho Postgres, Redis, NSQ, SOCKS5 pool, R2/S3 storage và AI providers. |
+| [`LOCAL-DEV-AND-DOCKER.md`](./operations/LOCAL-DEV-AND-DOCKER.md) | Hướng dẫn môi trường phát triển cục bộ & Docker stack | Docker Compose setup Postgres 16 (extensions: uuid, unaccent, pg_trgm), Redis 7, NSQ, Loki & Grafana. |
+| [`DATABASE-MIGRATION-SPEC.md`](./operations/DATABASE-MIGRATION-SPEC.md) | Quy chuẩn migration & seeding dữ liệu gốc | Quản lý schema qua Bun ORM, quy tắc advisory lock, zero-downtime expand-contract, và seeding dữ liệu baseline. |
+
+### 2.7 Quy Chuẩn & Quy Trình Phát Triển
 
 | File | Mô tả |
 |---|---|

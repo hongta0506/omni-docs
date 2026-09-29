@@ -12,7 +12,7 @@
 | **Routes nghiệp vụ chuẩn hóa** | **615** | Phạm vi cần di trú sau khi lọc trùng, chuẩn hóa theo 8 Bounded Contexts. |
 | **Workers nền** | **27** | Background workers xử lý queue, sync, cron, webhook. |
 | **Bounded Contexts** | **8** | Identity, Channel, Customer, Conversation, Deal, Marketing, AI Agent, Service API & Gateway. |
-| **Số Sprints di trú** | **6** | Lộ trình chuyển đổi toàn diện theo phương pháp Strangler Fig. |
+| **Số Sprints di trú** | **7** | Lộ trình chuyển đổi toàn diện theo phương pháp Strangler Fig (Bao gồm Sprint 7: Resilience & Observability). |
 
 ---
 
@@ -23,7 +23,8 @@
 | File | Mô tả | Trọng tâm |
 |---|---|---|
 | [`DDD-MIGRATION-MASTER-PLAN.md`](./DDD-MIGRATION-MASTER-PLAN.md) | Kế hoạch tổng thể di trú sang Go Clean DDD | Phân rã 8 Bounded Contexts, mô hình "2 cuốn sổ" mở rộng (`Contact` + `ChannelProfile`), chiến lược Strangler Fig 4 pha, zero-downtime DB migration. |
-| [`SPRINT-MIGRATION-ROADMAP.md`](./SPRINT-MIGRATION-ROADMAP.md) | Lộ trình chuyển đổi 6 Sprints | Phân bổ công việc chi tiết theo từng sprint nghiệp vụ dựa trên bản production `release/orbstack-mini-20260924`. |
+| [`SPRINT-MIGRATION-ROADMAP.md`](./SPRINT-MIGRATION-ROADMAP.md) | Lộ trình chuyển đổi 7 Sprints | Phân bổ công việc chi tiết theo từng sprint nghiệp vụ dựa trên bản production `release/orbstack-mini-20260924` (Bao gồm Sprint 7: Resilience & Observability). |
+| [`MVP-RESILIENCE-SPRINT-PLAN.md`](./MVP-RESILIENCE-SPRINT-PLAN.md) | Kế hoạch quản trị lỗi, ngoại lệ & chống chịu MVP | Kế hoạch hành động Sprint 0 - Sprint 7 cho toàn bộ 8 BCs, chuẩn hóa Exception Taxonomy, Circuit Breaker, DLQ & Observability Grafana Loki. |
 | [`PRODUCTION-GAP-ANALYSIS.md`](./PRODUCTION-GAP-ANALYSIS.md) | Phân tích chênh lệch Production | Đối chiếu 177 routes core ban đầu vs 615 routes production thực tế. Định vị 438 routes thiếu hụt và danh sách Issue A–H. |
 | [`DETAILED-MIGRATION-WBS.md`](./DETAILED-MIGRATION-WBS.md) | Phân rã cấu trúc công việc (WBS) | 8 Epics lớn, khớp chi tiết từng module ZaloCRM sang Go package, route controller và technical specs. |
 
@@ -64,5 +65,5 @@ SPRINT-MIGRATION-ROADMAP.md (Nắm thứ tự thực hiện theo Sprint)
 DETAILED-MIGRATION-WBS.md (Tra cứu checklist công việc)
        │
        ▼
-mapping-*.md (Tra cứu chi tiết từng Bounded Context khi implement)
+contexts/ (Tra cứu chi tiết từng Bounded Context khi implement)
 ```

@@ -23,6 +23,9 @@
 |---|---|
 | [`api-mapping.md`](./api-mapping.md) | Ánh xạ toàn bộ 82 endpoints từ Fastify (`chat`, `media`, `system-notifications`) sang Go Handlers, WebSocket events & Connect-RPC. |
 | [`repository-port.md`](./repository-port.md) | Đặc tả giao diện Repository tầng Domain: `ValidatedConversation`, `ValidatedMessage`, phân trang Cursor-based và Bun ORM models. |
+| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & User Stories theo chuẩn BDD (Given-When-Then): Inbound Idempotency, Outbox Dispatch, Cursor Seek, Watermark, Recall. |
+| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: Sequence Inbound/Outbox, State Machine vòng đời tin nhắn, Lưu đồ phân trang Seek Index. |
+| [`test-matrix.md`](./test-matrix.md) | Ma trận kiểm thử nghiệp vụ, điều kiện biên, kiểm thử tải và xử lý tranh chấp đa luồng (Skip Locked, Race Conditions). |
 
 ---
 

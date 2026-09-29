@@ -22,6 +22,9 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`mapping-ai-agent-and-goclaw-bridge.md`](./mapping-ai-agent-and-goclaw-bridge.md) | Ánh xạ chi tiết endpoints AI Agents, GoClaw Providers bridge, Vector Knowledge chunking, Ops Radar anomaly detection. |
+| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & BDD Scenarios (Given-When-Then): RAG Tenant Isolation, Circuit Breaker Fallback, Safe Handoff, Token Spike Alert. |
+| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: Sequence RAG Search & LLM Fallback, State Machine Safe Human Handoff, Flowchart Ops Radar Anomaly. |
+| [`test-matrix.md`](./test-matrix.md) | Ma trận kiểm thử: RAG accuracy, Boundary cách ly Tenant vector, Chuyển mạch trạng thái Circuit Breaker và Stress chunking. |
 
 ---
 
