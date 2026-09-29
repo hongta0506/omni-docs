@@ -40,3 +40,16 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 - Chiến lược Pragmatic CQRS: Read model chiếu thẳng DTO không re-hydrate Aggregate.
 - Checklist kiểm tra bắt buộc cho mọi AI Coding Agent trước khi mở PR.
 
+### 7. [CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md](./CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md) (Quản Trị Lỗi, Ngoại Lệ & Khả Năng Phục Hồi)
+- Chuẩn hóa Exception Taxonomy toàn hệ thống (Transient, Terminal, Security/Policy).
+- Ma trận mã lỗi và chiến lược tự chữa lành cho toàn bộ 8 Bounded Contexts.
+- Cơ chế Exponential Backoff with Jitter, Sliding Window Circuit Breaker, và Dead Letter Queue (DLQ).
+- Quy chuẩn 3 lớp Observability: Metric Prometheus, Structured JSON stream ra stdout cho Grafana Loki, và lưu DB PostgreSQL cho nút Redrive trên giao diện Web.
+
+### 8. [PROTOBUF-CONNECT-RPC-SPEC.md](./PROTOBUF-CONNECT-RPC-SPEC.md) (Quy Chuẩn Protobuf & Connect-RPC)
+- Chuẩn hóa quy trình thiết kế Protobuf schema cho 8 Bounded Contexts.
+- Cấu hình công cụ Buf CLI (`buf.yaml`, `buf.gen.yaml`), linting và breaking change prevention.
+- Cơ chế sinh mã tự động cho Go và Connect-RPC client/server.
+- Quy chuẩn ánh xạ mã lỗi giữa domain `pkg/errors` và `connect.Code`.
+
+

@@ -21,6 +21,9 @@
 
 | Tài liệu | Mô tả |
 |---|---|
+| [`usecases.md`](./usecases.md) | **Đặc tả SDLC & BDD**: Danh sách User Stories (`Given / When / Then`), luồng nghiệp vụ Two-Ledger, Lead Pool SLA, Smart Merge. |
+| [`workflows.md`](./workflows.md) | **Sơ đồ luồng & UML**: Sequence Diagram phân giải định danh đa kênh, State Machine vòng đời Lead/Customer, Flowchart Smart Merge. |
+| [`test-matrix.md`](./test-matrix.md) | **Ma trận kiểm thử**: Test Scenarios từ Unit Phone E.164, Stress Test Race Condition Claim Lead, đến Invariant Boundary Tests. |
 | [`api-mapping-core.md`](./api-mapping-core.md) | Ánh xạ 16 endpoints cốt lõi `contacts`: CRUD, Filter, Search, Quick-create, Export, Profile timeline. |
 | [`mapping-accounts.md`](./mapping-accounts.md) | Ánh xạ 7 endpoints B2B `accounts`: Pháp nhân doanh nghiệp, thông tin thuế, gán liên kết danh bạ đại diện. |
 | [`mapping-customer-ext.md`](./mapping-customer-ext.md) | Ánh xạ các endpoints mở rộng: Lead Pool (Claim/Return/Reassign), Customer Lists (Dynamic Segments), Appointments, Notes, Scoring. |
