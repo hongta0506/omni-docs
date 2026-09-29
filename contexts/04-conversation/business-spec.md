@@ -139,7 +139,136 @@
 
 ---
 
-## 3. Ma Trận Observability, Logging & Exception Chuẩn
+## 3. Kiến Trúc Phân Luồng & Giao Vận Đa Giao Thức (Multi-Protocol Delivery)
+
+Phân hệ Conversation vận hành đồng thời 3 giao thức để phục vụ cả Web Client, Mobile App và các sidecar daemon:
+
+```
+                      ┌─────────────────────────────────────────┐
+                      │            Client Layers                │
+                      │  (Next.js Web, Mobile Flutter/React-N)  │
+                      └────────────────────┬────────────────────┘
+                                           │
+                    ┌──────────────────────┼──────────────────────┐
+                    │ HTTP/REST (Go 1.22+) │ WebSocket Full-Duplex│
+                    │   (Sync API & CRUD)  │   (Realtime Events)  │
+                    ▼                      ▼                      ▼
+           ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+           │   REST Mux      │    │  WebSocket Hub  │    │   Connect-RPC   │
+           │ (/api/v1/chat/*)│    │ (/ws/v1/chat)   │    │(Internal/Daemon)│
+           └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
+                    │                      │                      │
+                    ▼                      ▼                      ▼
+         ┌──────────────────────────────────────────────────────────────────┐
+         │              CQRS Application & Domain Services                  │
+         │          (Command / Query Handlers + Invariants)                 │
+         └─────────────────────────────────┬────────────────────────────────┘
+                                           │
+                    ┌──────────────────────┴──────────────────────┐
+                    │                                             │
+                    ▼                                             ▼
+         ┌─────────────────────┐                       ┌─────────────────────┐
+         │ PostgreSQL (Bun ORM)│                       │ Redis Pub/Sub & Outbox
+         │ (Conversations,     │                       │ (Realtime Broadcast,│
+         │  Messages, Media)   │                       │  Gateway Forwarder) │
+         └─────────────────────┘                       └─────────────────────┘
+```
+
+### 3.1 Giao thức 1: REST API (Go 1.22+ ServeMux)
+- **Mục đích:** Đồng bộ dữ liệu, CRUD Conversations, gắn tag, đổi trạng thái, tải lịch sử chat, upload media multipart.
+- **Quy tắc:** Mọi endpoint danh sách tuân thủ chuẩn `omni-core/pkg/pagination` hoặc Cursor pagination.
+
+### 3.2 Giao thức 2: WebSocket Hub (`/ws/v1/chat`)
+- **Mục đích:** Cung cấp kênh liên lạc hai chiều (Full-Duplex) với độ trễ thấp (< 50ms) cho người dùng cuối và tư vấn viên.
+- **Quản lý kết nối:** Mỗi client kết nối được gán vào 1 connection goroutine độc lập được quản lý bởi `Hub` có giới hạn buffer channel để chống rò rỉ bộ nhớ.
+- **WebSocket Event Contracts:**
+  - `chat:message_received`: Bắn tới client khi có tin nhắn mới từ khách hoặc từ sale khác trong cùng hội thoại.
+  - `chat:typing`: Báo hiệu trạng thái đang gõ (`{ conversation_id, sender_id, is_typing: true }`).
+  - `chat:read_receipt`: Thông báo khách hoặc tư vấn viên đã đọc tin nhắn (`{ conversation_id, last_read_message_id }`).
+  - `chat:conversation_assigned`: Thông báo hội thoại vừa được gán cho nhân viên mới.
+  - `chat:conversation_status_changed`: Cập nhật trạng thái hội thoại (`open`, `resolved`, `spam`).
+
+### 3.3 Giao thức 3: Connect-RPC & gRPC
+- **Mục đích:** Giao tiếp nội bộ tốc độ cao giữa Conversation BC và các Gateway Sidecars (Zalo Daemon, WhatsApp Worker, Telegram MTProto) hoặc AI Copilot Worker.
+- **Đặc tính:** Type-safe, Zero JSON parsing overhead, hỗ trợ bidirectional stream khi cần đồng bộ message batch lớn.
+
+---
+
+## 4. Transactional Outbox Pattern & Gateway Dispatch
+
+Để đảm bảo **không bao giờ mất tin nhắn** (Zero Message Loss) và đảm bảo tính nhất quán giữa cơ sở dữ liệu và các kênh mạng xã hội bên ngoài:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Web / Mobile Client
+    participant API as Conversation Handler
+    participant DB as PostgreSQL
+    participant OutboxWorker as Outbox Relay Worker
+    participant Gateway as Channel Gateway (Zalo/WhatsApp)
+
+    Client->>API: POST /api/v1/conversations/{id}/messages
+    activate API
+    Note over API,DB: Mở DB Transaction
+    API->>DB: INSERT into messages (status: "sending")
+    API->>DB: INSERT into outbox_events (event: "MESSAGE_SEND_REQUESTED")
+    API->>DB: UPDATE conversations set last_message_at = NOW()
+    Note over API,DB: Commit Transaction (Atomic)
+    API-->>Client: HTTP 201 Created (Message DTO, status: "sending")
+    deactivate API
+
+    loop Every 50ms or on Redis Notify
+        OutboxWorker->>DB: SELECT * FROM outbox_events WHERE status = "pending" FOR UPDATE SKIP LOCKED
+        OutboxWorker->>Gateway: Dispatch Message via gRPC / WebSocket
+        alt Gửi thành công
+            Gateway-->>OutboxWorker: ACK (channel_message_id, timestamp)
+            OutboxWorker->>DB: UPDATE messages SET status = "sent", external_msg_id = ...
+            OutboxWorker->>DB: UPDATE outbox_events SET status = "published"
+            OutboxWorker->>Client: Broadcast "chat:message_status_updated" (status: "sent")
+        else Gửi thất bại / Gateway checkpoint
+            Gateway-->>OutboxWorker: NACK (error_code, reason)
+            OutboxWorker->>DB: UPDATE messages SET status = "failed", error_reason = ...
+            OutboxWorker->>DB: UPDATE outbox_events SET status = "failed"
+            OutboxWorker->>Client: Broadcast "chat:message_status_updated" (status: "failed")
+        end
+    end
+```
+
+---
+
+## 5. Thuật Toán & Sơ Đồ Phân Trang Cursor-Based (High-Performance Chat History)
+
+Khi một cuộc hội thoại có hàng ngàn tin nhắn và có hàng chục tin nhắn mới đổ về mỗi giây, phân trang truyền thống bằng `OFFSET/LIMIT` sẽ gây suy giảm hiệu năng nghiêm trọng (Full Table Scan) và gây hiện tượng trùng hoặc bỏ sót tin nhắn (Data Drift).
+
+### 5.1 Cấu Trúc Khóa Cursor: `(created_at, id)`
+Hệ thống sử dụng Composite Cursor kết hợp giữa thời gian tạo và UUID để đảm bảo tính duy nhất tuyệt đối ngay cả khi 2 tin nhắn được tạo trong cùng một millisecond.
+
+```sql
+-- Đọc tin nhắn cũ hơn (Scroll up / Load older messages)
+SELECT id, conversation_id, sender_type, content, status, created_at
+FROM messages
+WHERE conversation_id = $1
+  AND (created_at, id) < ($2, $3) -- cursor: (before_created_at, before_id)
+ORDER BY created_at DESC, id DESC
+LIMIT $4;
+```
+
+### 5.2 Sơ Đồ Luồng Cursor-Based
+
+```mermaid
+flowchart TD
+    A["Client gửi yêu cầu lấy tin nhắn<br/>(GET /conversations/{id}/messages)"] --> B{"Có Cursor không?"}
+    B -- "Không (Lần đầu mở chat)" --> C["Query Top N tin mới nhất:<br/>ORDER BY created_at DESC LIMIT 50"]
+    B -- "Có Cursor (Scroll up)" --> D["Query với Composite Cursor:<br/>WHERE (created_at, id) < (cursor_time, cursor_id)<br/>ORDER BY created_at DESC LIMIT 50"]
+    C --> E["Đảo ngược mảng kết quả thành ASC<br/>để hiển thị từ trên xuống"]
+    D --> E
+    E --> F["Tạo next_cursor từ tin cũ nhất<br/>cursor = Base64(last_item.created_at + ':' + last_item.id)"]
+    F --> G["Trả về JSON Response kèm has_more và next_cursor"]
+```
+
+---
+
+## 6. Ma Trận Observability, Logging & Exception Chuẩn
 
 | Nhóm Ngoại Lệ | Danh Sách Lỗi Kỹ Thuật / Domain | Phân Loại `pkg/errors` | Hành Động Hệ Thống | Event Log `pkg/logger` |
 |---|---|---|---|---|
