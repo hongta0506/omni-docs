@@ -93,6 +93,13 @@ Before writing any production code:
      gh project item-list 11 --owner hongta0506 --format json | jq -r '.items[] | select(.content.number==<ISSUE_NUMBER>) | .id'
      ```
 3. **User Approval**: Present the plan to the user in chat (in Vietnamese). **WAIT for explicit confirmation** before modifying any code.
+4. **Mandatory Acceptance Criteria Audit Before PR/Close (STRICT GATE)**:
+   - **Never close an issue or mark `Done` with unchecked boxes (`- [ ]`).**
+   - Before opening PR or merging, dev/agent MUST:
+     1. Audit codebase to verify all routes/invariants exist and pass tests.
+     2. Update GitHub Issue body (`gh issue edit <id>`) to change all verified `- [ ]` to `- [x]`.
+     3. If any item is deferred, spin off a new issue for it; never leave unchecked items in a closed issue.
+
 
 ---
 

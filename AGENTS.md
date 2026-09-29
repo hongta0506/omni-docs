@@ -237,3 +237,24 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 ```
 ```
 
+### 4.5 Mandatory Acceptance Criteria & Endpoint Verification Audit (STRICT GATE BEFORE PR & ISSUE CLOSURE)
+> **CRITICAL RULE FOR ALL DEVELOPERS & AI AGENTS:**
+> An issue or PR MUST NEVER be closed or moved to `Done` while checkboxes (`- [ ]`) in the GitHub Issue body remain unchecked.
+>
+> 1. **Zero Unchecked Items on Done:**
+>    - Every route, invariant, and test item listed under `Acceptance Criteria` and `Anti-Pattern Checklist` MUST be verified against actual code before closing the issue.
+> 2. **Pre-PR Issue Sync Command:**
+>    - Dev/AI Agent MUST audit the codebase and update the GitHub Issue body via `gh issue edit <ISSUE_ID>` to mark all completed items with `[x]` BEFORE opening the PR or merging:
+>      ```bash
+>      # Verify routes in codebase
+>      grep -rn "POST /api/v1/..." internal/<bc>/interfaces/http/
+>      # Update issue body to reflect [x]
+>      gh issue edit <ISSUE_ID> --body "<body_with_checked_boxes>"
+>      ```
+> 3. **Unimplemented / Deferred Scope Isolation:**
+>    - If any endpoint or invariant cannot be completed within the current PR/task, it is STRICTLY FORBIDDEN to leave it as an unchecked `- [ ]` in a closed issue.
+>    - The agent/developer MUST extract the uncompleted items into a new follow-up GitHub Issue first, remove them from the original issue, and link the new issue before ticking remaining items and closing.
+> 4. **PR Body Acceptance Criteria Table:**
+>    - Every PR description MUST explicitly include an **Acceptance Criteria Verification** table listing every endpoint, its file location, and test verification status.
+
+
