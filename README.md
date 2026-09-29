@@ -69,6 +69,9 @@
 | File | Mô tả |
 |---|---|
 | [`scan-prod-routes.ts`](./scripts/scan-prod-routes.ts) / `.js` | Script TypeScript/Node.js quét tự động toàn bộ Fastify routes, HTTP methods và controllers từ codebase monolith ZaloCRM. |
+| [`scan-omni-web.js`](./scripts/scan-omni-web.js) | Quét tự động toàn bộ API endpoint calls và HTTP methods từ codebase frontend `omni-web`. |
+| [`compare-web-vs-core.js`](./scripts/compare-web-vs-core.js) | So khớp tự động giữa frontend calls (`omni-web`) và Go ServeMux routes (`omni-core`), phát hiện lệch 404/405. |
+| [`check-bp-count.js`](./scripts/check-bp-count.js) | Kiểm toán và đối soát số lượng endpoint table trong Master Architecture Blueprint với backend Go. |
 
 ### 2.6 Vận Hành & Hạ Tầng Cục Bộ (`operations/`)
 
