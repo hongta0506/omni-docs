@@ -127,10 +127,14 @@ Detailed guide: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md` 
    - No `I*` prefixes or `*Impl` suffixes.
    - Do NOT create single-implementation interfaces unless needed for mock injection.
 6. **Observability, Structured Logging & Exception Standards (MANDATORY FOR ALL BCS)**:
-   - **Logging**: Always use `pkg/logger`. Never use `fmt.Println` or `log.Printf` in production code. All logs must emit Structured JSON to `stdout` containing `trace_id`, `tenant_id`, `bounded_context`, and `submodule` for Grafana Loki ingestion.
+   - **Logging**: Always use `pkg/logger`. Never use `fmt.Println` or `log.Printf` in production code. All logs must emit Structured JSON to `stdout` containing `trace_id`, `tenant_id`, `bounded_context`, and `submodule` for Grafana Loki ingestion. For business actions/commands, ALWAYS use `logger.LogAudit(ctx, logger.AuditEntry{...})` — never use ad-hoc `logger.InfoContext` without audit structure.
    - **Exceptions**: Always use `pkg/errors`. Never return anonymous `errors.New("raw string")`. Every domain error must be classified into `ClassificationTransient`, `ClassificationTerminal`, or `ClassificationSecurityPolicy`.
    - **Third-Party I/O Resilience**: All external API calls (Zalo, Meta, Telegram, Webhooks, external HTTP) must execute through `pkg/resilience.ExecuteWithRetry` or Circuit Breaker.
    - **Dead Letter Queue (DLQ)**: Failed critical async outbound jobs (messages, order sync, webhooks) that exhaust retries must persist to `system_outbound_dlq` for manual redrive.
+7. **Strict Error Propagation & Anti-Silent Mock Fallback (CRITICAL ANTI-PATTERN)**:
+   - **ZERO SILENT MOCK FALLBACKS**: Strictly prohibit fallback logic that returns fake mock IDs (`uuid.New().String()`) or static success responses (`map[string]any{"ok": true}`) when `err != nil` or dependencies are missing (`cmds == nil`, `db == nil`).
+   - If a command/query fails or returns an error, the HTTP handler MUST propagate the true error status code (`400 Bad Request`, `404 Not Found`, `409 Conflict`, `500 Internal Error`) via `pkg/errors`.
+   - Never write production fallback mocks just to make unit tests pass with nil dependencies. Write real mocks/stubs inside `*_test.go` using `sqlmock` or in-memory repositories instead.
 
 ---
 
@@ -222,7 +226,8 @@ List invariant rules that Aggregate Root and Value Objects must enforce.
 - [ ] **Idiomatic Go (Pitfall 5):** Accept interfaces, return structs. No `I*` prefix or `*Impl` suffix.
 - [ ] **Standard Pagination (Shared Kernel):** Embed `pkg/pagination.PaginationParam`, normalize via `Normalize()`, and return `PageResult[T]`.
 - [ ] **Context Lifecycle (Pitfall 4):** Never pass `r.Context()` to async goroutines without detaching via `context.WithoutCancel()`.
-- [ ] **Resilience & Observability (Mandatory for MVP):** Use `pkg/logger` (JSON stdout), classify errors via `pkg/errors`, and apply retry/circuit breaker via `pkg/resilience`.
+- [ ] **Resilience & Observability (Mandatory for MVP):** Use `pkg/logger.LogAudit` (JSON stdout), classify errors via `pkg/errors`, and apply retry/circuit breaker via `pkg/resilience`.
+- [ ] **No Silent Fallback (Anti-Cheat):** Zero fake mock fallbacks (`uuid.New()`, `{"ok": true}`) when `err != nil`. Errors must propagate genuine HTTP 4xx/5xx status codes.
 
 ## Acceptance Criteria
 - [ ] HTTP / Connect-RPC endpoints checklist
