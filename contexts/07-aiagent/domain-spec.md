@@ -143,4 +143,70 @@ func (a *AIAgentConfig) Validate() (*ValidatedAIAgentConfig, error) {
 func (v *ValidatedAIAgentConfig) Config() *AIAgentConfig {
 	return v.inner
 }
+
+---
+
+## 3. Pluggable AI Harness & Multi-Agent Swarm Domain Types
+
+### 3.1 Value Object: `AgentRole` & `SpecializedAgentSpec`
+
+```go
+type AgentRole string
+
+const (
+	AgentRoleSupervisorRouter AgentRole = "supervisor_router" // Phân loại ý định, điều phối bầy agent
+	AgentRoleKnowledgeFAQ    AgentRole = "knowledge_faq"     // RAG Vector Search tra cứu chính sách
+	AgentRoleSalesCommerce   AgentRole = "sales_commerce"    // Tra cứu hàng hóa, tính giá, lên đơn nháp
+	AgentRoleTechSupport     AgentRole = "tech_support"      // Hướng dẫn kỹ thuật, thu thập thông tin lỗi
+	AgentRoleSentimentEscalate AgentRole = "sentiment_escalate" // Canh gác cảm xúc, kích hoạt Safe Handoff
+)
+
+type SpecializedAgentSpec struct {
+	Role         AgentRole        `json:"role"`
+	SystemPrompt string           `json:"systemPrompt"`
+	ModelConfig  ModelConfigVO    `json:"modelConfig"`
+	AllowedTools []string         `json:"allowedTools"` // Danh sách tên Tool được phép thực thi
+	MaxTurns     int              `json:"maxTurns"`     // Giới hạn số lượt suy luận tối đa
+}
+```
+
+### 3.2 Value Object: `ToolCallDefinition` & `ToolResult`
+
+```go
+type ToolCallDefinition struct {
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	TargetBC    string                 `json:"targetBC"` // "deal", "customer", "marketing"
+	Parameters  map[string]interface{} `json:"parameters"`
+}
+
+type ToolExecutionResult struct {
+	ToolCallID string    `json:"toolCallId"`
+	ToolName   string    `json:"toolName"`
+	OutputJSON string    `json:"outputJson"`
+	Error      string    `json:"error,omitempty"`
+	ExecutedAt time.Time `json:"executedAt"`
+}
+```
+
+### 3.3 Value Object: `ApprovalGateVerdict`
+
+```go
+type GateDecision string
+
+const (
+	DecisionAutoSend     GateDecision = "auto_send"     // Gửi trực tiếp tới khách hàng
+	DecisionDraftCopilot GateDecision = "draft_copilot" // Đẩy bản nháp cho Sale duyệt
+	DecisionBlockAlert   GateDecision = "block_alert"   // Chặn phát ngôn và gửi cảnh báo
+)
+
+type ApprovalGateVerdict struct {
+	Decision        GateDecision `json:"decision"`
+	ConfidenceScore float64      `json:"confidenceScore"`
+	TriggeredRules  []string     `json:"triggeredRules"`
+	DraftContent    string       `json:"draftContent"`
+	EvaluatedAt     time.Time    `json:"evaluatedAt"`
+}
+```
+
 ```
