@@ -22,9 +22,11 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`mapping-ai-agent-and-goclaw-bridge.md`](./mapping-ai-agent-and-goclaw-bridge.md) | Ánh xạ chi tiết endpoints AI Agents, GoClaw Providers bridge, Vector Knowledge chunking, Ops Radar anomaly detection. |
-| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & BDD Scenarios (Given-When-Then): RAG Tenant Isolation, Circuit Breaker Fallback, Safe Handoff, Token Spike Alert. |
-| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: Sequence RAG Search & LLM Fallback, State Machine Safe Human Handoff, Flowchart Ops Radar Anomaly. |
+| [`usecase-pluggable-ai-harness-and-swarm.md`](./usecase-pluggable-ai-harness-and-swarm.md) | **Đặc tả Pluggable AI Harness & Multi-Agent Swarm**: Chuẩn hóa Port suy luận, OpenAI-compatible Adapter, bầy Agent chuyên trách, Tool Calling liên BC và Safety Gates (Copilot vs Hands-Free). |
+| [`usecases.md`](./usecases.md) | Đặc tả Use Cases & BDD Scenarios (Given-When-Then): RAG Tenant Isolation, Circuit Breaker Fallback, Safe Handoff, Token Spike Alert, Swarm Router & Tool Calling. |
+| [`workflows.md`](./workflows.md) | Sơ đồ luồng nghiệp vụ Mermaid: Sequence RAG Search & LLM Fallback, Swarm Router Tool Execution, State Machine Safe Human Handoff, Flowchart Ops Radar Anomaly, Class Diagram Harness Port. |
 | [`test-matrix.md`](./test-matrix.md) | Ma trận kiểm thử: RAG accuracy, Boundary cách ly Tenant vector, Chuyển mạch trạng thái Circuit Breaker và Stress chunking. |
+
 
 ---
 

@@ -94,3 +94,107 @@ flowchart TD
     CreateAlert --> AutoThrottle[Tự động hạ Rate-limit của Bot về 1 req/phút]
     AutoThrottle --> NotifyTelegram[Gửi cảnh báo khẩn cấp tới kênh Telegram của Admin]
 ```
+
+---
+
+## 4. Sơ Đồ Tuần Tự: Multi-Agent Swarm & Tool Calling Execution Loop
+
+Quy trình phối hợp giữa Router Agent, Specialized Agent và Tool Calling liên Bounded Context:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Khách Hàng (Chat)
+    participant Conv as Conversation BC
+    participant Router as Supervisor / Intent Router
+    participant Swarm as Specialized Agent (Sales/Deal)
+    participant Harness as Pluggable AI Harness
+    participant DealBC as Deal & Order BC
+    participant Gate as Safety Approval Gate
+    actor HumanAgent as Nhân Viên Tư Vấn (Sale)
+
+    Customer->>Conv: Tin nhắn: "Cho anh đặt 2 hộp trà mã SP-99 giao quận 1"
+    Conv->>Router: MessageReceivedEvent (TenantID, MessageContent)
+    
+    rect rgb(240, 248, 255)
+    Note over Router,Harness: BƯỚC 1: PHÂN LOẠI Ý ĐỊNH (ROUTER)
+    Router->>Harness: Execute(SystemRouterPrompt, MessageContent)
+    Harness-->>Router: Trả về Intent: "intent_ordering_deal"
+    Router->>Swarm: Bàn giao ngữ cảnh cho Sales Agent
+    end
+
+    rect rgb(255, 250, 240)
+    Note over Swarm,DealBC: BƯỚC 2: INFERENCE KÈM TOOL CALLING
+    Swarm->>Harness: Execute(SalesPrompt, Context, Tools: [get_product_info, create_deal_draft])
+    Harness-->>Swarm: Trả về ToolCall: get_product_info(sku="SP-99")
+    Swarm->>DealBC: Query ProductBySKU("SP-99")
+    DealBC-->>Swarm: Trả về: {name: "Trà Thượng Hạng", price: 250000, stock: 15}
+    
+    Swarm->>Harness: Gửi ToolResult vào Context -> Yêu cầu sinh phản hồi kế tiếp
+    Harness-->>Swarm: Trả về ToolCall: create_deal_draft(items=[{sku: "SP-99", qty: 2}], address="Quận 1")
+    Swarm->>DealBC: Command CreateDealDraft(...)
+    DealBC-->>Swarm: DealID: "deal-12345", Tổng tiền: 500.000đ
+    
+    Swarm->>Harness: Hoàn tất Tool Execution -> Sinh câu trả lời xác nhận
+    Harness-->>Swarm: Draft Message: "Dạ em đã tạo đơn nháp 2 hộp Trà Thượng Hạng (500k) giao Quận 1..." (Confidence: 0.92)
+    end
+
+    rect rgb(245, 255, 245)
+    Note over Swarm,HumanAgent: BƯỚC 3: SAFETY GATE KIỂM DUYỆT
+    Swarm->>Gate: EvaluateResponse(DraftMessage, Confidence: 0.92, Mode)
+    
+    alt Mode == 'hands_free' VÀ Confidence >= 0.85
+        Gate->>Conv: Command SendOutboundMessage(...)
+        Conv-->>Customer: Tự động gửi tin xác nhận cho khách hàng
+    else Mode == 'copilot' HOẶC Confidence < 0.85
+        Gate->>HumanAgent: WebSocket emit 'ai:draft_ready' {dealId, draftContent}
+        Note over HumanAgent: Sale xem bản nháp, bấm "Duyệt & Gửi" trên giao diện
+        HumanAgent->>Conv: Confirm & Gửi tin nhắn tới khách
+        Conv-->>Customer: Tin nhắn tới khách từ tài khoản Sale
+    end
+    end
+```
+
+---
+
+## 5. Sơ Đồ Kiến Trúc: Pluggable Inference Adapters
+
+Mô hình trừu tượng hóa Adapter cắm rút tự do giữa Go Core và các Engine bên ngoài:
+
+```mermaid
+classDiagram
+    class AIAgentHarnessPort {
+        <<interface>>
+        +Execute(ctx, req HarnessRequest) (*HarnessResponse, error)
+        +Stream(ctx, req HarnessRequest) (<-chan StreamChunk, error)
+        +HealthCheck(ctx, providerID) error
+    }
+
+    class GOSOAdapter {
+        -baseURL string
+        -hmacSecret string
+        -httpClient *http.Client
+        +Execute(ctx, req) (*HarnessResponse, error)
+        +Stream(ctx, req) (<-chan StreamChunk, error)
+    }
+
+    class OpenAICompatibleAdapter {
+        -client *openai.Client
+        -apiKey string
+        -endpointURL string
+        +Execute(ctx, req) (*HarnessResponse, error)
+        +Stream(ctx, req) (<-chan StreamChunk, error)
+    }
+
+    class EmbeddedLocalEngine {
+        -tokenEstimator Tokenizer
+        -ruleMatcher RuleEngine
+        +Execute(ctx, req) (*HarnessResponse, error)
+        +Stream(ctx, req) (<-chan StreamChunk, error)
+    }
+
+    AIAgentHarnessPort <|.. GOSOAdapter : implements
+    AIAgentHarnessPort <|.. OpenAICompatibleAdapter : implements
+    AIAgentHarnessPort <|.. EmbeddedLocalEngine : implements
+```
+

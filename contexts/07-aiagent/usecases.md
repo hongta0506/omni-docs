@@ -79,3 +79,42 @@
 - **Then** Ops Radar phát hiện độ lệch chuẩn vượt ngưỡng `Threshold: AnomalyFactor > 3.0`
 - **And** Tạo bản ghi `RadarAlert` mức độ `CRITICAL`
 - **And** Tạm thời hạ rate-limit của bot xuống 1 request/phút và gửi cảnh báo đỏ qua Telegram Admin.
+
+---
+
+### US-AI-05: Multi-Agent Swarm Router & Liên Lạc Tool Calling Tự Động
+- **As a** Doanh nghiệp bán hàng trực tuyến
+- **I want** Hệ thống tự động phân loại ý định người dùng sang Agent chuyên môn (CSKH vs Bán hàng) và tự động gọi Tool tra cứu sản phẩm / tạo đơn nháp
+- **So that** khách hàng nhận được tư vấn chuẩn xác kèm giỏ hàng mà không cần chờ nhân viên trực gõ tay.
+
+#### Scenario 1: Router Agent phân nhánh cuộc gọi sang Sales Agent kèm Tool Calling
+- **Given** Khách hàng nhắn: "Cho anh hỏi mẫu áo thun polo size L còn màu đen không, ship về Cầu Giấy giá bao nhiêu?"
+- **When** Supervisor Router Agent phân tích ngữ cảnh và gán nhãn `Intent: sales_order_inquiry`
+- **Then** Quyền xử lý được chuyển sang `SalesSpecializedAgent`
+- **And** `SalesSpecializedAgent` sinh lệnh gọi Tool `query_product_stock(sku="POLO-L-BLK")`
+- **And** Tool Execution Adapter gọi sang `internal/deal` trả về còn 4 chiếc, giá 290.000đ
+- **And** Agent tiếp tục gọi Tool `calculate_shipping_fee(district="Cầu Giấy", city="Hà Nội")` trả về 20.000đ
+- **And** Câu trả lời hoàn chỉnh được sinh ra: "Dạ áo thun polo size L màu đen bên em còn 4 chiếc ạ, giá 290k + phí ship về Cầu Giấy 20k là 310k anh nhé. Em có thể lên đơn luôn cho anh được không ạ?"
+
+---
+
+### US-AI-06: Cổng Kiểm Duyệt An Toàn Phản Hồi (Copilot Ghost Draft vs Hands-free Auto-Reply)
+- **As a** Quản lý đội ngũ Chăm sóc khách hàng
+- **I want** Giám sát mọi câu trả lời do AI tạo ra ở chế độ Copilot (Ghost Draft) trước khi gửi tới khách, và chỉ cho phép tự động gửi ở chế độ Hands-Free khi độ tin cậy đạt chuẩn
+- **So that** hạn chế tối đa nguy cơ AI bị ảo giác (Hallucination) hoặc phát ngôn sai lệch chính sách công ty.
+
+#### Scenario 1: Gửi gợi ý nháp (Ghost Draft) cho Sale khi Agent ở chế độ Copilot
+- **Given** Agent được cấu hình `Mode: copilot`
+- **When** AI hoàn tất sinh câu trả lời cho câu hỏi kỹ thuật của khách
+- **Then** Hệ thống không tự động gửi tin nhắn ra kênh Zalo/WhatsApp
+- **And** Emit sự kiện `ai:draft_ready` tới trình duyệt của nhân viên Sale phụ trách
+- **And** Khung chat hiển thị gợi ý mờ (Ghost Text) kèm nút "Gửi ngay (Ctrl+Enter)" và nút "Chỉnh sửa".
+
+#### Scenario 2: Tự động gửi thẳng khi ở chế độ Hands-Free đạt điểm tin cậy cao
+- **Given** Agent được cấu hình `Mode: hands_free` và `minConfidence = 0.85`
+- **When** Khách hàng hỏi câu hỏi quen thuộc và RAG tìm thấy tài liệu trùng khớp tuyệt đối (Cosine Score: 0.94)
+- **Then** AI đánh giá `ConfidenceScore: 0.92 >= 0.85`
+- **And** Không chứa từ khóa cấm trong Blacklist
+- **And** Hệ thống tự động gửi tin nhắn phản hồi tới khách hàng
+- **And** Ghi log Audit `AI_AUTO_REPLY_SENT` kèm `tenant_id` và token tiêu thụ.
+
