@@ -159,6 +159,55 @@ sequenceDiagram
 
 ---
 
+## 5. Quy Trình Kỹ Thuật Đăng Nhập WhatsApp Cá Nhân (WhatsApp Personal QR Multi-Device Sequence Diagram)
+
+Sơ đồ tuần tự phối hợp 5 thành phần: **Trình duyệt (Web Client)**, **Omni Core (Go Backend)**, **WhatsApp Gateway Daemon (Go `whatsmeow`)**, **SOCKS5 Sticky Proxy**, và **WhatsApp Server (`c.whatsapp.net`)**.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Nhân viên CSKH/Sale
+    participant Web as Omni Web (Frontend Client)
+    participant Core as Omni Core (Go DDD Backend)
+    participant WA as WhatsApp Gateway (whatsmeow Daemon)
+    participant Proxy as SOCKS5 Sticky Proxy
+    participant WhatsApp as WhatsApp Server (c.whatsapp.net)
+
+    Note over User,WhatsApp: BƯỚC 1: PRE-CHECK SỐ ĐIỆN THOẠI & PHÂN BỔ PROXY
+    User->>Web: Nhập số điện thoại (E.164: +84...) & bấm "Tiếp tục"
+    Web->>Core: POST /api/v1/whatsapp-personal/check-phone {phone}
+    Core->>Core: Kiểm tra trùng lặp trong Tenant & tra cứu reviveAccountId
+    Core->>Core: Cấp phát SOCKS5 Sticky Proxy từ Egress Proxy Pool
+    Core-->>Web: Trả về {status: "available", phone, canConnect: true}
+
+    Note over User,WhatsApp: BƯỚC 2: KHỞI TẠO PHIÊN PAIRING QR
+    Web->>Core: POST /api/v1/whatsapp-personal/qr/start {phone}
+    Core->>WA: Connect-RPC GetLoginQR(accountId, phone, proxyUrl)
+    WA->>Proxy: Mở kết nối TCP/TLS qua SOCKS5
+    Proxy->>WhatsApp: Thiết lập kết nối Noise Protocol WebSocket
+    WhatsApp-->>WA: Noise Pairing Key & QR Payload
+    WA-->>Core: Response {sessionId, qrCode, expiresIn: 20}
+    Core-->>Web: Trả về {sessionId, qrCode, qrImage, expiresIn}
+    Web->>User: Hiển thị mã QR lên giao diện kèm bộ đếm lùi
+
+    Note over User,WhatsApp: BƯỚC 3: QUÉT MÃ QR TRÊN WHATSAPP ĐIỆN THOẠI
+    User->>WhatsApp: Mở WhatsApp Mobile -> Linked Devices -> Quét mã QR
+    WhatsApp-->>WA: Noise Handshake Confirm & PairSuccess Event
+    WA->>WA: Lưu thông tin khóa phiên vào SQLite (/data/sessions.db)
+    WA-->>Core: StreamChannelEvents Event: MessageReceived / Connected {jid, pushName}
+    Core->>Core: Cập nhật ChannelAccount (status: "ACTIVE", account_uid: JID)
+    Core-->>Web: WebSocket/SSE emit 'whatsapp:connected' {accountId, jid}
+    Web->>User: Thông báo liên kết thành công & Chuyển sang màn hình quản lý
+
+    Note over User,WhatsApp: BƯỚC 4: BÀN GIAO INBOUND WORKER & HISTORY SYNC
+    WA->>WhatsApp: Lắng nghe tin nhắn inbound thời gian thực
+    WhatsApp-->>WA: Event MessageReceived (Inbound Message)
+    WA-->>Core: StreamChannelEvents: MessageReceivedEvent {sender, content, timestamp}
+    Core->>Core: Forward vào Conversation Bounded Context (Không trigger AI nếu Human Mode)
+```
+
+---
+
 ## 5. Máy Trạng Thái Phiên Đăng Nhập QR (Zalo QR Session State Machine)
 
 ```mermaid
