@@ -258,7 +258,90 @@ type ToolRegistry interface {
 
 ---
 
-## 6. Sơ Đồ Triển Khai Hạ Tầng (Infrastructure Deployment)
+## 6. LangChain-Go (`tmc/langchaingo`) AI-Centric Runtime Engine
+
+Để giải phóng kỹ sư khỏi việc tự viết hàng ngàn dòng code boilerplate (quản lý context history, streaming parser, tool execution loop, vector store connectors), Omni Core tích hợp **`github.com/tmc/langchaingo`** làm Runtime Engine chính tại tầng Infrastructure.
+
+### 6.1 Kiến Trúc Cách Ly DDD (Clean Boundary)
+- **Domain Layer (`domain/`)**: Hoàn toàn thuần Go, định nghĩa `AIAgentHarnessPort` và các Value Objects. **Tuyệt đối không import `langchaingo` vào Domain.**
+- **Infrastructure Layer (`infrastructure/langchain/`)**: Đóng gói toàn bộ logic của `langchaingo` thành một Implementation Adapter của `AIAgentHarnessPort`.
+
+```
+┌────────────────────────────────────────────────────────┐
+│  Domain Layer: AIAgentHarnessPort                      │
+└──────────────────────────▲─────────────────────────────┘
+                           │ implements
+┌──────────────────────────┴─────────────────────────────┐
+│  Infrastructure: LangChainGoAdapter                    │
+│                                                        │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │ langchaingo / `agents.NewOpenAIToolsAgent()`     │  │
+│  │                                                  │  │
+│  │  - Model Provider: `llms/openai`, `llms/ollama`   │  │
+│  │  - Context Memory: `memory.NewChatMessageHistory`│  │
+│  │  - Vector Store: `vectorstores/qdrant`           │  │
+│  │  - Tools Bridge: Wrap CQRS Commands thành Tools  │  │
+│  └──────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────┘
+```
+
+### 6.2 Cầu Nối Tool Calling Giữa LangChain-Go và Các Bounded Contexts
+Mọi nghiệp vụ liên quan đến dữ liệu doanh nghiệp được bọc thành `tools.Tool` interface của `langchaingo`:
+
+```go
+package langchain
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/tmc/langchaingo/tools"
+	dealapp "omni-core/internal/deal/application"
+)
+
+// DealToolBridge bọc CQRS Command/Query của Deal BC thành LangChain Tool
+type DealToolBridge struct {
+	getPricingQuery *dealapp.GetProductPricingHandler
+	createDraftCmd  *dealapp.CreateDealDraftHandler
+}
+
+func (d *DealToolBridge) Name() string {
+	return "query_and_create_deal"
+}
+
+func (d *DealToolBridge) Description() string {
+	return "Tra cứu giá sản phẩm, số lượng tồn kho và tạo đơn hàng nháp cho khách hàng."
+}
+
+func (d *DealToolBridge) Call(ctx context.Context, input string) (string, error) {
+	// Parse input do LLM sinh ra và gọi trực tiếp vào CQRS Handler của Deal BC
+	var req struct {
+		SKU      string `json:"sku"`
+		Quantity int    `json:"quantity"`
+	}
+	if err := json.Unmarshal([]byte(input), &req); err != nil {
+		return "", err
+	}
+	
+	// Gọi Application Service nội bộ
+	pricing, err := d.getPricingQuery.Handle(ctx, req.SKU)
+	if err != nil {
+		return "", err
+	}
+	
+	resJSON, _ := json.Marshal(pricing)
+	return string(resJSON), nil
+}
+```
+
+### 6.3 Lợi Ích Của Giải Pháp LangChain-Go AI-Centric
+1. **Chat UI Tự Trị (Self-Serve Chat Window):** Khách hàng hoặc Sale nội bộ có thể chat trực tiếp với Agent, Agent tự lặp vòng suy luận (ReAct: Thought -> Action -> Observation) để trả lời hoặc thao tác hệ thống mà không cần backend can thiệp từng bước.
+2. **Loại Bỏ Hoàn Toàn Tự Viết Parser:** Tự động bắt schema tham số của Tool, bắt lỗi parse JSON từ mô hình và tự động nhắc LLM sửa định dạng (Self-Correction).
+3. **Đa Nhà Cung Cấp Cùng Một Chuẩn:** Chuyển đổi qua lại giữa OpenAI GPT-4o, Anthropic Claude 3.5, DeepSeek-V3, hoặc Ollama Llama-3/Qwen chạy nội bộ chỉ bằng 1 biến môi trường.
+
+---
+
+## 7. Sơ Đồ Triển Khai Hạ Tầng (Infrastructure Deployment)
 
 - **Go Core Daemon:** Chạy service `aiagent` nội tại, quản lý worker pool lắng nghe sự kiện inbound từ NATS JetStream / Go channel.
 - **Local LLM Engine (Tùy chọn On-Premise):**
@@ -266,3 +349,4 @@ type ToolRegistry interface {
   - Chạy mô hình mã nguồn mở tối ưu tiếng Việt (vd: `Qwen2.5-7B-Instruct`, `PhoGPT`, `DeepSeek-R1-Distill-Qwen-7B`).
   - Giao tiếp với Go Core qua mạng nội bộ Docker (`http://ollama:11434/v1`) với độ trễ < 50ms.
 - **Cloud Fallback:** Khi local LLM bị sập hoặc quá tải hàng đợi (> 20 requests), Circuit Breaker tự động chuyển tiếp sang Cloud API (`DeepSeek Open Platform` hoặc `OpenAI`) để đảm bảo hệ thống không bao giờ gián đoạn.
+
