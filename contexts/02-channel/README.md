@@ -22,6 +22,7 @@
 | Tài liệu | Mô tả |
 |---|---|
 | [`social-channels-matrix.md`](./social-channels-matrix.md) | **Đặc tả 2 Hướng Official vs Unofficial**: Ma trận đối soát Zalo (OA vs Personal), WhatsApp (Cloud vs Baileys), Telegram (Bot vs MTProto), Facebook (Graph vs Profile), Instagram (Graph vs Private API). |
+| [`zalo-personal-domain-gateway-spec.md`](./zalo-personal-domain-gateway-spec.md) | **Đặc Tả Chi Tiết Zalo Personal Domain, Schema & Gateway Client RPC**: Danh bạ bạn bè, Quản lý nhóm Zalo, Quét thành viên Lead Gen, DDL PostgreSQL 5 bảng (`zalo_friends`, `zalo_groups`, `zalo_group_members`, `zalo_group_scans`, `zalo_scanned_members`) và Go RPC Interface `ZaloPersonalGatewayClient` chống mock/fake. |
 | [`channel-error-handling-and-exceptions.md`](./channel-error-handling-and-exceptions.md) | **Quản Lý Lỗi & Ngoại Lệ Kênh**: Bảng tra cứu Error Codes (Meta, Zalo, Telegram), Phân loại ngoại lệ (Transient, Terminal, Security/Policy), Cơ chế Retry/DLQ, Circuit Breaker và Structured JSON Audit Log. |
 | [`usecases.md`](./usecases.md) | **Đặc tả SDLC & BDD**: Danh sách User Stories (`Given / When / Then`), Đăng nhập đa giao thức, Sticky Proxy, Giới hạn tốc độ gửi tin, Điều phối kép Official/Unofficial. |
 | [`usecase-zalo-personal-wizard-connect.md`](./usecase-zalo-personal-wizard-connect.md) | **Wizard Kết Nối Nick Zalo Cá Nhân 4 Bước**: Đặc tả chi tiết luồng SĐT, tra cứu nick hệ thống, chống trùng lặp đa tầng (Revive/Block), sinh & quét mã QR, và bảo vệ phiên. |
