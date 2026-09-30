@@ -77,3 +77,13 @@
 | `POST` | `/api/v1/whatsapp-official/webhook` | `whatsapp/official_handler.go:Receive` | `commands.HandleWhatsAppWebhookEvent` | `ReceiveWebhookEvent` |
 | `POST` | `/api/v1/whatsapp-official/templates/sync`| `whatsapp/official_handler.go:SyncTemplates` | `commands.SyncWhatsAppTemplates` | `SyncTemplates` |
 | `POST` | `/api/v1/whatsapp-official/messages/send-template` | `whatsapp/official_handler.go:SendTemplate` | `commands.SendWhatsAppTemplateMessage` | `SendTemplateMessage` |
+
+---
+
+## 3. Đặc Tả Nghiệp Vụ, Schema DB & Gateway Client RPC Chuẩn Hóa
+
+Xem tài liệu chi tiết bắt buộc tuân thủ: [zalo-personal-domain-gateway-spec.md](./zalo-personal-domain-gateway-spec.md) để:
+- Lấy trọn vẹn danh mục API Routes (Accounts, Friends/Danh bạ, Groups/Nhóm, Group Scans).
+- DDL PostgreSQL: `zalo_friends`, `zalo_groups`, `zalo_group_members`, `zalo_group_scans`, `zalo_scanned_members`.
+- Go RPC Interface `ZaloPersonalGatewayClient` chống sinh code mock/fake.
+
