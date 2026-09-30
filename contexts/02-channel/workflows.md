@@ -98,3 +98,86 @@ flowchart TD
     end
 ```
 
+
+---
+
+## 4. Quy Trình Kỹ Thuật Đăng Nhập Zalo Cá Nhân (Zalo Personal QR Login Sequence Diagram)
+
+Sơ đồ tuần tự phối hợp 5 thành phần: **Trình duyệt (Vue 3 Client)**, **Omni Core (Go Backend)**, **ZCA Gateway Daemon (Node.js `zca-js`)**, **SOCKS5 Sticky Proxy**, và **Zalo Platform Server**.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Nhân viên kinh doanh
+    participant Web as Omni Web (Vue 3 Client)
+    participant Core as Omni Core (Go DDD Backend)
+    participant ZCA as ZCA Gateway (Node.js Daemon)
+    participant Proxy as SOCKS5 Proxy
+    participant Zalo as Zalo Web Server
+
+    Note over User,Zalo: BƯỚC 1 & 2: KIỂM TRA SĐT & NICK ZALO (LOOKUP)
+    User->>Web: Nhập SĐT & bấm "Kiểm tra"
+    Web->>Core: POST /api/v1/zalo-accounts/check-phone {phone}
+    Core->>ZCA: gRPC LookupUser(system_nick_id, phone)
+    ZCA->>Proxy: Outbound TLS request
+    Proxy->>Zalo: api.findUser(phone)
+    Zalo-->>Proxy: Trả về Profile (displayName, avatar, uid)
+    Proxy-->>ZCA: Trả về kết quả
+    ZCA-->>Core: Response {displayName, avatarUrl, zaloUid}
+    Core->>Core: Kiểm tra trùng nick (Tenant & Owner filter)
+    Core-->>Web: Trả về {found, info, duplicate}
+    Web->>User: Hiển thị Avatar + Tên nick Zalo để xác nhận
+
+    Note over User,Zalo: BƯỚC 3: KHỞI TẠO QR & QUÉT MÃ (PAIRING)
+    User->>Web: Bấm "Xác nhận, quét QR"
+    Web->>Core: POST /api/v1/zalo-accounts (Tạo record qr_pending)
+    Web->>Core: Join Socket.IO room "account:{accountId}"
+    Web->>Core: POST /api/v1/zalo-accounts/{id}/login
+    Core->>ZCA: gRPC StartQRLogin(accountId, proxyUrl)
+    ZCA->>Proxy: Khởi tạo Zalo instance qua Proxy SOCKS5
+    ZCA->>Zalo: zalo.loginQR()
+    Zalo-->>ZCA: Event QRCodeGenerated (Image Data)
+    ZCA-->>Core: Stream Event QR_GENERATED (Base64)
+    Core-->>Web: Socket.IO emit 'zalo:qr' {accountId, qrImage} & HTTP response
+    Web->>User: Hiển thị hình ảnh mã QR (render trong modal)
+
+    Note over User,Zalo: QUÉT MÃ & DUYỆT ĐĂNG NHẬP
+    User->>Zalo: Dùng app Zalo trên điện thoại quét mã QR
+    Zalo-->>ZCA: Event QRCodeScanned {displayName, avatar}
+    ZCA-->>Core: Stream Event QR_SCANNED
+    Core-->>Web: Socket.IO emit 'zalo:scanned' {displayName}
+    Web->>User: Đổi UI: "Đã quét! Đang xác nhận trên điện thoại…"
+
+    User->>Zalo: Bấm "Đăng nhập" xác nhận trên điện thoại
+    Zalo-->>ZCA: Event GotLoginInfo {cookie, imei, userAgent}
+    ZCA-->>Core: Stream Event LOGIN_SUCCESS {cookies, imei}
+    Core->>Core: Mã hóa AES-GCM-256 (Cookie + IMEI)
+    Core->>Core: Cập nhật DB: status = 'connected', lastConnectedAt = NOW()
+    Core-->>Web: Socket.IO emit 'zalo:connected' {accountId}
+    Web->>User: Bước 4 Hoàn tất & Cảnh báo không dùng Zalo Web
+```
+
+---
+
+## 5. Máy Trạng Thái Phiên Đăng Nhập QR (Zalo QR Session State Machine)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle: Mở modal nhập SĐT
+    Idle --> LookingUp: Bấm "Kiểm tra" (check-phone)
+    LookingUp --> Confirming: Tra cứu thành công (Found/Fallback)
+    LookingUp --> Blocked: Trùng nick người khác (Owned by other)
+    Blocked --> [*]: Đóng modal
+
+    Confirming --> GeneratingQR: Bấm "Xác nhận, quét QR"
+    GeneratingQR --> QRDisplayed: Nhận mã QR (zalo:qr)
+    QRDisplayed --> Scanned: Người dùng quét mã (zalo:scanned)
+    
+    QRDisplayed --> QRExpired: Quá hạn 120s (zalo:qr-expired)
+    QRExpired --> GeneratingQR: Tự động retry (< 3 lần)
+    QRExpired --> QRDead: Vượt quá 3 lần retry (zalo:qr-session-dead)
+    QRDead --> GeneratingQR: Người dùng bấm "Tạo QR mới"
+
+    Scanned --> Connected: Xác nhận trên điện thoại (zalo:connected)
+    Connected --> [*]: Hoàn tất (Done)
+```
