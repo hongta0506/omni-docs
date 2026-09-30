@@ -153,6 +153,12 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 git commit -m "<type>(<scope>): <short description> (closes #<issue>)"
 git push origin <branch-name>
 gh pr create --base staging --title "[BC-name] <type>: <description>" --body "..."
+
+# MANDATORY: Watch and verify CI checks before merging or closing issue
+gh pr checks <PR_NUMBER_OR_URL> --watch
+
+# Only merge when all CI checks pass (SUCCESS)
+gh pr merge <PR_NUMBER_OR_URL> --squash --delete-branch
 ```
 
 ### 4.3 Sprint Board Automation (MANDATORY)
@@ -244,11 +250,15 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 
 ### 4.5 Mandatory Acceptance Criteria & Endpoint Verification Audit (STRICT GATE BEFORE PR & ISSUE CLOSURE)
 > **CRITICAL RULE FOR ALL DEVELOPERS & AI AGENTS:**
-> An issue or PR MUST NEVER be closed or moved to `Done` while checkboxes (`- [ ]`) in the GitHub Issue body remain unchecked.
+> An issue or PR MUST NEVER be closed or moved to `Done` while checkboxes (`- [ ]`) in the GitHub Issue body remain unchecked, OR while CI checks have not passed.
 >
 > 1. **Zero Unchecked Items on Done:**
 >    - Every route, invariant, and test item listed under `Acceptance Criteria` and `Anti-Pattern Checklist` MUST be verified against actual code before closing the issue.
-> 2. **Pre-PR Issue Sync Command:**
+> 2. **Mandatory CI Verification Gate:**
+>    - AI Agent MUST explicitly wait for CI/CD checks to complete using `gh pr checks <PR_NUMBER_OR_URL> --watch`.
+>    - If any check fails (e.g. `Enforce AGENTS.md Rules` or `Go Test Suite`), the agent MUST fix the violations on the feature branch, push the changes, and wait for CI to return a green `pass` status.
+>    - It is STRICTLY FORBIDDEN to merge a PR or close an issue when CI checks are in pending or failing state.
+> 3. **Pre-PR Issue Sync Command:**
 >    - Dev/AI Agent MUST audit the codebase and update the GitHub Issue body via `gh issue edit <ISSUE_ID>` to mark all completed items with `[x]` BEFORE opening the PR or merging:
 >      ```bash
 >      # Verify routes in codebase
@@ -256,10 +266,10 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 >      # Update issue body to reflect [x]
 >      gh issue edit <ISSUE_ID> --body "<body_with_checked_boxes>"
 >      ```
-> 3. **Unimplemented / Deferred Scope Isolation:**
+> 4. **Unimplemented / Deferred Scope Isolation:**
 >    - If any endpoint or invariant cannot be completed within the current PR/task, it is STRICTLY FORBIDDEN to leave it as an unchecked `- [ ]` in a closed issue.
 >    - The agent/developer MUST extract the uncompleted items into a new follow-up GitHub Issue first, remove them from the original issue, and link the new issue before ticking remaining items and closing.
-> 4. **PR Body Acceptance Criteria Table:**
+> 5. **PR Body Acceptance Criteria Table:**
 >    - Every PR description MUST explicitly include an **Acceptance Criteria Verification** table listing every endpoint, its file location, and test verification status.
 
 
