@@ -135,6 +135,10 @@ Detailed guide: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md` 
    - **ZERO SILENT MOCK FALLBACKS**: Strictly prohibit fallback logic that returns fake mock IDs (`uuid.New().String()`) or static success responses (`map[string]any{"ok": true}`) when `err != nil` or dependencies are missing (`cmds == nil`, `db == nil`).
    - If a command/query fails or returns an error, the HTTP handler MUST propagate the true error status code (`400 Bad Request`, `404 Not Found`, `409 Conflict`, `500 Internal Error`) via `pkg/errors`.
    - Never write production fallback mocks just to make unit tests pass with nil dependencies. Write real mocks/stubs inside `*_test.go` using `sqlmock` or in-memory repositories instead.
+8. **Test Thread-Safety & Race Prevention (MANDATORY FOR ALL TESTS)**:
+   - All CI tests run under `go test -race ./...`. Any detected data race will fail the build immediately.
+   - Mock repositories and in-memory test fakes accessed across multiple goroutines (HTTP server, background dispatch loops, event streams) MUST protect shared memory using `sync.Mutex` or `sync.RWMutex`.
+   - Never use blind `time.Sleep` to wait for async state changes; synchronize via channels, `sync.WaitGroup`, or mutex-guarded polling.
 
 ---
 
