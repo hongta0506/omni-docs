@@ -259,3 +259,65 @@ Nhằm tránh việc nhiều tài khoản Zalo/Telegram cùng phát sinh traffic
      | **WhatsApp Personal** | `@whiskeysockets/baileys` (Node.js) hoặc `whatsmeow` (Go) | `connection.update` (qr scan confirmed) | `creds.update` (multi-device auth keys) |
      | **Telegram Personal** | MTProto / TDLib Sidecar | `updateAuthorizationStateWaitCode` | `updateAuthorizationStateReady` (session string) |
    - Tầng Core chỉ giao tiếp qua Connect-RPC chuẩn và ánh xạ Domain Aggregate `ChannelAccount` duy nhất.
+---
+
+## 6. Zalo Personal Realtime Messaging & Chat History Backfill Flow
+
+### 6.1 Tổng Quan Luồng Tin Nhắn Hai Chiều (Inbound / Outbound) & Lịch Sử
+
+Khác với Zalo OA sử dụng webhook HTTP từ Zalo Developer Portal, **Zalo Personal** (`zca-js`) chạy trên kết nối WebSocket socket-level.
+
+```
+[ omni-web ]                 [ omni-core ]               [ gateway-zalo ]             [ Zalo Server ]
+     │                             │                             │                            │
+     │ 1. POST /messages           │                             │                            │
+     │    (Outbound Send)          │                             │                            │
+     │────────────────────────────>│ 2. Connect-RPC / HTTP       │                            │
+     │                             │    SendMessage(recipient,msg)│                            │
+     │                             │────────────────────────────>│ 3. api.sendMessage()      │
+     │                             │                             │───────────────────────────>│
+     │                             │                             │ 4. Message Delivered Ack   │
+     │                             │ 5. Return msgId + sentAt    │<───────────────────────────│
+     │                             │<────────────────────────────│                            │
+     │ 6. 201 Created (MessageDTO) │                             │                            │
+     │<────────────────────────────│                             │                            │
+     │                             │                             │                            │
+     │                             │                             │ 7. Event: 'message'        │
+     │                             │                             │    (Inbound Received)      │
+     │                             │                             │<───────────────────────────│
+     │                             │ 8. ForwardInboundMessage    │                            │
+     │                             │    (InboundEventForwarder)  │                            │
+     │                             │<────────────────────────────│                            │
+     │                             │ 9. Save Message & Conv      │                            │
+     │ 10. WebSocket Emit          │                             │                            │
+     │     'chat:message'          │                             │                            │
+     │<────────────────────────────│                             │                            │
+     │                             │                             │                            │
+     │                             │                             │ 11. Sync History Trigger   │
+     │                             │                             │     (requestOldMessages)   │
+     │                             │                             │───────────────────────────>│
+     │                             │                             │ 12. Event: 'old_messages'  │
+     │                             │                             │<───────────────────────────│
+     │                             │ 13. Backfill Batch Persist  │                            │
+     │                             │<────────────────────────────│                            │
+```
+
+### 6.2 Chi Tiết Kỹ Thuật (Implementation Specifics)
+
+1. **Avatar & Contact Mapping Trong Hội Thoại (`conversationDTO`)**:
+   - Khi tạo hoặc truy vấn hội thoại, `contact.avatarUrl` và `friendship.zaloAvatarUrl` bắt buộc lấy trực tiếp từ `channel_profiles.avatar_url` (CDN Zalo zadn.vn).
+   - Tuyệt đối không fallback về giá trị giả lập tĩnh `https://res-zalo.zadn.vn/default`.
+
+2. **Kéo Lịch Sử Tin Nhắn Cũ (Backfill via `pumpOldMessages`)**:
+   - Trong `zca-js`, tin nhắn cũ được phân trang qua WebSocket con trỏ: `api.listener.requestOldMessages(threadType, cursor)`.
+   - Gateway daemon lắng nghe sự kiện `old_messages`, trích xuất các trường:
+     - `msgId` (ID tin nhắn Zalo)
+     - `content` (Nội dung văn bản / attachment metadata)
+     - `uidFrom` (UID người gửi)
+     - `ts` (Timestamp gửi)
+     - `threadId` / `toId` (UID hội thoại người nhận)
+   - Lưu trữ idempotent vào PostgreSQL bảng `messages` và cập nhật `last_message_at` / `last_message_snippet` của `conversations`.
+
+3. **Thu Thập Số Điện Thoại Bạn Bè Công Khai (Phone Capture Invariant)**:
+   - Khi gọi `api.getAllFriends()`, trích xuất trường `phoneNumber` / `phone`.
+   - Nếu bạn bè bật chia sẻ số điện thoại, lưu vào `contacts.primary_phone` (chuẩn hóa format 84xxx / 0xxx) và ánh xạ với khách hàng trong CRM.
