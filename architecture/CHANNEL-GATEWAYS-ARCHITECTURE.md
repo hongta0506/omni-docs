@@ -182,3 +182,80 @@ Nhằm tránh việc nhiều tài khoản Zalo/Telegram cùng phát sinh traffic
 3. **Rate Limiting & Anti-Spam Gate**:
    - Giới hạn tốc độ gửi tin nhắn tối đa theo từng tài khoản (ví dụ Zalo cá nhân: max 1 tin / 3-5 giây với người lạ, có jitter ngẫu nhiên).
    - Tự động ngắt kết nối tạm thời khi phát hiện cảnh báo mã Captcha hoặc rate-limit từ nền tảng.
+
+---
+
+## 5. Universal Channel QR Login & Realtime Session Handshake Standard (Zalo, WhatsApp, Telegram)
+
+> **Mục tiêu kiến trúc:** Chuẩn hóa quy trình đăng nhập bằng mã QR giữa **Client Web (`omni-web`)**, **Core Backend (`omni-core`)**, và **Sidecar Gateway Daemon (`zca-js`, `Baileys`, `MTProto`)**. Đảm bảo trải nghiệm realtime liền mạch (Zero Polling Lag), không rò rỉ bộ nhớ (Zero Memory Leak) và tái sử dụng 100% mẫu thiết kế cho mọi kênh hội thoại không chính thức (Unofficial Channels).
+
+### 5.1 Kiến Trúc Luồng Sự Kiện Đăng Nhập (Universal Sequence Flow)
+
+```
+[ Client: omni-web ]          [ Core: omni-core ]          [ Gateway Daemon ]          [ 3rd-party Platform ]
+       │                             │                            │                             │
+       │ 1. POST /zalo-accounts      │                            │                             │
+       │    (Create account record)  │                            │                             │
+       │────────────────────────────>│                            │                             │
+       │    201 Created (accountId)  │                            │                             │
+       │<────────────────────────────│                            │                             │
+       │                             │                            │                             │
+       │ 2. Socket.IO / WS Subscribe │                            │                             │
+       │    emit('channel:subscribe')│                            │                             │
+       │────────────────────────────>│                            │                             │
+       │                             │                            │                             │
+       │ 3. POST /:id/login          │                            │                             │
+       │────────────────────────────>│ 4. Connect-RPC / gRPC      │                             │
+       │                             │    GenerateLoginQR(id)     │                             │
+       │                             │───────────────────────────>│ 5. Trigger SDK loginQR()   │
+       │                             │                            │────────────────────────────>│
+       │                             │                            │ 6. Event: QRCodeGenerated   │
+       │                             │                            │<────────────────────────────│
+       │                             │ 7. Return qrImage Base64   │                             │
+       │                             │<───────────────────────────│                             │
+       │ 8. Response { qrImage }     │                            │                             │
+       │<────────────────────────────│                            │                             │
+       │ (Hiển thị QR trên Modal)    │                            │                             │
+       │                             │                            │ 9. User scans QR on Phone   │
+       │                             │                            │<────────────────────────────│
+       │                             │                            │ 10. Event: QRCodeScanned    │
+       │                             │ 11. Connect-RPC stream/poll│<────────────────────────────│
+       │                             │     CheckLoginStatus(id)   │                             │
+       │                             │───────────────────────────>│                             │
+       │ 12. emit('channel:scanned') │ 12. Response { Scanned }   │                             │
+       │<────────────────────────────│<───────────────────────────│                             │
+       │ (Modal: Đang xác thực...)   │                            │                             │
+       │                             │                            │ 13. Event: GotLoginInfo     │
+       │                             │                            │<────────────────────────────│
+       │                             │ 14. Response { Connected,  │                             │
+       │                             │     DisplayName, Token }   │                             │
+       │                             │<───────────────────────────│                             │
+       │                             │ 15. DB Update: status=active                             │
+       │                             │     Save Encrypted Session │                             │
+       │ 16. emit('channel:connected'│                            │                             │
+       │<────────────────────────────│                            │                             │
+       │ (Modal: Bước 4 Done! 🎉)    │                            │                             │
+```
+
+### 5.2 Ba Nguyên Tắc Thiết Kế Kỹ Thuật (Engineering Invariants)
+
+1. **Dual Transport Compatibility (WebSocket Native & HTTP Long-Polling Fallback)**:
+   - Client Web (`omni-web`) kết nối qua giao thức Socket.IO (hỗ trợ cả WebSocket nâng cấp và HTTP Long-Polling).
+   - Core Backend (`omni-core`) duy trì In-Memory Session Event Hub để đẩy các gói tin chuẩn Engine.IO/Socket.IO v4:
+     - Gói Scanned: `42["zalo:scanned", {"accountId": "...", "displayName": "..."}]`
+     - Gói Connected: `42["zalo:connected", {"accountId": "..."}]`
+   - Điều này đảm bảo khi hệ thống chạy qua các Reverse Proxy hạn chế WebSocket (Nginx, Cloudflare), kết nối vẫn tự động fallback qua HTTP Polling mà không làm đứt đoạn Wizard.
+
+2. **On-Demand Lifecycle & Resource Safety (Zero Background Worker Leak)**:
+   - Luồng đồng bộ trạng thái đăng nhập giữa Core và Gateway Sidecar CHỈ tồn tại khi có kết nối đăng nhập đang mở (`showQRDialog = true`).
+   - Khi client hoàn tất kết nối hoặc người dùng bấm Hủy (`cancelQR` -> `channel:unsubscribe`), toàn bộ Context và Goroutine theo dõi trạng thái phải được hủy ngay lập tức (`cancel()`).
+   - Tuyệt đối không chạy Background Polling vĩnh viễn trên các tài khoản chưa quét mã.
+
+3. **Multi-Channel Extensibility (Zalo Personal, WhatsApp Web Multidevice, Telegram MTProto)**:
+   - Cùng một cấu trúc được áp dụng đồng nhất cho các kênh:
+     | Kênh | Thư viện Gateway | Sự kiện Scanned | Sự kiện Connected / Credentials |
+     |---|---|---|---|
+     | **Zalo Personal** | `zca-js` (Node.js) | `event.type === 2` (`QRCodeScanned`) | `event.type === 4` (`GotLoginInfo`: cookies + imei) |
+     | **WhatsApp Personal** | `@whiskeysockets/baileys` (Node.js) hoặc `whatsmeow` (Go) | `connection.update` (qr scan confirmed) | `creds.update` (multi-device auth keys) |
+     | **Telegram Personal** | MTProto / TDLib Sidecar | `updateAuthorizationStateWaitCode` | `updateAuthorizationStateReady` (session string) |
+   - Tầng Core chỉ giao tiếp qua Connect-RPC chuẩn và ánh xạ Domain Aggregate `ChannelAccount` duy nhất.
