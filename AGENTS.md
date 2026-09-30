@@ -150,12 +150,19 @@ Detailed guide: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md` 
 git checkout staging && git pull origin staging
 git checkout -b <type>/<issue-number>-<short-kebab-desc>
 # Implement and test
+# MANDATORY LOCAL QUALITY GATE: Chạy script verify ở local trước khi commit/push!
+bash scripts/ci/verify_agents_rules.sh
+go test -race ./...
+
 git commit -m "<type>(<scope>): <short description> (closes #<issue>)"
 git push origin <branch-name>
 gh pr create --base staging --title "[BC-name] <type>: <description>" --body "..."
 
 # MANDATORY: Watch and verify CI checks before merging or closing issue
 gh pr checks <PR_NUMBER_OR_URL> --watch
+
+# If CI checks fail, AI Agent MUST immediately extract exact failure logs:
+gh run view --log-failed
 
 # Only merge when all CI checks pass (SUCCESS)
 gh pr merge <PR_NUMBER_OR_URL> --squash --delete-branch
@@ -254,11 +261,25 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 >
 > 1. **Zero Unchecked Items on Done:**
 >    - Every route, invariant, and test item listed under `Acceptance Criteria` and `Anti-Pattern Checklist` MUST be verified against actual code before closing the issue.
-> 2. **Mandatory CI Verification Gate:**
+> 2. **Mandatory Local Verification Gate (PRE-COMMIT / PRE-PR REQUIREMENT):**
+>    - AI Agent BẮT BUỘC phải thực thi script kiểm tra quy tắc AGENTS.md và race detector ở môi trường local trước khi push hoặc tạo PR:
+>      ```bash
+>      # Bước 1: Chạy kiểm tra 9 chốt chặn chống Mock và Anti-pattern ở local
+>      bash scripts/ci/verify_agents_rules.sh
+>      # Bước 2: Chạy kiểm tra Race condition
+>      go test -race ./internal/<bc>/...
+>      ```
+>    - Nếu script báo `FAILED` ở bất kỳ bước nào (Silent mock fallback, LogAudit thiếu, In-Memory DB mock, PII leak, Pagination sai chuẩn), Agent PHẢI sửa triệt để trước khi push. Nghiêm cấm push code để "thử nghiệm CI".
+> 3. **Mandatory CI Verification Gate & Failure Inspection:**
 >    - AI Agent MUST explicitly wait for CI/CD checks to complete using `gh pr checks <PR_NUMBER_OR_URL> --watch`.
->    - If any check fails (e.g. `Enforce AGENTS.md Rules` or `Go Test Suite`), the agent MUST fix the violations on the feature branch, push the changes, and wait for CI to return a green `pass` status.
+>    - If any check fails (e.g. `Enforce AGENTS.md Rules` or `Go Test Suite`), the agent MUST run:
+>      ```bash
+>      gh run view --log-failed
+>      ```
+>      to extract the exact error lines, stack trace, and race detector warnings. The agent MUST NOT guess or ignore failure output.
+>    - The agent MUST fix the violations on the feature branch, push the changes, and wait for CI to return a green `pass` status.
 >    - It is STRICTLY FORBIDDEN to merge a PR or close an issue when CI checks are in pending or failing state.
-> 3. **Pre-PR Issue Sync Command:**
+> 4. **Pre-PR Issue Sync Command:**
 >    - Dev/AI Agent MUST audit the codebase and update the GitHub Issue body via `gh issue edit <ISSUE_ID>` to mark all completed items with `[x]` BEFORE opening the PR or merging:
 >      ```bash
 >      # Verify routes in codebase
@@ -266,10 +287,10 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 >      # Update issue body to reflect [x]
 >      gh issue edit <ISSUE_ID> --body "<body_with_checked_boxes>"
 >      ```
-> 4. **Unimplemented / Deferred Scope Isolation:**
+> 5. **Unimplemented / Deferred Scope Isolation:**
 >    - If any endpoint or invariant cannot be completed within the current PR/task, it is STRICTLY FORBIDDEN to leave it as an unchecked `- [ ]` in a closed issue.
 >    - The agent/developer MUST extract the uncompleted items into a new follow-up GitHub Issue first, remove them from the original issue, and link the new issue before ticking remaining items and closing.
-> 5. **PR Body Acceptance Criteria Table:**
+> 6. **PR Body Acceptance Criteria Table:**
 >    - Every PR description MUST explicitly include an **Acceptance Criteria Verification** table listing every endpoint, its file location, and test verification status.
 
 
