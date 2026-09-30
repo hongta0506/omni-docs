@@ -321,3 +321,50 @@ Khác với Zalo OA sử dụng webhook HTTP từ Zalo Developer Portal, **Zalo 
 3. **Thu Thập Số Điện Thoại Bạn Bè Công Khai (Phone Capture Invariant)**:
    - Khi gọi `api.getAllFriends()`, trích xuất trường `phoneNumber` / `phone`.
    - Nếu bạn bè bật chia sẻ số điện thoại, lưu vào `contacts.primary_phone` (chuẩn hóa format 84xxx / 0xxx) và ánh xạ với khách hàng trong CRM.
+---
+
+## 7. Zalo Group Chat History Sync & Message Recall (Undo) Flow
+
+### 7.1 Luồng Đồng Bộ Lịch Sử Nhóm & Cộng Đồng (Group & Community Sync)
+
+Đối với tin nhắn nhóm và cộng đồng, `zca-js` phân biệt rõ với DM cá nhân:
+1. **Phát hiện danh sách nhóm**: Gọi `api.getAllGroups()` để lấy danh sách nhóm tham gia (`gridInfoMap`).
+2. **Kéo lịch sử tin nhắn nhóm**: Với mỗi `groupId`, gọi `api.getGroupChatHistory(groupId, limit)` trả về mảng `groupMsgs`.
+3. **Lưu trữ hội thoại**: Đánh dấu `channel_type='zalo_personal'`, `thread_type='group'`, `external_conversation_id=groupId`. Cập nhật `group_name` và `group_avatar`.
+
+### 7.2 Luồng Thu Hồi Tin Nhắn Hai Chiều (Bidirectional Message Recall / Undo)
+
+```
+[ User/Peer on Zalo ]       [ Zalo Server ]       [ Gateway Daemon ]       [ Go Core (omni-core) ]       [ Client Web UI ]
+        │                          │                      │                         │                           │
+        │ 1. Bấm 'Thu hồi'         │                      │                         │                           │
+        │─────────────────────────>│                      │                         │                           │
+        │                          │ 2. Event 'undo'      │                         │                           │
+        │                          │    (globalMsgId,     │                         │                           │
+        │                          │     cliMsgId)        │                         │                           │
+        │                          │─────────────────────>│                         │                           │
+        │                          │                      │ 3. Forward POST Webhook │                           │
+        │                          │                      │    /webhook/zalo-personal│                          │
+        │                          │                      │────────────────────────>│                           │
+        │                          │                      │                         │ 4. UPDATE messages        │
+        │                          │                      │                         │    SET status='recalled'  │
+        │                          │                      │                         │ 5. Socket.IO Emit         │
+        │                          │                      │                         │    'chat:recalled'        │
+        │                          │                      │                         │──────────────────────────>│
+        │                          │                      │                         │                           │ (Giao diện cập nhật:
+        │                          │                      │                         │                           │  'Tin nhắn đã thu hồi')
+        │                          │                      │                         │                           │
+        │                          │                      │                         │ 6. Agent bấm Thu hồi CRM  │
+        │                          │                      │                         │<──────────────────────────│
+        │                          │                      │ 7. POST /undo           │                           │
+        │                          │                      │<────────────────────────│                           │
+        │                          │ 8. api.undoMessage   │                         │                           │
+        │                          │    (msgId, cliMsgId) │                         │                           │
+        │                          │<─────────────────────│                         │                           │
+        │                          │ 9. Recall Broadcast  │                         │                           │
+        │<─────────────────────────│────────────────────────────────────────────────│                           │
+```
+
+### 7.3 Bắt Buộc Kỹ Thuật (Engineering Invariants)
+- **CliMsgId Invariant**: Zalo yêu cầu cả `msgId` (server global ID) và `cliMsgId` (client message ID) để thu hồi tin nhắn. Hệ thống bắt buộc lưu cả 2 ID này trong metadata của `messages`.
+- **Idempotent Recall**: Sự kiện `undo` có thể nhận trùng lặp từ nhiều nick cùng ở trong nhóm; cập nhật trạng thái `status='recalled'` phải là thao tác an toàn (idempotent).
