@@ -368,3 +368,42 @@ Khác với Zalo OA sử dụng webhook HTTP từ Zalo Developer Portal, **Zalo 
 ### 7.3 Bắt Buộc Kỹ Thuật (Engineering Invariants)
 - **CliMsgId Invariant**: Zalo yêu cầu cả `msgId` (server global ID) và `cliMsgId` (client message ID) để thu hồi tin nhắn. Hệ thống bắt buộc lưu cả 2 ID này trong metadata của `messages`.
 - **Idempotent Recall**: Sự kiện `undo` có thể nhận trùng lặp từ nhiều nick cùng ở trong nhóm; cập nhật trạng thái `status='recalled'` phải là thao tác an toàn (idempotent).
+
+---
+
+## 8. Zalo Native Driver (zcago) Ingestion, Deduplication & API Parity
+
+### 8.1 Quy Chuẩn Timestamp & Định Danh Tin Nhắn (Timestamp & Message ID Invariant)
+1. **Timestamp gốc từ Zalo**:
+   - Mọi tin nhắn (lịch sử `OldMessages` và trực tiếp `Message`) bắt buộc trích xuất `ts` từ trường epoch millisecond `TMessage.TS` (`time.UnixMilli(ms)`).
+   - Nghiêm cấm gán `time.Now()` cho tin nhắn lịch sử vì sẽ phá vỡ thứ tự thời gian (`ORDER BY sent_at ASC`) và vô hiệu hóa cơ chế chống trùng.
+2. **Định danh kép (Dual Message ID)**:
+   - `channel_message_id`: Lưu `TMessage.MsgID` (Zalo Server Snowflake ID). Nếu rỗng, fallback sang `TMessage.CliMsgID`.
+   - Cột `channel_message_id` phải có ràng buộc duy nhất trên PostgreSQL:
+     ```sql
+     CREATE UNIQUE INDEX idx_messages_conv_channel_msg_id 
+     ON messages (conversation_id, channel_message_id) 
+     WHERE channel_message_id IS NOT NULL AND channel_message_id != '';
+     ```
+   - Mọi thao tác ghi `INSERT` phải bảo vệ bằng `ON CONFLICT (conversation_id, channel_message_id) DO NOTHING`.
+
+### 8.2 Phân Loại Content-Type & Media Assets
+1. **Nhận diện tự động Content-Type**:
+   - `chat.photo` hoặc URL ảnh CDN Zalo (`photo-stal`, `zdn.vn/no/jpg`, `.jpg`, `.png`, `.webp`) phải được gán `content_type = 'image'`.
+   - `chat.sticker` / `sticker` -> `content_type = 'sticker'`.
+   - `chat.video` / `video` -> `content_type = 'video'`.
+   - `chat.voice` / `voice` -> `content_type = 'voice'`.
+2. **Mảng Attachments**:
+   - Tin nhắn ảnh/tệp tin bắt buộc ghi cấu trúc mảng JSON vào cột `attachments`:
+     ```json
+     [{"url": "https://photo-stal-...", "type": "image"}]
+     ```
+
+### 8.3 Chuẩn Hóa Payload & API Parity với Node.js Cũ
+Để đảm bảo Frontend Vue (`omni-web`) hoạt động chính xác 100% không bị miss field:
+1. **Metadata Persistence**:
+   - Lưu trữ `quote` (thông tin reply: `ownerId`, `msg`, `ts`, `globalMsgId`, `cliMsgId`).
+   - Lưu trữ `mentions` (mảng vị trí @tag trong group: `[{ uid, pos, len, type }]`).
+   - Lưu `metadata.sender = { kind: "user_native", name: "...", syncedFromNative: true }` cho tin nhắn do chính chủ gửi từ ứng dụng Zalo thật để `MessageSourceBadge.vue` render "👤 Sale CRM · {tên} 🔄".
+2. **DTO Contract Endpoint `GET /api/v1/conversations/:id/messages`**:
+   - Trả ra đầy đủ các trường: `id`, `conversationId`, `zaloMsgId` (chính là `channel_message_id`), `zaloCliMsgId`, `senderId`, `senderUid`, `senderType` (`self` | `contact`), `senderName`, `sentVia` (`user_native` | `user`), `content`, `contentType`, `status`, `sentAt`, `createdAt`, `quote`, `mentions`, `attachments`, `metadata`.
