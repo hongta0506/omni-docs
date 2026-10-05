@@ -200,7 +200,7 @@ Theo dõi các chỉ số quan trọng trên Grafana:
 
 ---
 
-## 6. Tiêu Chí & Kế Hoạch Hoàn Nguyên Khẩn Cấp (Emergency Rollback Plan)
+## 6. Tiêu Chí & Kế Hoạch Hoàn Nguyên Khẩn Cấp (Emergency Rollback Runbook - 15 Phút)
 
 ### 6.1 Điều Kiện Kích Hoạt Hoàn Nguyên (Rollback Triggers)
 Nếu xuất hiện bất kỳ điều kiện nào sau đây kéo dài quá **2 phút liên tục**:
@@ -208,23 +208,48 @@ Nếu xuất hiện bất kỳ điều kiện nào sau đây kéo dài quá **2 
 2. Tỷ lệ lỗi xác thực chữ ký HMAC sai lệch vượt quá **0.5%** (dấu hiệu sai lệch secret hoặc thuật toán ký).
 3. Thời gian phản hồi P99 của endpoint `/context` vượt quá **1500ms** (gây nghẽn context của GOSO).
 4. Nhân viên phát hiện bot trả lời đè lên tin nhắn của nhân viên (Human Takeover Lease bị hỏng).
+5. Tỷ lệ đối chiếu sai lệch `aiagent_shadow_parity_match_ratio` sụt giảm dưới ngưỡng an toàn **99.9%**.
 
-### 6.2 Thao Tác Hoàn Nguyên 1 Lệnh (< 30 Giây)
-DevOps chỉ cần thực hiện 1 câu lệnh cấu hình lại Ingress Routing để đẩy toàn bộ lưu lượng trở lại Node.js Fastify:
+### 6.2 Quy Trình 4 Bước Hoàn Nguyên Khẩn Cấp (<= 15 Phút)
 
+#### Bước 1: Dập Emergency Kill-Switch & Drain Webhooks (T+0m -> T+2m)
+Ngay lập tức kích hoạt Emergency Kill-Switch trên Service API Gateway để chặn toàn bộ các thao tác ghi (mutations) từ Agent Hands:
 ```bash
-# Thao tác rollback tức thì qua Nginx / Ingress Controller
-kubectl apply -f k8s/ingress-fallback-to-fastify.yaml
-# Hoặc trên máy chủ Nginx đơn lẻ:
+curl -X POST https://api.admatrix.vn/api/v1/service/credentials/$CREDENTIAL_ID/kill-switch   -H "Authorization: Bearer $OPS_MASTER_TOKEN"   -H "Content-Type: application/json"   -d '{"reason": "Emergency Cutover Rollback triggered"}'
+```
+- Thời gian thực thi: **30 giây**.
+- Kết quả kiểm chứng: Mọi request mutation tới `/api/v1/service/*` nhận mã 403 Forbidden với thông báo `Credential is kill-switched`.
+
+#### Bước 2: Điều Hướng Nginx / Cloudflare Ingress Proxy (T+2m -> T+5m)
+Chuyển đổi Ingress Traffic trả ngược về cụm Fastify backend:
+```bash
+# Tại máy chủ Nginx / Ingress Controller:
 ln -sf /etc/nginx/sites-available/zalocrm-fastify.conf /etc/nginx/sites-enabled/
-nginx -s reload
-```
+nginx -t && nginx -s reload
 
-Đồng thời bật lại cron sweeper của Fastify:
-```bash
-curl -X POST http://localhost:3000/api/admin/goclaw-bridge/reconcile/resume \
-  -H "Authorization: Bearer $INTERNAL_OPS_TOKEN"
+# Hoặc qua Kubernetes Ingress / Helm:
+kubectl apply -f k8s/ingress-fallback-to-fastify.yaml
 ```
+- Thời gian thực thi: **2 phút**.
+- Kiểm tra kết quả: `curl -I https://api.admatrix.vn/api/integrations/goclaw/health` trả về header `X-Powered-By: Fastify`.
+
+#### Bước 3: Revert DNS & Fallback sang Fastify Cluster (T+5m -> T+10m)
+Nếu lỗi xảy ra ở mức mạng hoặc hạ tầng Kubernetes, chuyển DNS Cloudflare qua Fastify Standby:
+```bash
+# Chuyển đổi DNS A/CNAME record qua Cloudflare API
+curl -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID"   -H "Authorization: Bearer $CF_API_TOKEN"   -H "Content-Type: application/json"   -d '{"type":"CNAME","name":"api","content":"fastify-standby.admatrix.vn","ttl":60,"proxied":true}'
+```
+- Thời gian thực thi: **3 phút**.
+- Thời gian DNS hội tụ: **dưới 60 giây**.
+
+#### Bước 4: Reconcile & Đồng Bộ Dữ Liệu Bù (T+10m -> T+15m)
+Bật lại Reconcile Sweeper trên Fastify để quét và bù các tin nhắn chưa được xử lý trong khoảng thời gian chuyển tiếp:
+```bash
+curl -X POST http://zalocrm-fastify-backend:3000/api/admin/goclaw-bridge/reconcile/resume   -H "Authorization: Bearer $INTERNAL_OPS_TOKEN"
+```
+- Quét các tin nhắn trong cửa sổ 30 phút gần nhất (`MAX_RECONCILE_WINDOW_MS`).
+- Đảm bảo 100% cuộc trò chuyện không bị thất thoát thông tin.
+- Hoàn tất quy trình hoàn nguyên trong tối đa **15 phút**.
 
 ---
 
