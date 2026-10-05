@@ -28,7 +28,9 @@ Before touching code or architecture, read documentation in order:
 - **Testing & Quality Rigor**: `addyosmani/agent-skills` (`/test-driven-development`, `/code-review-and-quality`, `/spec-driven-development`).
 
 ### 1.3 Rules Chuẩn Khi Tạo/Cập Nhật Issue GitHub (MANDATORY)
-Mọi GitHub Issue tạo mới hoặc cập nhật trên `omni-core` phục vụ AI Agent bắt buộc phải có cấu trúc 7 phần, khóa 5 bẫy Go DDD và ranh giới cách ly file chống conflict. Chi tiết quy chuẩn xem mục [4.4 Standard Issue Specification & Anti-Pattern Locking](#44-standard-issue-specification--anti-pattern-locking-mandatory).
+Mọi GitHub Issue tạo mới hoặc cập nhật phục vụ AI Agent bắt buộc phải tuân thủ chuẩn cấu trúc Issue tương ứng:
+- **Backend (`omni-core`)**: Bắt buộc tuân thủ cấu trúc 7 phần, khóa 5 bẫy Go DDD và ranh giới cách ly file chống conflict (Chi tiết tại [Mục 4.4](#44-standard-issue-specification--anti-pattern-locking-mandatory)).
+- **Frontend (`omni-web`)**: Bắt buộc tuân thủ cấu trúc chuẩn Frontend UX/UI & State Machine, ranh giới Views/Components/Composables, tuyệt đối không lẫn backend/database code (Chi tiết tại [Mục 4.6](#46-standard-frontend-issue-specification-omni-web-mandatory)).
 
 ---
 
@@ -296,5 +298,58 @@ git checkout -b <type>/<issue-number>-<short-kebab-desc>
 >    - The agent/developer MUST extract the uncompleted items into a new follow-up GitHub Issue first, remove them from the original issue, and link the new issue before ticking remaining items and closing.
 > 6. **PR Body Acceptance Criteria Table:**
 >    - Every PR description MUST explicitly include an **Acceptance Criteria Verification** table listing every endpoint, its file location, and test verification status.
+
+### 4.6 Standard Frontend Issue Specification (`omni-web`) (MANDATORY)
+Mọi GitHub Issue tạo mới hoặc cập nhật trên `omni-web` phục vụ Frontend AI Agent bắt buộc phải tách bạch hoàn toàn với backend code/DDL, áp dụng chuẩn thiết kế UX/UI Pro Max và tuân thủ cấu trúc 7 phần sau:
+
+```markdown
+## Context & Business Goal
+Mô tả bối cảnh kinh doanh, mục tiêu trải nghiệm người dùng và luồng thao tác chính trên màn hình.
+
+## Affected Modules & Strict File Boundaries
+> **FRONTEND REPO ISOLATION (CRITICAL):**
+> AI Agents chỉ thao tác trong phạm vi các thư mục Frontend của `omni-web`. TUYỆT ĐỐI KHÔNG chèn mã Go, SQL schema hoặc backend DDL vào Issue này.
+
+- **Views:** `src/views/<FeatureView>.vue`
+- **Components:** `src/components/<feature>/<component>.vue`
+- **Composables / State:** `src/composables/<use-feature>.ts`, `src/stores/<feature>.ts`
+- **Types / DTOs:** `src/types/<feature>.ts`
+- **API Services:** `src/api/<feature>.ts`
+- **Forbidden Area:** `src/components/chat/` (trừ khi liên quan trực tiếp chat), các views/stores ngoài phạm vi.
+
+## UI/UX Specifications & State Machine (UX/UI Pro Max)
+Bắt buộc đặc tả đầy đủ 5 trạng thái giao diện:
+1. **Loading State:** Sử dụng `v-skeleton-loader` định dạng phù hợp layout (table-row, card, avatar).
+2. **Empty State:** Minh họa icon trực quan, thông điệp rõ ràng, nút CTA khởi tạo/thao tác.
+3. **Error State:** Hiển thị `v-alert` hoặc toast theo đúng mã lỗi HTTP (400, 401, 403, 404, 500) kèm nút Retry.
+4. **Active / Populated State:** Dữ liệu hiển thị trực quan, phân trang server-side, bộ lọc/tìm kiếm, badges màu theo status.
+5. **In-Action / Progress State:** Disable nút bấm thao tác + loading spinner, hiển thị `v-progress-linear` thời gian thực với tác vụ nền.
+
+## Design System & Component Requirements
+- **Framework:** Vuetify 3 (`v-card`, `v-btn`, `v-data-table-server`, `v-progress-linear`, `v-alert`, `v-dialog`).
+- **Icons:** Lucide icons (`lucide-vue-next`).
+- **Data Density:** Bố cục cô đọng, tối ưu cho nghiệp vụ CRM/CSKH vận hành hàng ngày.
+- **Micro-Interactions:** Tooltips, confirmation dialogs cho thao tác phá hủy (Xóa, Hủy, Kick).
+- **Theme tokens:** Sử dụng màu CSS semantic Vuetify (`rgb(var(--v-theme-surface))`, primary, error).
+
+## API Contract & Anti-Cheat Zero Mock
+> **CRITICAL ANTI-CHEAT:** Nghiêm cấm tạo mock data tĩnh `[...]` hoặc `{ ok: true }` để qua mặt giao diện. Dữ liệu bắt buộc đọc từ API backend thật.
+
+- **Endpoints Backend Gọi Thật:**
+  - `METHOD /api/v1/...` (params, payload, response contract)
+- **TypeScript DTO Interfaces:** Khai báo cụ thể các interface trong `src/types/<feature>.ts`.
+
+## Frontend Quality & Performance Rules
+- [ ] **Type-Safety:** 100% TypeScript typed, cấm dùng `any`. Lệnh `pnpm run build` (`vue-tsc -b`) phải pass với 0 lỗi.
+- [ ] **Resource Cleanup:** Mọi timer (`setInterval`, `setTimeout`) hoặc listener phải giải phóng trong `onUnmounted()` / `onScopeDispose()`.
+- [ ] **Zero Silent Mock:** Bắt buộc bắt error HTTP thật và hiển thị thông báo, không giấu lỗi hay trả fallback giả.
+- [ ] **Server-Side Pagination:** Bảng/danh sách lớn phải dùng pagination server-side (`page`, `limit`), không load toàn bộ vào RAM trình duyệt.
+
+## Acceptance Criteria
+- [ ] Checklist tính năng giao diện (UI)
+- [ ] Checklist tương tác người dùng (Actions, Validation, Dialogs)
+- [ ] Checklist trạng thái dữ liệu (Loading, Empty, Error, Progress)
+- [ ] Type check pass (`pnpm run build`)
+```
 
 
