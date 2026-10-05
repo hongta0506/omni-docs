@@ -70,7 +70,11 @@ Verify which Bounded Context owns the feature, what submodules are involved, and
 ## 3. Plan-First & Issue-First Workflow (SDLC Mandatory)
 
 Before writing any production code:
-1. **GitHub Issue**: Create via `gh issue create` with title `[BC-name] <type>: <description>`. Phải tuân thủ cấu trúc chuẩn 7 phần (xem `AGENTS.md` §4.4): Context & Goal, Affected Submodule & Strict File Boundaries (cách ly chống conflict), Source Docs Reference, Domain Invariants, **Go DDD Performance & Anti-Pattern Checklist (MANDATORY)**, Acceptance Criteria, Git Workflow.
+1. **GitHub Issue**: Create via `gh issue create` with title `[BC-name] <type>: <description>`. Must strictly comply with [`STANDARD-GITHUB-ISSUE-SPECIFICATION.md`](architecture/STANDARD-GITHUB-ISSUE-SPECIFICATION.md) and `AGENTS.md` §4.4:
+   - Verbatim 7-section structure.
+   - Complete 8-item **Go DDD Performance & Anti-Pattern Checklist (MANDATORY)** (no omission, no truncation).
+   - Mandatory pagination contract for every list endpoint: URL params `?page=&page_size=`, application query embedding `pkg/pagination.PaginationParam`, and response JSON `PageResult[T]` with `{ items, total, page, limit, totalPages, hasNext }`.
+   - Strict file boundaries with multi-agent file isolation block.
 2. **Sprint Board Automation & Concurrency Control (MANDATORY)**:
    - Project: **Omni Core — Backend DDD Sprint Board** (ID: `PVT_kwHOD3RGJc4Bkgl_`)
    - Field: `PVTSSF_lAHOD3RGJc4Bkgl_zhjQ8L0`
@@ -198,58 +202,3 @@ internal/<bc_name>/
 │   │   ├── events.go               # Domain Events
 │   │   ├── repository.go           # Repository Port interface (*Validated<Aggregate> only)
 │   │   └── validation.go           # Validated<Aggregate> wrapper
-│   └── errors.go                   # BC-wide domain errors
-├── application/                    # Layer 2: CQRS Application
-│   └── <submodule>/
-│       ├── commands/               # State mutations
-│       └── queries/                # Read projections & list DTO queries
-├── infrastructure/                 # Layer 3: Persistence & Adapters
-│   ├── <submodule>/
-│   │   ├── postgres_repository.go  # Bun ORM / pgx repository implementing Port
-│   │   └── models.go               # DB table schemas & mappings
-│   └── client/                     # External service/SDK clients
-└── interfaces/                     # Layer 4: Multi-Protocol Delivery
-    ├── http/                       # REST ServeMux (Go 1.22+) flat handlers per resource
-    ├── grpc/                       # Connect-RPC / gRPC service implementations
-    ├── ws/                         # WebSocket hub & handlers
-    └── stream/                     # Server-Sent Events (SSE) streaming
-```
-
-### Shared Kernel Conventions (Mandatory across all BCs):
-1. **Pagination**: Flat lists use `omni-core/pkg/pagination` (`PaginationParam`, `PageResult[T]`). Handlers normalize via `norm := q.Normalize()`, pass `norm.Limit()` and `norm.Offset()` to DB, return standard `{ "items": [...], "total": ..., "page": ..., "limit": ..., "totalPages": ..., "hasNext": ... }`.
-2. **Error Classification**: Use `omni-core/pkg/errors` (`CodeNotFound`, `CodeConflict`, `CodeInvalidInput`, `CodeUnauthorized`, `CodeForbidden`, `CodeInternal`). Map explicitly to HTTP status and Connect-RPC codes.
-3. **Identity & Tenant Claims**: Use `omni-core/pkg/auth`. Extract `TenantID` and `UserID` from `auth.UserClaimsFromContext(ctx)`. Never trust client-supplied tenant IDs.
-4. **UUIDs**: Use `omni-core/pkg/uid` (`uid.New()`, `uid.IsValid()`) or `github.com/google/uuid`.
-
----
-
-## 10. Performance, Concurrency & Anti-Pattern Prevention (Mandatory)
-
-Reference: `omni-docs/architecture/GOLANG-DDD-PERFORMANCE-AND-PITFALLS.md`.
-
-Every agent must avoid the 5 critical Go anti-patterns:
-1. **Memory & GC Pressure**:
-   - Never spawn naked, unbounded goroutines (`go func()`). Use managed worker pools or bounded buffered channels.
-   - Prevent slice retention memory leaks: always clone sub-slices when storing long-term references (`slices.Clone(buf[:n])`).
-   - Avoid `any` or `map[string]interface{}` across internal boundaries. Use concrete structs to stay on the stack and avoid heap escape.
-2. **Architecture Bloat & Pragmatic CQRS**:
-   - Write path (Commands): Pass through Domain Aggregate Root to enforce invariants (`ValidatedAggregate`).
-   - Read path (Queries): Query DB directly via `bun` / `sqlc` into read-model projection DTOs. Do NOT instantiate Domain Aggregates for pure read/list queries.
-3. **Aggregate Bloat & N+1 Prevention**:
-   - Aggregates are consistency boundaries, not data containers. Hold IDs and metrics; do NOT embed thousands of child entities in memory.
-   - Never execute DB queries inside a loop. Batch query related records with `bun.In()` or SQL `JOIN` / `json_agg()`.
-4. **Concurrency & Context Safety**:
-   - Never pass HTTP `r.Context()` directly to asynchronous background tasks. HTTP cancellation will abort the background task. Use `context.WithoutCancel(r.Context())` with a timeout.
-   - For critical asynchronous side-effects (Zalo messages, SMS, audit logs), use the Transactional Outbox pattern (`outbox_events` table in the same DB transaction).
-5. **Java/C# Paradigm Traps**:
-   - "Accept interfaces, return structs".
-   - Define interfaces in the consumer/calling package, not upfront next to the implementation.
-   - Never use `I*` prefixes (`IUserRepository`) or `*Impl` suffixes (`UserRepositoryImpl`).
-   - If there is only one implementation, do NOT create an interface unless needed for test mock injection.
-
----
-
-## 11. Docker-First Environment
-
-Never assume local host tooling:
-- All linting, testing, and building must run via `make` targets or `docker compose run --rm omni-core ...`.
