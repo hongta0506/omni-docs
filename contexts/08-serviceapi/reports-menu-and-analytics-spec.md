@@ -67,6 +67,7 @@ Mọi endpoint đều nhận tham số lọc thời gian `?from=YYYY-MM-DD&to=YY
   - Top 10 khách hàng phản hồi nhanh nhất.
 
 ### 2.7 GET /api/v1/reports/audit (Nhật ký an ninh)
+- **Phân trang bắt buộc:** Query struct embed `pkg/pagination.PaginationParam` (`?page=&page_size=`), trả về `pkg/pagination.PageResult[AuditEntry]` với JSON uniform `{items, total, page, page_size, total_pages, has_next}`.
 - **Mục đích:** Truy vết các hành vi nhạy cảm của người dùng.
 - **Dữ liệu:** Quét bảng `privacy_audit_logs` và `user_sessions`: hành động xem số điện thoại, xuất file excel, phân quyền, đăng nhập thất bại.
 
@@ -79,8 +80,8 @@ Mọi endpoint đều nhận tham số lọc thời gian `?from=YYYY-MM-DD&to=YY
 - **MIME:** `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 
 ### 2.9 Các Endpoints Báo Cáo Chi Tiết:
-- `GET /api/v1/reports/messages`: Thống kê tin nhắn theo từng ngày.
-- `GET /api/v1/reports/contacts`: Thống kê contact mới theo ngày và phân bố trạng thái.
+- `GET /api/v1/reports/messages?page=&page_size=`: Thống kê tin nhắn phân trang chuẩn `pkg/pagination`.
+- `GET /api/v1/reports/contacts?page=&page_size=`: Thống kê contact phân trang chuẩn `pkg/pagination`.
 - `GET /api/v1/reports/appointments`: Thống kê lịch hẹn theo trạng thái và loại hình.
 - `GET /api/v1/reports/crm-usage`: Chỉ số DAU/MAU người dùng hệ thống.
 

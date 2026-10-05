@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS order_seller_mappings (
 | `PUT` | `/api/v1/order-store/sync` | `settings.edit` | Bật/tắt đồng bộ, bật/tắt tự động tạo Contact. |
 | `GET` | `/api/v1/order-store/sellers` | `settings.edit` | Danh sách người bán trên hoá đơn và liên kết nhân viên CRM. |
 | `PUT` | `/api/v1/order-store/sellers` | `settings.edit` | Cập nhật ánh xạ người bán hoá đơn -> nhân viên CRM. |
-| `GET` | `/api/v1/order-store/buyers/unlinked` | `settings.edit` | Danh sách người mua trên đơn hàng chưa được gắn hồ sơ Contact. |
+| `GET` | `/api/v1/order-store/buyers/unlinked?page=&page_size=` | `settings.edit` | Danh sách người mua chưa gắn hồ sơ (Chuẩn `pkg/pagination`: trả về `{items, total, page, page_size, total_pages, has_next}`). |
 | `POST` | `/api/v1/order-store/buyers/link` | `settings.edit` | Gắn thủ công đơn hàng vào Contact. |
 | `POST` | `/api/v1/order-store/buyers/create-contacts` | `settings.edit` | Tạo hàng loạt Contact từ danh sách người mua chưa gắn. |
-| `GET` | `/api/v1/order-store/contacts/:contactId/purchases` | `deal.access` | Lịch sử mua hàng của khách hàng (Tab Đơn hàng). |
+| `GET` | `/api/v1/order-store/contacts/:contactId/purchases?page=&page_size=` | `deal.access` | Lịch sử mua hàng của khách (Chuẩn `pkg/pagination`: trả về `{items, total, page, page_size, total_pages, has_next}`). |
 | `POST` | `/api/v1/webhooks/pancake/:tenantId` | Public Secret | Webhook nhận đơn tức thì từ Pancake POS. |

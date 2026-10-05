@@ -83,4 +83,4 @@ CREATE INDEX IF NOT EXISTS idx_contact_score_tenant ON contact_score_breakdowns(
 | `GET` | `/api/v1/friends/:id/score-breakdown` | `contact.access` | Xem chi tiết 4 chiều điểm số và lịch sử tín hiệu của 1 khách hàng. |
 | `POST` | `/api/v1/friends/:id/promote` | `contact.edit` | Thao tác đẩy giai đoạn thủ công cho khách hàng. |
 | `POST` | `/api/v1/scoring/recompute-all` | Master Org Only | Kích hoạt tính toán lại toàn bộ điểm số sau khi thay đổi trọng số. |
-| `GET` | `/api/v1/leads/stuck` | `contact.access` | Danh sách khách hàng bị kẹt ở các giai đoạn cần can thiệp. |
+| `GET` | `/api/v1/leads/stuck?stageId=&page=&page_size=` | `contact.access` | Danh sách lead bị kẹt giai đoạn (Chuẩn `pkg/pagination`: trả về `{items, total, page, page_size, total_pages, has_next}`). |

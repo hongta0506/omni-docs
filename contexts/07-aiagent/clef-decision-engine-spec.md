@@ -73,5 +73,5 @@ CREATE INDEX IF NOT EXISTS idx_decision_logs_tenant ON decision_logs(tenant_id, 
 | `POST` | `/api/v1/admin/decision/engine/reactivate` | Master Org Only | Kích hoạt lại engine Clef sau sự cố. |
 | `POST` | `/api/v1/admin/decision/engine/disable` | Master Org Only | Tắt Clef, chuyển sang dùng LLM dự phòng. |
 | `PUT` | `/api/v1/admin/decision/llm` | Master Org Only | Cấu hình LLM fallback model (DeepSeek / OpenAI). |
-| `GET` | `/api/v1/admin/decision/logs` | Master Org Only | Tra cứu nhật ký nhận định toàn hệ thống. |
+| `GET` | `/api/v1/admin/decision/logs?page=&page_size=` | Master Org Only | Tra cứu nhật ký nhận định toàn hệ thống (Chuẩn `pkg/pagination`: trả về `{items, total, page, page_size, total_pages, has_next}`). |
 | `POST` | `/api/v1/admin/decision/playground` | Master Org Only | Thử nghiệm nhận định với đoạn chat tuỳ ý. |

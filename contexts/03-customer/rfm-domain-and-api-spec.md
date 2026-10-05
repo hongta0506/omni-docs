@@ -66,8 +66,8 @@ CREATE INDEX IF NOT EXISTS idx_contact_rfm_tenant_segment ON contact_rfm_assignm
 | Method | Route | Quyền | Mục đích |
 |---|---|---|---|
 | `GET` | `/api/v1/rfm/summary` | `deal.access` | Thống kê số lượng khách theo 6 nhóm, tổng số khách có đơn, luật đang dùng. |
-| `GET` | `/api/v1/rfm/segment?segment=&page=&pageSize=` | `deal.access` | Lấy danh sách khách hàng theo nhóm cụ thể (hỗ trợ phân trang, R/F/M scores). |
-| `GET` | `/api/v1/rfm/filter?minPurchases=&maxPurchases=...` | `deal.access` | "Lọc tự do" khách hàng theo các ngưỡng tuỳ chọn. |
+| `GET` | `/api/v1/rfm/segment?segment=&page=&page_size=` | `deal.access` | Lấy danh sách khách hàng theo nhóm cụ thể (Chuẩn `pkg/pagination`: trả về `{items, total, page, page_size, total_pages, has_next}`). |
+| `GET` | `/api/v1/rfm/filter?minPurchases=&page=&page_size=` | `deal.access` | "Lọc tự do" khách hàng theo các ngưỡng tuỳ chọn (Chuẩn `pkg/pagination`: trả về `{items, total, page, page_size, total_pages, has_next}`). |
 | `GET` | `/api/v1/rfm/contacts/:contactId` | `deal.access` | Lấy trạng thái RFM và cờ bỏ qua live của 1 khách hàng. |
 | `POST` | `/api/v1/rfm/to-list` | `customer_list.create` | Đẩy danh sách khách RFM sang Tệp khách hàng CRM (`CustomerList`). |
 | `POST` | `/api/v1/rfm/recompute` | `settings.edit` | Kích hoạt tính toán lại toàn bộ dữ liệu RFM toàn tổ chức. |
