@@ -29,4 +29,4 @@ Kịch bản tự động gồm chuỗi các bước gửi tin (Step 1 -> Chờ 
 - `POST /api/v1/marketing/sequences/:id/enroll`: Ghi danh danh sách contact vào sequence.
 - `POST /api/v1/marketing/sequences/:id/pause`: Tạm dừng sequence.
 - `POST /api/v1/marketing/sequences/:id/resume`: Tiếp tục sequence.
-- `GET /api/v1/marketing/sequences/:id/executions`: Lịch sử các bước gửi tin và kết quả (gửi thành công, bỏ qua, lỗi).
+- `GET /api/v1/marketing/sequences/:id/executions?page=&page_size=`: Lịch sử các bước gửi tin phân trang chuẩn `pkg/pagination` (trả về `{items, total, page, page_size, total_pages, has_next}`).

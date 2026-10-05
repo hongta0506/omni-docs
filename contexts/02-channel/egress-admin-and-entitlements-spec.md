@@ -30,7 +30,7 @@
 
 | Method | Route | Quyền | Mục đích |
 |---|---|---|---|
-| `GET` | `/api/v1/admin/egress` | Master Org Only | Liệt kê toàn bộ proxy và trạng thái tải nicks của mọi tổ chức. |
+| `GET` | `/api/v1/admin/egress?page=&page_size=` | Master Org Only | Liệt kê danh sách proxy phân trang chuẩn `pkg/pagination` (trả về `{items, total, page, page_size, total_pages, has_next}`). |
 | `POST` | `/api/v1/admin/egress/proxies` | Master Org Only | Nạp lô proxy SOCKS5h mới vào hệ thống. |
 | `GET` | `/api/v1/my/entitlement` | Authenticated User | Tổ chức tự xem gói, hạn, trần nick và số lượng đang dùng. |
 | `GET` | `/api/v1/admin/entitlements/:orgId` | Master Org Only | Xem quyền lợi và hạn ngạch của 1 tổ chức cụ thể. |

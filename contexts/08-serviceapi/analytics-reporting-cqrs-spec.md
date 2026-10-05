@@ -78,7 +78,7 @@ GROUP BY u.id, u.full_name;
 |---|---|---|---|
 | `GET` | `/api/v1/analytics/overview` | `contacts`, `deals`, `agent_sla_metrics` | `{ totalContacts, activeDeals, totalRevenue, averageResponseSec }` |
 | `GET` | `/api/v1/analytics/conversions` | `contacts`, `deals` | `{ conversionRate, leadsReceived, dealsClosed }` |
-| `GET` | `/api/v1/analytics/team-performance`| `users`, `contacts`, `deals` | `{ members: [{ userId, name, totalDeals, revenue }] }` |
+| `GET` | `/api/v1/analytics/team-performance?page=&page_size=`| `users`, `contacts`, `deals` | Phân trang chuẩn `pkg/pagination` (`PageResult[TeamMemberMetric]`: `{items, total, page, page_size, total_pages, has_next}`) |
 | `GET` | `/api/v1/dashboard/metrics` | `contacts`, `messages` | `{ metrics: { newContactsToday, messagesSentToday, activeChats } }` |
 | `GET` | `/api/v1/dashboard/export-excel` | Full aggregated dataset | Trả về file MIME `application/vnd.openxmlformats-officedocument...` thật |
 | `GET` | `/api/v1/reports/overview` | `conversations`, `messages` | `{ summary: { totalConversations, resolved, avgFirstResponseMs } }` |
