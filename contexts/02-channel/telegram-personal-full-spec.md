@@ -87,7 +87,7 @@ CREATE TABLE channel_telegram_accounts (
     display_name VARCHAR(255),
     avatar_url TEXT,
     status VARCHAR(32) NOT NULL DEFAULT 'INITIALIZED',
-    proxy_url VARCHAR(255) NOT NULL,
+    proxy_url VARCHAR(255),
     encrypted_session TEXT,
     daily_stranger_outbound INT NOT NULL DEFAULT 0,
     last_quota_reset_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -145,10 +145,20 @@ CREATE TABLE channel_telegram_scraped_members (
 2. **Stranger Outbound Quota**:
    - Invariant: Tối đa 25 tin nhắn gửi cho người lạ/ngày mỗi tài khoản.
    - Tự động reset bộ đếm sau 24h.
-3. **SOCKS5 Sticky Proxy**:
-   - Cố định 1 SOCKS5 Proxy cho 1 tài khoản trong suốt vòng đời phiên.
+3. **Đa Chế Độ Proxy & Direct Connection**:
+   - Hỗ trợ 3 cơ chế kết nối linh hoạt theo nhu cầu hạ tầng:
+     - **Direct Connection** (`proxy_url` rỗng): Kết nối TCP trực tiếp từ server tới Telegram DC IP (phù hợp máy dev local, VPS quốc tế không bị chặn ISP).
+     - **SOCKS5 Sticky Proxy** (`socks5://user:pass@host:port`): Tunnel TCP nguyên bản qua SOCKS5, ghim cố định per account trong suốt vòng đời phiên.
+     - **HTTP CONNECT Tunnel** (`http://user:pass@host:port` hoặc `https://...`): Sử dụng cơ chế HTTP CONNECT tunnel mở raw TCP socket qua proxy HTTP/HTTPS để đàm phán MTProto.
 4. **Encryption at Rest**:
    - Khóa session MTProto (`session.StorageMemory` / string) bắt buộc mã hóa AES-GCM-256 trước khi lưu vào cột `encrypted_session`.
+5. **Vòng Đời Phiên & Giải Phóng Tài Nguyên (Graceful Teardown)**:
+   - Khi người dùng bấm ngắt kết nối (`DELETE /api/v1/telegram-personal/accounts/{id}`) hoặc đóng modal quét QR:
+     - Hệ thống bắt buộc gọi `gotdClient.Disconnect(accountID)` để cancel context, đóng kết nối TCP MTProto đang hoạt động trong bộ nhớ.
+     - Xóa các goroutine đang lắng nghe token / update của tài khoản, ngăn chặn triệt để tình trạng zombie connection chiếm giữ socket và nghẽn Telegram DC.
+6. **Chuẩn Hóa Xuất & Hiển Thị Mã QR (ISO/IEC 18004)**:
+   - **Backend Handshake Timeout**: Giới hạn thời gian kết nối và lấy QR token trong 20s (thay vì treo 3 phút). Trường hợp Telegram DC trả mã lỗi `FLOOD_WAIT` hoặc quá hạn 20s, backend trả ngay mã HTTP `429 Too Many Requests` hoặc `504 Gateway Timeout` kèm `retry_after_seconds`.
+   - **Frontend Rendering Standard**: Chuỗi `tg://login?token=...` bắt buộc được render thông qua thư viện QR chuẩn tuân theo ISO/IEC 18004 (sử dụng thư viện `qrcode`), hiển thị rõ ràng trên giao diện để camera ứng dụng Telegram quét thành công 100%. Nghiêm cấm dùng thuật toán giả lập vẽ chấm ngẫu nhiên (`seed % 3`).
 
 ---
 
