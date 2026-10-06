@@ -222,3 +222,113 @@ Triển khai nghiêm ngặt theo khuyến cáo từ [`gotd/td/SUPPORT.md`](https
    - Khách cũ (đã từng chat vào): Không giới hạn số lượng tin nhắn trao đổi 1-1.
 4. **Session Encryption (At Rest):**
    - Dữ liệu auth MTProto token session được mã hoá bằng thuật toán **AES-256-GCM** trước khi lưu vào bảng `channel_accounts`.
+---
+
+## 7. Đồng Bộ Hội Thoại, Nhóm & Kênh (Dialogs, Groups & Channels Synchronization)
+
+### 7.1 Phân Biệt Cơ Chế Quét Thành Viên: Supergroup vs Broadcast Channel
+
+| Tiêu chí | Telegram Supergroup / Group (Nhóm chat) | Telegram Broadcast Channel (Kênh phát tin) |
+|---|---|---|
+| **Mục đích** | Thảo luận đa chiều giữa các thành viên | Phát thanh một chiều từ chủ kênh tới người đọc |
+| **Quyền quét thành viên thường** | **CÀO ĐƯỢC.** Mọi thành viên trong nhóm đều duyệt được danh sách (trừ khi nhóm bật cờ `Hide Participants`). | **KHÔNG THỂ.** Người xem thông thường chỉ thấy số lượng subscriber, không xem được danh tính. |
+| **Quyền quét khi là Admin** | Cào được 100% không giới hạn. | Cào được 100% toàn bộ Subscribers. |
+| **Dữ liệu trích xuất (Lead)** | `user_id`, `username`, `first_name`, `last_name`, `role` (Admin/Member/Bot). | `user_id`, `username`, `first_name`, `last_name`. |
+| **Chiến lược khai thác CRM** | Cào thành viên từ các nhóm đối thủ / nhóm cộng đồng để nạp vào Lead Pool. | Quét danh sách người theo dõi của kênh nội bộ để nuôi dưỡng khách tiềm năng. |
+
+---
+
+### 7.2 Sơ Đồ Luồng: Quét Thành Viên Nhóm & Tự Động Nạp Lead (Group Scraping & Lead Pipeline)
+
+```
+[Sale / Web UI]          [Omni Core (Channel)]      [TG Gateway Daemon]         [Telegram DC]
+      │                         │                          │                        │
+      │── 1. Quét thành viên ──►│                          │                        │
+      │   (group_id, limit)     │── 2. SyncGroupMembers ──►│                        │
+      │                         │   (group_id, batch_size) │── 3. channels.GetParticipants
+      │                         │                          │◄── Batch 200 members ──│
+      │                         │                          ├── 4. Sleep 2s (Anti-Flood)
+      │                         │                          │── 5. channels.GetParticipants
+      │                         │                          │◄── Batch tiếp theo ... │
+      │                         │◄── 6. Stream Members ────│                        │
+      │                         │    (user_id, username..) │                        │
+      │                         ├── 7. Tự Động Nạp Lead:   │                        │
+      │                         │    - Lưu bảng contacts   │                        │
+      │                         │    - Gắn Tag tên nhóm    │                        │
+      │                         │    - Kích hoạt Sequence  │                        │
+      │◄── 8. Báo cáo hoàn tất──│                          │                        │
+```
+
+---
+
+### 7.3 Hợp Đồng Protobuf Bổ Sung (Group & Channel Sync)
+
+Bổ sung vào `proto/omni/channel/v1/telegram_personal.proto`:
+
+```protobuf
+// Bổ sung vào service TelegramPersonalService
+rpc ListDialogs(ListDialogsRequest) returns (ListDialogsResponse);
+rpc SyncGroupMembers(SyncGroupMembersRequest) returns (stream GroupMemberScrapedEvent);
+
+message ListDialogsRequest {
+  string tenant_id = 1;
+  string account_id = 2;
+  int32 limit = 3;
+  int32 offset_date = 4;
+}
+
+message DialogItem {
+  string peer_id = 1;
+  string title = 2;
+  string type = 3; // "user", "group", "supergroup", "channel"
+  int32 participant_count = 4;
+  bool is_creator_or_admin = 5;
+  bool can_scrape_members = 6;
+}
+
+message ListDialogsResponse {
+  repeated DialogItem dialogs = 1;
+  int32 total = 2;
+}
+
+message SyncGroupMembersRequest {
+  string tenant_id = 1;
+  string account_id = 2;
+  string peer_id = 3;
+  int32 max_members = 4; // Ví dụ: 1000
+  string filter = 5;      // "recent", "admins", "all"
+}
+
+message GroupMemberScrapedEvent {
+  string peer_id = 1;
+  string tg_user_id = 2;
+  string username = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string role = 6; // "member", "admin", "creator"
+  int64 joined_date_unix = 7;
+}
+```
+
+---
+
+### 7.4 Bổ Sung REST Endpoints Quản Lý Nhóm tại Omni Core (interfaces/http)
+
+Tuân thủ nghiêm ngặt chuẩn `pkg/pagination.PaginationParam` và response `PageResult[T]`:
+
+| Phương thức | Endpoint | Quyền (RBAC) | Mô tả chi tiết |
+|---|---|---|---|
+| `GET` | `/api/v1/telegram-personal/dialogs?page=&page_size=` | `channel.view` | Lấy danh sách hội thoại/nhóm/kênh nick đang tham gia (Chuẩn `pkg/pagination`) |
+| `POST` | `/api/v1/telegram-personal/groups/:id/sync` | `contact.manage` | Kích hoạt tác vụ nền cào danh sách thành viên nhóm |
+| `GET` | `/api/v1/telegram-personal/groups/:id/members?page=&page_size=` | `contact.view` | Xem danh sách thành viên đã cào về kèm phân trang chuẩn `pkg/pagination` |
+
+---
+
+### 7.5 Quy Tắc An Toàn Khi Cào Thành Viên (Anti-Flood Wait Guard)
+
+1. **Telegram `FLOOD_WAIT_X` Handling:**
+   - Khi quét danh sách thành viên số lượng lớn, nếu Telegram trả về lỗi `FLOOD_WAIT_X`, daemon bắt buộc phải sleep đúng số giây `X` theo chỉ định của server Telegram trước khi tiếp tục, tuyệt đối không gửi request dồn dập.
+2. **Pacing & Batch Delay:**
+   - Mỗi lần lấy 200 thành viên (`batch_size = 200`), daemon tự động nghỉ giãn cách **2s - 3s** trước khi gọi trang tiếp theo.
+3. **Daily Scraping Cap:**
+   - Giới hạn tối đa **5.000 thành viên/ngày/nick** để giữ tài khoản hoàn toàn nằm trong ngưỡng an toàn của Telegram Anti-Abuse System.
