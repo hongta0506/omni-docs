@@ -12,8 +12,8 @@
 ## 1. Bối Cảnh & Mục Tiêu Nghiệp Vụ (Context & Goals)
 
 Hệ thống Omni Platform cần mở rộng kết nối tài khoản **Telegram cá nhân (Personal / User Account)** cho nhân viên kinh doanh:
-1. **Thu Lead Tự Động (Inbound Realtime):** Lắng nghe realtime các tin nhắn khách hàng gửi tới nick cá nhân hoặc tin nhắn trong các Group thảo luận để tự động trích xuất Lead/Contact vào CRM.
-2. **Kịch Bản Chăm Khách 1-1 (Low-frequency Sequence & Nurturing):** Điều phối tin nhắn trả lời và kịch bản chăm sóc với tần suất an toàn, có nhịp trễ Jitter (3s - 7s), chống checkpoint tài khoản.
+1. **Thu Lead Tự Động (Inbound Realtime):** Lắng nghe realtime các tin nhắn người dùng gửi tới nick cá nhân hoặc tin nhắn trong các Group thảo luận để tự động trích xuất thành **Lead mới** vào Lead Pool của CRM (`contacts.status = 'lead'`).
+2. **Kịch Bản Nuôi Dưỡng Lead 1-1 (Low-frequency Sequence & Lead Nurturing):** Điều phối tin nhắn trả lời và kịch bản nuôi dưỡng lead với tần suất an toàn, có nhịp trễ Jitter (3s - 7s), chống checkpoint tài khoản.
 3. **Đăng Nhập QR Code Native:** Nhân viên quét mã QR trực tiếp trên app Telegram điện thoại (`Settings` -> `Devices` -> `Link Desktop Device`), không cần nhập OTP thủ công qua SMS.
 4. **Tự Chủ Hạ Tầng (Zero SaaS Cost):** Tự host 100% bằng thư viện Go thuần [`gotd/td`](https://github.com/gotd/td), không phụ thuộc bên thứ 3 và không tốn phí thuê bao hàng tháng.
 
@@ -83,7 +83,7 @@ Hệ thống Omni Platform cần mở rộng kết nối tài khoản **Telegram
 ### 3.2 Luồng 2: Nhận Tin Nhắn Realtime & Tự Động Thu Lead (Inbound Realtime & Lead Harvest)
 
 ```
-[Khách Hàng TG]            [Telegram DC]        [TG Gateway Daemon]      [Omni Core (Channel/Customer)]
+[User / Lead TG]           [Telegram DC]        [TG Gateway Daemon]      [Omni Core (Channel/Customer)]
        │                         │                       │                         │
        │─── Gửi tin nhắn ───────►│                       │                         │
        │                         │─── Push tg.Updates ──►│                         │
@@ -94,7 +94,7 @@ Hệ thống Omni Platform cần mở rộng kết nối tài khoản **Telegram
        │                         │                       │                         ├── 2. Bắn Takeover WS Hub
        │                         │                       │                         │      (Web chat tức thì)
        │                         │                       │                         └── 3. Check Lead Pool:
-       │                         │                       │                                Chưa có -> Tạo Contact
+       │                         │                       │                                Chưa có -> Nạp Lead mới (contacts.status='lead')
 ```
 
 ---
@@ -107,8 +107,8 @@ Hệ thống Omni Platform cần mở rộng kết nối tài khoản **Telegram
            │─── 1. Dispatch Msg ────►│                          │                        │
            │                         │─── 2. SendMessageRPC ───►│                        │
            │                         │                          ├── 3. Rate Limit Check: │
-           │                         │                          │      Khách lạ: <30/day │
-           │                         │                          │      Khách cũ: No cap  │
+           │                         │                          │      Lead mới (chưa chat 2 chiều): <25/day │
+           │                         │                          │      Lead đã tương tác: No cap  │
            │                         │                          ├── 4. Apply Jitter:     │
            │                         │                          │      Sleep 3s - 7s     │
            │                         │                          │─── 5. messages.Send ──►│
@@ -218,8 +218,8 @@ Triển khai nghiêm ngặt theo khuyến cáo từ [`gotd/td/SUPPORT.md`](https
 2. **Safety Jitter Delay:**
    - Các kịch bản Sequence chăm khách tự động phải có độ trễ ngẫu nhiên: `time.Sleep(rand.Duration(3s, 7s))`.
 3. **Daily Outbound Quota Guard:**
-   - Khách lạ (chưa từng có lịch sử hội thoại 2 chiều): Giới hạn tối đa **25 tin nhắn mới/ngày/nick**.
-   - Khách cũ (đã từng chat vào): Không giới hạn số lượng tin nhắn trao đổi 1-1.
+   - Lead mới (chưa từng có lịch sử hội thoại 2 chiều): Giới hạn tối đa **25 tin nhắn mới/ngày/nick**.
+   - Lead/Contact đã tương tác (đã từng chat 2 chiều): Không giới hạn số lượng tin nhắn trao đổi 1-1.
 4. **Session Encryption (At Rest):**
    - Dữ liệu auth MTProto token session được mã hoá bằng thuật toán **AES-256-GCM** trước khi lưu vào bảng `channel_accounts`.
 ---
@@ -248,87 +248,3 @@ Triển khai nghiêm ngặt theo khuyến cáo từ [`gotd/td/SUPPORT.md`](https
       │                         │   (group_id, batch_size) │── 3. channels.GetParticipants
       │                         │                          │◄── Batch 200 members ──│
       │                         │                          ├── 4. Sleep 2s (Anti-Flood)
-      │                         │                          │── 5. channels.GetParticipants
-      │                         │                          │◄── Batch tiếp theo ... │
-      │                         │◄── 6. Stream Members ────│                        │
-      │                         │    (user_id, username..) │                        │
-      │                         ├── 7. Tự Động Nạp Lead:   │                        │
-      │                         │    - Lưu bảng contacts   │                        │
-      │                         │    - Gắn Tag tên nhóm    │                        │
-      │                         │    - Kích hoạt Sequence  │                        │
-      │◄── 8. Báo cáo hoàn tất──│                          │                        │
-```
-
----
-
-### 7.3 Hợp Đồng Protobuf Bổ Sung (Group & Channel Sync)
-
-Bổ sung vào `proto/omni/channel/v1/telegram_personal.proto`:
-
-```protobuf
-// Bổ sung vào service TelegramPersonalService
-rpc ListDialogs(ListDialogsRequest) returns (ListDialogsResponse);
-rpc SyncGroupMembers(SyncGroupMembersRequest) returns (stream GroupMemberScrapedEvent);
-
-message ListDialogsRequest {
-  string tenant_id = 1;
-  string account_id = 2;
-  int32 limit = 3;
-  int32 offset_date = 4;
-}
-
-message DialogItem {
-  string peer_id = 1;
-  string title = 2;
-  string type = 3; // "user", "group", "supergroup", "channel"
-  int32 participant_count = 4;
-  bool is_creator_or_admin = 5;
-  bool can_scrape_members = 6;
-}
-
-message ListDialogsResponse {
-  repeated DialogItem dialogs = 1;
-  int32 total = 2;
-}
-
-message SyncGroupMembersRequest {
-  string tenant_id = 1;
-  string account_id = 2;
-  string peer_id = 3;
-  int32 max_members = 4; // Ví dụ: 1000
-  string filter = 5;      // "recent", "admins", "all"
-}
-
-message GroupMemberScrapedEvent {
-  string peer_id = 1;
-  string tg_user_id = 2;
-  string username = 3;
-  string first_name = 4;
-  string last_name = 5;
-  string role = 6; // "member", "admin", "creator"
-  int64 joined_date_unix = 7;
-}
-```
-
----
-
-### 7.4 Bổ Sung REST Endpoints Quản Lý Nhóm tại Omni Core (interfaces/http)
-
-Tuân thủ nghiêm ngặt chuẩn `pkg/pagination.PaginationParam` và response `PageResult[T]`:
-
-| Phương thức | Endpoint | Quyền (RBAC) | Mô tả chi tiết |
-|---|---|---|---|
-| `GET` | `/api/v1/telegram-personal/dialogs?page=&page_size=` | `channel.view` | Lấy danh sách hội thoại/nhóm/kênh nick đang tham gia (Chuẩn `pkg/pagination`) |
-| `POST` | `/api/v1/telegram-personal/groups/:id/sync` | `contact.manage` | Kích hoạt tác vụ nền cào danh sách thành viên nhóm |
-| `GET` | `/api/v1/telegram-personal/groups/:id/members?page=&page_size=` | `contact.view` | Xem danh sách thành viên đã cào về kèm phân trang chuẩn `pkg/pagination` |
-
----
-
-### 7.5 Quy Tắc An Toàn Khi Cào Thành Viên (Anti-Flood Wait Guard)
-
-1. **Telegram `FLOOD_WAIT_X` Handling:**
-   - Khi quét danh sách thành viên số lượng lớn, nếu Telegram trả về lỗi `FLOOD_WAIT_X`, daemon bắt buộc phải sleep đúng số giây `X` theo chỉ định của server Telegram trước khi tiếp tục, tuyệt đối không gửi request dồn dập.
-2. **Pacing & Batch Delay:**
-   - Mỗi lần lấy 200 thành viên (`batch_size = 200`), daemon tự động nghỉ giãn cách **2s - 3s** trước khi gọi trang tiếp theo.
-3. **Daily Scraping Cap:**
-   - Giới hạn tối đa **5.000 thành viên/ngày/nick** để giữ tài khoản hoàn toàn nằm trong ngưỡng an toàn của Telegram Anti-Abuse System.
