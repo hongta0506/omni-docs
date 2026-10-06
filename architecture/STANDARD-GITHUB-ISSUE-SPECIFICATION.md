@@ -120,3 +120,60 @@ For **EVERY** endpoint that returns a list, collection, or search result:
 2. **Leaving Generic Pagination Placeholders:** Never write simply "pagination support". Specify query params and response shape.
 3. **Closing with Unchecked Items:** Never close an issue with remaining `- [ ]`. Any uncompleted feature must be spun off into a new tracked issue before closing.
 4. **Permitting Boundary Leaks:** Never leave the `Affected Submodule & Strict File Boundaries` section empty or vague.
+---
+
+## 5. Standard Frontend Issue Specification (`omni-web` Mandatory)
+
+Every frontend issue created on `hongta0506/omni-web` **MUST** follow this structured template:
+
+```markdown
+## Context & Business Goal
+[Clearly describe the user workflow, business objective, and target UI views.]
+
+## Affected Modules & Strict File Boundaries
+> **FRONTEND REPO ISOLATION (CRITICAL):**
+> AI Agents must operate strictly within `omni-web` frontend paths. STRICTLY PROHIBITED: Inserting Go code, SQL schemas, or backend DDL into this issue.
+
+- **Views:** `src/views/<FeatureView>.vue`
+- **Components:** `src/components/<feature>/<component>.vue`
+- **Composables / State:** `src/composables/<use-feature>.ts`, `src/stores/<feature>.ts`
+- **Types / DTOs:** `src/types/<feature>.ts`
+- **API Services:** `src/api/<feature>.ts`
+- **Forbidden Area:** [Out-of-scope views, stores, or backend repositories.]
+
+## UI/UX Specifications & State Machine (UX/UI Pro Max)
+1. **Loading State:** Skeleton loaders (`v-skeleton-loader`) matching data shapes.
+2. **Empty State:** Contextual icon, informative title, actionable description, CTA button.
+3. **Error State:** Real HTTP status codes handled via alerts/toasts with Retry action.
+4. **Active / Populated State:** Dense, readable tables/cards with formatted timestamps and status chips.
+5. **In-Action / Progress State:** Disabled buttons with loading spinners or progress bars (`v-progress-linear`).
+
+## Design System & Component Requirements
+- **Framework:** Vuetify 3 / Lucide icons.
+- **Theme Tokens:** Standard Vuetify semantic tokens, zero arbitrary inline style overrides.
+- **Micro-Interactions:** Tooltips on icon buttons, `v-dialog` confirmation before destructive actions.
+
+## API Contract & Anti-Cheat Zero Mock
+> **CRITICAL ANTI-CHEAT:** Never inject dummy data arrays `[...]` or fake objects. Every network call must hit backend endpoints or surface real HTTP errors.
+
+- List relevant backend endpoints (e.g. `GET /api/v1/...`, `POST /api/v1/...`).
+- Specify TypeScript DTO interfaces.
+
+## Frontend Quality & Performance Rules
+- [ ] **Type-Safety:** 100% TypeScript typed, zero `any` without type guard, `pnpm run build` passes with 0 errors.
+- [ ] **Resource Cleanup:** Clean up EventBus, Socket.IO, intervals in `onUnmounted()`.
+- [ ] **Zero Silent Mock:** Propagate genuine HTTP errors to UI toasts/alerts.
+- [ ] **Server-Side Pagination:** Flat lists must use `page` & `limit` server-side pagination.
+
+## Acceptance Criteria
+- [ ] Component & layout checklist
+- [ ] User interaction & dialog checklist
+- [ ] Realtime socket / API integration checklist
+- [ ] Quality gate pass (`pnpm run build` and unit tests)
+
+## Git Workflow
+```bash
+git checkout staging && git pull origin staging
+git checkout -b feat/<issue-number>-<short-kebab-desc>
+```
+```
