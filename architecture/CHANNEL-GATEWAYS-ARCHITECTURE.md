@@ -174,7 +174,25 @@ Dành cho doanh nghiệp sử dụng WhatsApp Business Account chính thống:
 
 ---
 
-## 4. Egress Proxy Management & Account Security
+## 4. Telegram Personal Integration (gotd/td MTProto Daemon & Lead Scraping)
+
+> **Tài liệu đặc tả chi tiết:** [`contexts/02-channel/telegram-personal-gateway-spec.md`](../contexts/02-channel/telegram-personal-gateway-spec.md) (`SPEC-CHANNEL-TG-001`)  
+> **Container:** `telegram-gateway` (Go thuần độc lập, kết nối `omni-core` qua Connect-RPC/gRPC)
+
+### 4.1 Kiến Trúc & Ranh Giới Kỹ Thuật
+- **Giao thức:** Nhị phân MTProto 2.0 (TCP / TLS Port 443) thông qua thư viện Go thuần [`gotd/td`](https://github.com/gotd/td) (Zero CGO, Zero C++).
+- **Cơ chế Đăng nhập:** Quét mã QR native (`auth/qrlogin`) trực tiếp bằng app Telegram trên điện thoại (`Settings` -> `Devices` -> `Link Desktop Device`).
+- **Cơ chế Realtime Inbound:** Duy trì TCP Socket 24/7 với Telegram Data Center, server Telegram chủ động push gói tin `tg.Updates` tới daemon, độ trễ < 50ms về `TakeoverWSHub`.
+- **Cơ chế Outbound An Toàn:** Tự động điều tiết nhịp gửi tin kèm Safety Jitter (3s - 7s), giới hạn tối đa 25 tin nhắn mới/ngày cho người lạ.
+
+### 4.2 Thu Lead Tự Động Từ Nhóm (Group & Channel Member Scraping)
+- **Supergroup (Nhóm chat):** Cào toàn bộ danh sách thành viên (`channels.GetParticipants`) với iterator helper, phân trang batch 200 kèm độ trễ 2s-3s (Anti-Flood Wait).
+- **Broadcast Channel (Kênh phát tin):** Cào danh sách Subscribers khi tài khoản là Admin.
+- **Quy chuẩn ADR-ARCH-009:** Toàn bộ thành viên cào về được nạp tự động vào **Lead Pool** (`contacts.status = 'lead'`, `leads.stage = 'new'`, `score = 10`). Tuyệt đối không gán nhãn `customer` khi chưa phát sinh giao dịch.
+
+---
+
+## 5. Egress Proxy Management & Account Security
 
 Nhằm tránh việc nhiều tài khoản Zalo/Telegram cùng phát sinh traffic từ một IP duy nhất của máy chủ trung tâm:
 1. **Dynamic Proxy Binding**: Mỗi `channel_account` được liên kết với một Proxy cụ thể trong `admin/egress` (HTTP/SOCKS5 có xác thực).
@@ -185,11 +203,11 @@ Nhằm tránh việc nhiều tài khoản Zalo/Telegram cùng phát sinh traffic
 
 ---
 
-## 5. Universal Channel QR Login & Realtime Session Handshake Standard (Zalo, WhatsApp, Telegram)
+## 6. Universal Channel QR Login & Realtime Session Handshake Standard (Zalo, WhatsApp, Telegram)
 
 > **Mục tiêu kiến trúc:** Chuẩn hóa quy trình đăng nhập bằng mã QR giữa **Client Web (`omni-web`)**, **Core Backend (`omni-core`)**, và **Sidecar Gateway Daemon (`zca-js`, `Baileys`, `MTProto`)**. Đảm bảo trải nghiệm realtime liền mạch (Zero Polling Lag), không rò rỉ bộ nhớ (Zero Memory Leak) và tái sử dụng 100% mẫu thiết kế cho mọi kênh hội thoại không chính thức (Unofficial Channels).
 
-### 5.1 Kiến Trúc Luồng Sự Kiện Đăng Nhập (Universal Sequence Flow)
+### 6.1 Kiến Trúc Luồng Sự Kiện Đăng Nhập (Universal Sequence Flow)
 
 ```
 [ Client: omni-web ]          [ Core: omni-core ]          [ Gateway Daemon ]          [ 3rd-party Platform ]
@@ -398,12 +416,3 @@ Khác với Zalo OA sử dụng webhook HTTP từ Zalo Developer Portal, **Zalo 
      ```json
      [{"url": "https://photo-stal-...", "type": "image"}]
      ```
-
-### 8.3 Chuẩn Hóa Payload & API Parity với Node.js Cũ
-Để đảm bảo Frontend Vue (`omni-web`) hoạt động chính xác 100% không bị miss field:
-1. **Metadata Persistence**:
-   - Lưu trữ `quote` (thông tin reply: `ownerId`, `msg`, `ts`, `globalMsgId`, `cliMsgId`).
-   - Lưu trữ `mentions` (mảng vị trí @tag trong group: `[{ uid, pos, len, type }]`).
-   - Lưu `metadata.sender = { kind: "user_native", name: "...", syncedFromNative: true }` cho tin nhắn do chính chủ gửi từ ứng dụng Zalo thật để `MessageSourceBadge.vue` render "👤 Sale CRM · {tên} 🔄".
-2. **DTO Contract Endpoint `GET /api/v1/conversations/:id/messages`**:
-   - Trả ra đầy đủ các trường: `id`, `conversationId`, `zaloMsgId` (chính là `channel_message_id`), `zaloCliMsgId`, `senderId`, `senderUid`, `senderType` (`self` | `contact`), `senderName`, `sentVia` (`user_native` | `user`), `content`, `contentType`, `status`, `sentAt`, `createdAt`, `quote`, `mentions`, `attachments`, `metadata`.
