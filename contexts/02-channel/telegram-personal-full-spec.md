@@ -230,6 +230,76 @@ Sticker trong Telegram được đóng gói dưới dạng `Document` kèm thu�
      }
      ```
 
+### 5.4 Đặc Tả Đồng Bộ Avatar Cá Nhân, Hội Thoại & Thành Viên Nhóm (Profile & Chat Photos)
+Telegram không trả về CDN URL trực tiếp như Zalo hay Meta mà đóng gói ảnh đại diện thành cấu trúc nhị phân MTProto (`UserProfilePhoto` / `ChatPhoto`). Hệ thống bắt buộc phải giải mã và đồng bộ ảnh qua luồng xử lý sau:
+
+1. **Avatar Tài Khoản Cá Nhân (`channel_accounts.avatar_url`)**:
+   - Khi quét mã QR hoặc đăng nhập thành công (`ExportLoginQR`), lấy `u.Photo` từ `*tg.User`.
+   - Nếu `u.Photo` thuộc kiểu `*tg.UserProfilePhoto`:
+     - Trích xuất `PhotoID`.
+     - Kiểm tra cache / storage: Nếu file ảnh ứng với `PhotoID` đã tồn tại trên server/S3, tái sử dụng URL cũ (chống tải lặp lại).
+     - Nếu chưa có: Tải binary qua MTProto API `UploadGetFile` với `InputPeerPhotoFileLocation` (Peer: `InputPeerSelf`, PhotoID: `u.Photo.PhotoID`, Big: `false` để lấy thumbnail 160x160 hoặc Big: `true` cho ảnh chuẩn).
+     - Lưu binary vào Media Storage (`LocalStorage` trên server hoặc S3).
+     - Cập nhật URL công khai vào `channel_accounts.avatar_url`.
+
+2. **Avatar Hội Thoại & Nhóm Chat (`conversations.metadata.avatar_url`)**:
+   - Khi quét danh sách hội thoại (`FetchDialogs`), phân loại theo Peer:
+     - User Chat: Trích xuất `u.Photo` (`*tg.UserProfilePhoto`).
+     - Group / Supergroup / Channel: Trích xuất `ch.Photo` (`*tg.ChatPhoto`).
+   - Tải ảnh đại diện kích thước nhỏ (`small`) qua MTProto `UploadGetFile`.
+   - Lưu trữ vào Media Storage theo định dạng key: `telegram/avatars/dialogs/{peer_id}_{photo_id}.jpg`.
+   - Trả về trong struct `teledom.TelegramDialog.AvatarURL`.
+   - `telegram_sync_worker` nạp URL này vào `conversations.metadata` (`{"avatar_url": "..."}`) và cập nhật `contacts.avatar_url` (đối với hội thoại 1-1).
+
+3. **Avatar Thành Viên Nhóm (`channel_group_members.avatar_url`)**:
+   - Khi cào danh sách thành viên nhóm (`ScrapeGroupParticipants` / `channels.getParticipants`), duyệt danh sách `users []tg.UserClass`.
+   - Với mỗi thành viên có `u.Photo`:
+     - Tải thumbnail avatar hoặc trích xuất vị trí file MTProto.
+     - Lưu vào Media Storage và điền URL thật vào struct `teledom.ScrapedGroupMember.AvatarURL`.
+     - `postgres_repository` ghi nhận `AvatarURL` vào bảng `channel_group_members` (thay vì để chuỗi rỗng `""`).
+
+### 5.5 Kiến Trúc Media Storage Đa Tầng & Cơ Chế Server Disk Fallback (S3 vs Local Storage)
+Hệ thống thiết kế trừu tượng hóa tầng lưu trữ tệp đa phương tiện qua `StoragePort` (`pkg/storage`):
+
+```go
+type StoragePort interface {
+    // Save lưu dữ liệu binary và trả về URL công khai truy cập được
+    Save(ctx context.Context, relativePath string, data []byte, contentType string) (publicURL string, error)
+    // Get đọc dữ liệu binary từ storage
+    Get(ctx context.Context, relativePath string) (io.ReadCloser, string, error)
+    // Exists kiểm tra tệp đã tồn tại chưa (dùng cho deduplication/cache)
+    Exists(ctx context.Context, relativePath string) (bool, error)
+}
+```
+
+**Chiến lược thích ứng (Adaptive Fallback Strategy):**
+1. **Ưu tiên Cloud Object Storage (S3 / MinIO / Cloudflare R2)**:
+   - Kích hoạt khi có cấu hình biến môi trường: `STORAGE_DRIVER=s3` hoặc có `AWS_S3_BUCKET` + `AWS_ENDPOINT`.
+   - Tải file lên bucket S3 theo prefix chỉ định. URL trả về dạng CDN: `https://media.domain.com/{relativePath}`.
+2. **Cơ Chế Dự Phòng Lưu Trực Tiếp Trên Server (Local Disk Fallback - BẮT BUỘC KHI CHƯA CÓ S3)**:
+   - **Mặc định kích hoạt**: Khi chưa có hoặc thiếu cấu hình S3, hệ thống tự động fallback sang `LocalStorage`.
+   - **Đường dẫn vật lý trên server**: Lưu trữ tại `./data/storage/{relativePath}` (hoặc đường dẫn cấu hình qua `STORAGE_LOCAL_DIR`). Tự động khởi tạo cây thư mục bằng `os.MkdirAll`.
+   - **Cơ chế phục vụ tệp (HTTP File Serving)**: Hệ thống mở route HTTP nội bộ phục vụ static file:
+     `GET /api/v1/media/files/*` hoặc `GET /media/*`.
+   - **Định dạng URL công khai trả về**:
+     - Cấu hình domain: `fmt.Sprintf("%s/api/v1/media/files/%s", appBaseURL, relativePath)`
+     - Mặc định local/dev: `http://localhost:8080/api/v1/media/files/telegram/avatars/{filename}`.
+   - **Bảo mật & MIME**: Sử dụng `http.DetectContentType` xác định MIME chuẩn (`image/jpeg`, `image/png`, `image/webp`). Chống tấn công Path Traversal qua `filepath.Clean`.
+
+### 5.6 Xử Lý Binary Media Trong Tin Nhắn MTProto (Inbound & Outbound Photo Streaming)
+1. **Nhận Tin Nhắn Ảnh Đến (Inbound Photo)**:
+   - Khi nhận sự kiện `*tg.Message` chứa `*tg.MessageMediaPhoto`:
+     - **NGHIÊM CẤM** trả về fake URI nội bộ `tg://photo/{id}` vì trình duyệt web không thể hiển thị.
+     - Sử dụng MTProto Downloader (`gotd/td/telegram/downloader`) tải binary ảnh bản kích thước lớn nhất (`PhotoSize.Type = "y"` hoặc `"x"`).
+     - Đẩy binary vào `StoragePort` (Local Server Disk hoặc S3) với đường dẫn `telegram/messages/photos/{account_id}_{photo_id}.jpg`.
+     - Lưu URL HTTP thật vào cột `media_url` của bảng `messages` để Web Chat hiển thị lập tức qua thẻ `<img>`.
+2. **Gửi Tin Nhắn Ảnh Đi (Outbound Photo)**:
+   - API `POST /api/v1/telegram-personal/messages/send-media` nhận `media_url`.
+   - Outbound Driver hỗ trợ 2 nguồn ảnh:
+     - Nguồn HTTP/HTTPS từ xa: Tải binary qua HTTP client có timeout/resilience.
+     - Nguồn file nội bộ server (Local Disk Fallback): Đọc trực tiếp từ đường dẫn máy chủ mà không cần loopback HTTP request.
+     - Nạp binary vào MTProto Uploader (`uploader.NewUploader`) và gửi qua `MessagesSendMedia`.
+
 ---
 
 ## 6. Đặc Tả Chiều Gửi Tin Nhắn Đa Phương Tiện (Outbound Media & Sticker Dispatch)
