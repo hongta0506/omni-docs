@@ -292,6 +292,51 @@ Triển khai nghiêm ngặt theo khuyến cáo từ [`gotd/td/SUPPORT.md`](https
 
 ---
 
+
+---
+
+### 7.3 Phân Loại Hội Thoại Telegram trong Hộp Thư Hợp Nhất (1-1 Chat, Supergroup & Broadcast Channel)
+
+> **Mục tiêu:** Cung cấp đầy đủ siêu dữ liệu nhận diện trên giao diện (`omni-web`) để nhân viên và hệ thống phân biệt rõ ràng 3 hình thái hội thoại: Chat 1-1 với khách, Nhóm thảo luận cộng đồng (Supergroup), và Kênh phát tin tức 1 chiều (Broadcast Channel).
+
+#### 1. Ma Trận Phân Loại 3 Hình Thái Hội Thoại Telegram
+
+| Tiêu chí | Chat 1-1 (Direct Message) | Nhóm Chat (Supergroup / Group) | Kênh Phát Tin (Broadcast Channel) |
+|---|---|---|---|
+| **MTProto Peer Class** | `*tg.PeerUser` | `*tg.PeerChat` hoặc `*tg.PeerChannel` (`ch.Megagroup == true` hoặc `!ch.Broadcast`) | `*tg.PeerChannel` (`ch.Broadcast == true`) |
+| **Giá trị `threadType`** | `"user"` | `"group"` | `"channel"` |
+| **Giá trị `telegramType`** | `"user"` | `"group"` / `"supergroup"` | `"channel"` |
+| **Biểu tượng UI (Icon)** | Avatar cá nhân + Icon Telegram | 👥 `mdi-account-group` / Icon Nhóm Telegram | 📢 `mdi-bullhorn-outline` / Loa phát thanh Telegram |
+| **Hiển thị Số thành viên** | 1 người | Hiển thị badge: `N thành viên` (`member_count`) | Hiển thị badge: `N người theo dõi` (Subscribers) |
+| **Quyền soạn tin (Composer)** | Cho phép gửi 2 chiều bình thường | Cho phép gửi tin nhắn nhóm (hỗ trợ @mention) | **Chỉ Admin/Creator mới được gửi.** Nếu tài khoản chỉ là Member/Subscriber: Khóa thanh soạn thảo, hiển thị banner *"📢 Kênh phát tin tức — Bạn chỉ có quyền đọc tin, chỉ Quản trị viên mới được đăng bài"*. |
+
+#### 2. Chuẩn Dữ Liệu Trả Về API (`GET /api/v1/conversations`)
+Khi trả danh sách hội thoại cho `omni-web`, backend (`internal/conversation/interfaces/http/handler.go`) phải bóc tách `metadata` của cuộc trò chuyện và serialize ra:
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "channel": "telegram",
+  "channelType": "telegram",
+  "threadType": "group",
+  "telegramType": "supergroup",
+  "memberCount": 1540,
+  "canSend": true,
+  "title": "Cộng đồng AI & Automation Việt Nam",
+  "lastMessageSnippet": "Xin chào cả nhà...",
+  "unreadCount": 3
+}
+```
+
+#### 3. Quy Tắc Giao Diện `omni-web` (`ConversationList.vue` & `MessageThread.vue`):
+1. **Cột Danh sách Hội thoại (`ConversationList.vue`):**
+   - Nếu `conv.channel === 'telegram'`:
+     - `conv.threadType === 'user'`: Hiển thị icon Telegram nhỏ tại góc avatar cá nhân.
+     - `conv.threadType === 'group'`: Hiển thị icon 👥 trước tiêu đề + badge số lượng thành viên (`N thành viên`).
+     - `conv.threadType === 'channel'`: Hiển thị icon 📢 trước tiêu đề + badge kênh phát sóng (`N theo dõi`).
+2. **Khung Chat Chi Tiết (`MessageThread.vue`):**
+   - Header hiển thị chip phân loại trực quan: `[👥 Nhóm Telegram: 1,540 thành viên]` hoặc `[📢 Kênh Telegram: 10,200 người theo dõi]`.
+   - Nếu `threadType === 'channel'` và `canSend === false`: Khóa composer, thay thế bằng banner thông báo chế độ chỉ đọc (Read-only Channel).
+
 ## 8. Đối Soát Trạng Thái Implementation & Phân Tích Khoảng Trống (Audit Status & Gap Analysis)
 
 Kiểm tra toàn diện source code `internal/channel/interfaces/http/telegram/telegram_handler.go`, `native_gotd_client.go`, `postgres_repository.go` và `telegram_sync_worker.go`:
