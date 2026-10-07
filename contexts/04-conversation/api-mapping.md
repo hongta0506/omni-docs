@@ -24,6 +24,7 @@
 | `GET` | `/api/v1/conversations` | `queries.ListConversationsHandler` | `ConversationService.ListConversations` | Lấy danh sách hội thoại theo bộ lọc (kênh, chưa đọc, tag, folder) |
 | `POST` | `/api/v1/conversations` | `commands.CreateConversationHandler` | `ConversationService.CreateConversation` | Khởi tạo cuộc hội thoại mới với khách hàng |
 | `GET` | `/api/v1/conversations/:id` | `queries.GetConversationHandler` | `ConversationService.GetConversation` | Xem chi tiết cuộc hội thoại và thông tin profile khách |
+| `DELETE` | `/api/v1/conversations/:id` | `commands.DeleteConversationHandler` | `ConversationService.DeleteConversation` | Xóa mềm cuộc hội thoại (`status = 'deleted'`) |
 | `PUT` | `/api/v1/conversations/:id/assign` | `commands.AssignConversationHandler` | `ConversationService.AssignConversation` | Gán cuộc hội thoại cho nhân viên tư vấn |
 | `PUT` | `/api/v1/conversations/:id/status` | `commands.UpdateConversationStatusHandler` | `ConversationService.UpdateStatus` | Đổi trạng thái (Open, Closed, Spam, Archive) |
 | `POST` | `/api/v1/conversations/:id/read` | `commands.MarkAsReadHandler` | `ConversationService.MarkAsRead` | Đánh dấu đã đọc toàn bộ tin nhắn trong hội thoại |
