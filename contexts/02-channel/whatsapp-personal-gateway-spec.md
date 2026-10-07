@@ -303,4 +303,77 @@ Response:
 | **Session Store** | Dự kiến mount sqlite file ngoài container | Dùng `sqlstore.New("postgres", dbConnStr)` hoặc lưu credentials vào Bun DB |
 | **QR Code Engine** | Chưa có code Go, phụ thuộc daemon ngoài | Dùng kênh `client.GetQRChannel(context.Background())` sinh Base64 QR code |
 | **Inbound Handler** | Chỉ có stub xử lý webhook/stream | Gắn `client.AddEventHandler` hứng `events.Message` đẩy trực tiếp DB & SocketIO |
-| **Outbound Dispatcher** | Client gRPC rỗng | Dùng `client.SendMessage(recipientJID, &waProto.Message{...})` |
+| **Outbound Dispatcher** | Client gRPC rỗng | Dùng `WhatsAppOutboundDispatcher` lắng nghe NSQ `whatsapp.outbound.messages` gọi `whatsmeow.Client.SendMessage` |
+
+---
+
+## 8. Kiến Trúc NSQ Outbound Message Dispatcher & Transactional Outbox
+
+Tương tự cơ chế điều phối tin nhắn ngoại vi của Zalo và Telegram, WhatsApp Personal bắt buộc phải có pipeline gửi tin bất đồng bộ chuẩn hóa qua Transactional Outbox và NSQ:
+
+### 8.1 Sơ Đồ Pipeline Điều Phối Tin Nhắn Ngoại Vi (Outbound Dispatch Pipeline)
+
+```
+[Web Chat UI] (POST /api/v1/conversations/{id}/messages)
+       │
+       ▼
+[Conversation HTTP Handler]
+       ├─► INSERT INTO messages (status = 'sending')
+       ├─► INSERT INTO outbox_events (event_type = 'WHATSAPP_MESSAGE_DISPATCH_REQUESTED', status = 'PENDING')
+       ├─► (Async / Non-blocking) Publish NSQ Topic: whatsapp.outbound.messages
+       └─► (Fallback nếu NSQ nil/lỗi): Direct sync call waRepo.SendMessage(...)
+              │
+              ▼ (NSQ Message Queue)
+[WhatsAppOutboundDispatcher Worker] (channel: whatsapp-dispatcher, 4 workers)
+       ├─► Unmarshal WhatsAppOutboundTask
+       ├─► FindByID(tenantUUID, accountUUID)
+       ├─► resilience.ExecuteWithRetry(maxRetries = 3, backoff = 500ms..2s)
+       │     └─► waRepo.SendMessage(accountID, recipientJID, content)
+       ├─► SUCCESS:
+       │     ├─► UPDATE messages SET status = 'delivered', channel_message_id = sentMsgID
+       │     ├─► UPDATE outbox_events SET status = 'PROCESSED', processed_at = now
+       │     └─► Audit Log: WHATSAPP_MESSAGE_DISPATCH_SUCCESS
+       └─► FAILED / MAX RETRIES EXHAUSTED:
+             ├─► UPDATE messages SET status = 'failed'
+             ├─► UPDATE outbox_events SET status = 'DEAD_LETTER', processed_at = now
+             └─► Audit Log: WHATSAPP_MESSAGE_DISPATCH_FAILED
+```
+
+### 8.2 Định Nghĩa Task & NSQ Topic
+
+- **Topic:** `whatsapp.outbound.messages` (`pkgnsq.TopicWhatsAppOutboundMessages`)
+- **Channel:** `whatsapp-dispatcher` (`pkgnsq.ChannelWhatsAppDispatcher`)
+- **Payload Struct (`WhatsAppOutboundTask`):**
+
+```go
+type WhatsAppOutboundTask struct {
+    OutboxEventID  uuid.UUID `json:"outboxEventId"`
+    MessageID      uuid.UUID `json:"messageId"`
+    ConversationID uuid.UUID `json:"conversationId"`
+    TenantID       string    `json:"tenantId"`
+    AccountID      string    `json:"accountId"`
+    RecipientJID   string    `json:"recipientJid"`
+    Content        string    `json:"content"`
+    MediaType      string    `json:"mediaType,omitempty"`
+    MediaURL       string    `json:"mediaUrl,omitempty"`
+}
+```
+
+### 8.3 Wiring vào Vòng Đời Hệ Thống (`cmd/server/main.go`)
+
+1. Khởi tạo `WhatsAppOutboundDispatcher`:
+   ```go
+   if nsqClient != nil {
+       waOutboundDispatcher := chandisp.NewWhatsAppOutboundDispatcher(nsqClient, waRepo, bundb)
+       if err := waOutboundDispatcher.Start(); err != nil {
+           slog.Warn("failed to start whatsapp outbound dispatcher", "err", err)
+       } else {
+           slog.Info("whatsapp outbound dispatcher worker started (topic: whatsapp.outbound.messages, chan: whatsapp-dispatcher)")
+       }
+   }
+   ```
+2. Inject adapter vào `ConversationHTTPHandler`:
+   ```go
+   convHTTP.WithWhatsAppClient(waRepo)
+   ```
+
