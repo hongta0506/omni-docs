@@ -13,7 +13,7 @@
 | **Zalo** | **Official (OA)** | Zalo OpenAPI v3, HTTPS Webhook | App ID + Secret, OAuth2 Access Token / Refresh Token | Không rủi ro khóa nick. Tính phí gửi tin ZNS/UID theo hạn mức Zalo Cloud. | Bị giới hạn cửa sổ phản hồi 48h, chỉ gửi tin tương tác hoặc ZNS có phí. Không đọc được tin nhắn cá nhân. |
 | **Zalo** | **Unofficial (Personal)** | WebSocket daemon (`zca-js` / TLS Node sidecar) | Quét QR Code, Session Cookie, AES Secret Key | Nguy cơ Checkpoint, ban account nếu spam hoặc đổi IP đột ngột. Cần SOCKS5 Sticky Proxy. | Đọc/gửi tin nhắn tài khoản cá nhân, quản lý nhóm bạn bè, tag bạn bè, không tốn phí ZNS. |
 | **WhatsApp** | **Official (Cloud API)** | Meta Graph API v20+, Webhooks | Meta App Token, System User Token, WABA ID | Không rủi ro ban nick. Trả phí theo cuộc hội thoại (Conversation-based pricing). | Phải dùng Template Message duyệt trước nếu ngoài 24h. Chỉ chat với khách chủ động nhắn trước. |
-| **WhatsApp** | **Unofficial (Web/Baileys)** | WebSocket qua Baileys lib, Protobuf TLS | Quét QR Code / 8-digit Pairing Code | Rủi ro bị WhatsApp khóa số điện thoại (Ban JID) nếu gửi dồn dập. | Chat 1-1 tự do từ số cá nhân/doanh nghiệp không cần duyệt mẫu template, tạo/tham gia group. |
+| **WhatsApp** | **Unofficial (Personal/Native)** | WebSocket qua `go.mau.fi/whatsmeow` Go Native In-Process, Protobuf TLS | Quét QR Code / Pairing Code qua app | Rủi ro bị WhatsApp khóa số điện thoại (Ban JID) nếu gửi dồn dập. Cần SOCKS5 Sticky Proxy. | Chat 1-1 tự do từ số cá nhân/doanh nghiệp không cần duyệt mẫu template, tạo/tham gia group. |
 | **Telegram** | **Official (Bot API)** | HTTPS Long Polling / Webhook (`api.telegram.org`) | Bot Token từ `@BotFather` | Miễn phí 100%, không bị ban nick trừ khi vi phạm ToS nghiêm trọng. | Bot không thể chủ động nhắn trước cho user nếu user chưa bấm `/start`. Không đọc được chat cá nhân ngoài bot. |
 | **Telegram** | **Unofficial (Personal/MTProto)** | TDLib / MTProto TCP binary protocol | SĐT + Mã OTP SMS/Telegram, Session String | Rủi ro bị FloodWait, SpamBot gắn cờ nếu add user lạ hoặc blast tin dồn dập. | Quản lý nick cá nhân, đọc tin nhắn user/group/channel, chủ động nhắn qua username/phone. |
 | **Facebook Messenger** | **Official (Page Graph API)** | Meta Graph API / Messenger Webhook | Facebook Page Access Token, App Secret Proof | Không rủi ro khóa nick. Tuân thủ chính sách 24h Messaging Window. | Chat dưới danh nghĩa Fanpage. Ngoài 24h phải dùng Message Tags (Confirmed Event, Post Purchase) hoặc Sponsored. |
@@ -48,7 +48,7 @@ Tất cả các kênh dù là Official hay Unofficial đều phải tuân thủ 
 ## 3. Quy Tắc Phòng Thủ Kỹ Thuật Cho Hướng Unofficial
 
 1. **SOCKS5 Sticky Proxy Cố Định**:
-   - 1 tài khoản Unofficial (Zalo Personal, WhatsApp Baileys, Telegram MTProto, Instagram Private) được gán cố định 1 IP Proxy dân cư (Residential Proxy).
+   - 1 tài khoản Unofficial (Zalo Personal, WhatsApp whatsmeow, Telegram MTProto, Instagram Private) được gán cố định 1 IP Proxy dân cư (Residential Proxy).
    - Tuyệt đối không để tài khoản nhảy IP liên tục giữa các lần gửi hoặc reconnect.
 2. **Jitter Delay & Giả Lập Hành Vi Người**:
    - Hướng Unofficial không gửi tin dồn dập (Burst = 1).

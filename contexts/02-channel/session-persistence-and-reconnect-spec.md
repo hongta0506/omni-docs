@@ -91,43 +91,43 @@ sequenceDiagram
 
 ---
 
-## 3. Đặc Tả Lưu Trữ & Phục Hồi Phiên WhatsApp Personal
+## 3. Đặc Tả Lưu Trữ & Phục Hồi Phiên WhatsApp Personal (Go Native whatsmeow)
 
-### 3.1 Cấu Trúc Baileys Multi-Device State
-Bộ xác thực của Baileys gồm 2 tầng:
-1. `creds`: `AuthenticationCreds` (chứa `noiseKey`, `signedIdentityKey`, `signedPreKey`, `registrationId`, `advSecretKey`, `me: { id, name }`).
-2. `keys`: Bảng tra cứu dynamic keys (`pre-key-*`, `session-*`, `sender-key-*`, `app-state-sync-key-*`).
+### 3.1 Cấu Trúc whatsmeow Multi-Device Store
+Bộ xác thực và session state của `whatsmeow` được đóng gói trong `store.Device`:
+1. `Registration`: `RegistrationID`, `NoiseKey`, `IdentityKey`, `SignedPreKey`.
+2. `Sessions & Keys`: Được quản lý tự động bởi `whatsmeow/store/sqlstore`.
+3. `PushName & JID`: Thông tin danh tính tài khoản WhatsApp khi handshake thành công.
 
-### 3.2 Chiến Lược Lưu Trữ
-Có 2 mô hình lưu trữ được hỗ trợ:
+### 3.2 Chiến Lược Lưu Trữ với `sqlstore` (PostgreSQL)
+`whatsmeow` hỗ trợ driver SQL native. Trong Omni Core, sử dụng PostgreSQL backend dùng chung với Bun ORM:
 
-1. **Mô hình 1: Custom Auth Adapter đẩy về PostgreSQL (Khuyến nghị cho Microservices)**:
-   - Triển khai `usePostgresAuthState(db, accountId)`.
-   - Mọi thay đổi về `creds` và `keys` được serialize và upsert trực tiếp vào bảng `whatsapp_sessions`:
-   ```sql
-   CREATE TABLE IF NOT EXISTS whatsapp_sessions (
-       account_id UUID NOT NULL,
-       key_id VARCHAR(255) NOT NULL,
-       val JSONB NOT NULL,
-       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-       PRIMARY KEY (account_id, key_id)
-   );
-   ```
-2. **Mô hình 2: Persistent Volume SQLite/File per Account**:
-   - Sử dụng thư viện `useMultiFileAuthState('/data/whatsapp-sessions/' + accountId)`.
-   - Thư mục này bắt buộc phải mount vào Docker Persistent Volume để tránh mất key khi container restart.
+```go
+import (
+    "go.mau.fi/whatsmeow/store/sqlstore"
+    waLog "go.mau.fi/whatsmeow/util/log"
+)
+
+// Khởi tạo container dùng chung connection pool PostgreSQL
+container, err := sqlstore.New("postgres", dbConnString, waLog.Stdout("Database", "INFO", true))
+if err != nil {
+    return err
+}
+
+// Khởi tạo hoặc lấy lại device store của tài khoản
+deviceStore, err := container.GetFirstDevice() // hoặc container.GetDeviceByJID(jid)
+client := whatsmeow.NewClient(deviceStore, waLog.Stdout("Client", "INFO", true))
+```
 
 ### 3.3 Cố Định Browser Fingerprint WhatsApp
-Khi khởi tạo kết nối qua Baileys:
-```typescript
-const { state, saveCreds } = await usePostgresAuthState(pool, accountId);
+Khi khởi tạo kết nối qua `whatsmeow`, cố định thuộc tính client nhận diện phần cứng/trình duyệt:
+```go
+import "go.mau.fi/whatsmeow/store"
 
-const sock = makeWASocket({
-    auth: state,
-    browser: ['Omni Channel', 'Chrome', '128.0.0.0'], // BẮT BUỘC CỐ ĐỊNH, KHÔNG DÙNG Browsers.appropriate()
-    printQRInTerminal: false,
-    syncFullHistory: false, // Tránh crash memory khi tải lịch sử cũ
-});
+// BẮT BUỘC CỐ ĐỊNH, KHÔNG DÙNG random props
+store.DeviceProps.Os = "Mac OS"
+store.DeviceProps.PlatformType = waProto.DeviceProps_CHROME.Enum()
+store.DeviceProps.RequireFullSync = proto.Bool(false) // Tránh crash memory khi tải lịch sử cũ
 ```
 
 ---

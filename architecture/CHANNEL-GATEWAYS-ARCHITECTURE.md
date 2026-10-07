@@ -103,61 +103,44 @@ Tương tự Zalo (Zalo Personal vs Zalo OA), WhatsApp được phân rã thành
 
 | Đặc tính | WhatsApp Personal (Unofficial) | WhatsApp Official (Cloud API / WABA) |
 |---|---|---|
-| **Cơ chế xác thực** | Quét QR Code qua Web Multidevice (Baileys / whatsmeow) | Meta System User Token / WABA OAuth Signup |
-| **Giao thức vận hành** | gRPC Daemon Sidecar + Noise Protocol over WS | HTTPS REST Meta Graph API + Webhook Inbound |
+| **Cơ chế xác thực** | Quét QR Code qua Web Multidevice (whatsmeow Go native) | Meta System User Token / WABA OAuth Signup |
+| **Giao thức vận hành** | Go Native In-Process (`go.mau.fi/whatsmeow`) + Noise Protocol over WS | HTTPS REST Meta Graph API + Webhook Inbound |
 | **Chi phí gửi tin** | Miễn phí (chỉ tốn chi phí hạ tầng / Proxy) | Trả phí theo phiên hội thoại Meta (Conversation-based) |
 | **Rủi ro vận hành** | Nguy cơ bị khóa số nếu gửi spam hoặc thiếu Proxy xoay IP | Không rủi ro khóa số, tuân thủ chính sách Meta |
 | **Mẫu tin nhắn** | Gửi tự do văn bản, media không cần duyệt | Bắt buộc đăng ký và duyệt Template trước khi gửi |
 | **Cửa sổ gửi tin** | Không giới hạn thời gian phản hồi | Giới hạn 24h kể từ tin nhắn cuối của khách hàng |
 
-### 3.2 WhatsApp Personal Daemon (gRPC & Baileys / whatsmeow)
+### 3.2 WhatsApp Personal Native Engine (`go.mau.fi/whatsmeow` In-Process)
 
-WhatsApp Personal được quản lý qua microservice daemon (Node.js/Baileys hoặc Go/whatsmeow), kết nối với Go Core qua gRPC hai chiều (Bi-directional gRPC Streaming):
+Tương tự Zalo (`zcago`) và Telegram (`gotd/td`), WhatsApp Personal vận hành theo kiến trúc **Go Native In-Process** nhúng trực tiếp trong `omni-core` (`internal/channel/infrastructure/whatsapp/`), loại bỏ hoàn toàn daemon sidecar/Baileys Node.js phụ thuộc bên ngoài:
 
 ```
-[ Go Core: omni-core ]
-       │
-       │ (1) gRPC: StartInstance(instance_id)
-       ▼
-[ WhatsApp Gateway Service ]
-       │
-       │ (2) Generates QR / Session State
-       ▼
-[ Go Core: Inbound Event Subscriber ]
-       │
-       │ (3) Broadcasts via WebSocket
-       ▼
-[ Frontend: omni-web ] (Hiển thị QR để người dùng quét)
+┌────────────────────────────────────────────────────────────────────────┐
+│                      OMNI CORE (internal/channel)                      │
+│                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ NativeWhatsmeowClient Manager (go.mau.fi/whatsmeow)               │  │
+│  │ - Client instance per WhatsApp Personal Account in RAM           │  │
+│  │ - Persistent Session Store: PostgreSQL / SQLite (sqlstore)       │  │
+│  │ - Noise Protocol over WebSocket directly to WhatsApp Web Servers │  │
+│  │ - SOCKS5 / HTTP Proxy per-nick allocation (SPEC 056)             │  │
+│  │ - QR Code Event Channel via SSE / Polling                        │  │
+│  │ - Inbound Event Dispatcher -> DB (conversations, messages)       │  │
+│  │                             -> SocketIO Broadcast Hub            │  │
+│  └──────────────────────────────────┬───────────────────────────────┘  │
+└─────────────────────────────────────┼──────────────────────────────────┘
+                                      │ Noise Protocol over WS (WSS Port 443)
+                                      │ Đi qua Residential Proxy SOCKS5
+                                      ▼
+                        WHATSAPP MULTI-DEVICE SERVERS
+                             (c.whatsapp.net)
 ```
 
-#### Protobuf Service Contract (Personal Daemon)
-
-```protobuf
-syntax = "proto3";
-
-package whatsapp.v1;
-
-option go_package = "omni-core/gen/whatsapp/v1;whatsappv1";
-
-service WhatsAppGatewayService {
-  rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse);
-  rpc StopInstance(StopInstanceRequest) returns (StopInstanceResponse);
-  rpc GetInstanceStatus(GetInstanceStatusRequest) returns (GetInstanceStatusResponse);
-  rpc SubscribeEvents(SubscribeEventsRequest) returns (stream WhatsAppEvent);
-  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
-}
-
-message StartInstanceRequest {
-  string instance_id = 1;
-  string webhook_url = 2;
-}
-
-message WhatsAppEvent {
-  string instance_id = 1;
-  string event_type = 2; // QR_CODE, READY, MESSAGE_RECEIVED, DISCONNECTED
-  bytes payload = 3;
-}
-```
+#### Ưu Điểm Kiến Trúc Go Native In-Process:
+1. **Zero External Daemon:** Không cần duy trì container Node.js/Baileys riêng hay RPC hop trung gian, tiết kiệm tài nguyên RAM/CPU.
+2. **Type-Safe & High Performance:** Thư viện Go thuần `whatsmeow` xử lý mã hóa E2E (Signal Protocol / Noise Handshake) với hiệu năng cao, goroutine per-account nhẹ và ổn định.
+3. **Session Persistence Chuẩn:** Sử dụng `whatsmeow/store/sqlstore` gắn trực tiếp vào PostgreSQL backend hoặc encrypted credentials trong `channel_accounts`.
+4. **Đồng Bộ Kiến Trúc Đa Kênh:** Thống nhất 3 kênh Personal không chính thức (Zalo `zcago`, Telegram `gotd/td`, WhatsApp `whatsmeow`) đều chạy chung mô hình Native In-Process trong `omni-core`.
 
 ### 3.3 WhatsApp Official Cloud API (WABA)
 

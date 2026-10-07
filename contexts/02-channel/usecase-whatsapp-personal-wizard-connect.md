@@ -8,11 +8,12 @@ WhatsApp Personal (Unofficial) cho phép doanh nghiệp kết nối trực tiế
 - Giữ nguyên danh bạ và các cuộc trò chuyện lịch sử trên điện thoại của nhân viên.
 - Chi phí vận hành thấp (chỉ bao gồm hạ tầng container và Egress Proxy).
 
-### 1.2 Kiến Trúc Container Sidecar & whatsmeow
-Hệ thống tuân thủ **Universal Social Gateway Architecture** của Omni Core:
-- **Core Application (`omni-core`)**: Chứa logic nghiệp vụ, quản lý tài khoản (`ChannelAccount`), phân quyền Tenant và định tuyến tin nhắn. Hoàn toàn độc lập với giao thức mạng xã hội.
-- **WhatsApp Gateway Daemon (`gateways/whatsapp/`)**: Microservice viết bằng Go thuần dựa trên thư viện `go.mau.fi/whatsmeow`. Đóng gói Docker container riêng (`whatsapp-gateway:3001`), lưu trữ session bằng SQLite persistent volume.
-- **Giao Tiếp Inter-Service**: Kết nối với Core qua giao thức **Connect-RPC / gRPC** hai chiều (`ChannelGatewayService` theo schema `api/proto/channel/v1/gateway.proto`).
+### 1.2 Kiến Trúc Go Native In-Process & whatsmeow
+Hệ thống tuân thủ **Universal Social Gateway Architecture** của Omni Core, tương tự Zalo (`zcago`) và Telegram (`gotd/td`):
+- **Core Application (`omni-core`)**: Chứa logic nghiệp vụ, quản lý tài khoản (`ChannelAccount`), phân quyền Tenant và định tuyến tin nhắn.
+- **WhatsApp Native Driver (`internal/channel/infrastructure/whatsapp/`)**: Nhúng trực tiếp thư viện Go thuần [`go.mau.fi/whatsmeow`](https://github.com/tulir/whatsmeow) chạy in-process trong `omni-core`, loại bỏ hoàn toàn daemon sidecar/container Node.js độc lập.
+- **Quản lý Phiên (Session Store)**: Sử dụng `whatsmeow/store/sqlstore` gắn trực tiếp vào PostgreSQL backend hoặc mã hóa lưu trong `channel_accounts.credentials`.
+- **Giao Tiếp Inter-Process**: Gọi trực tiếp in-memory thông qua interface `WhatsAppGatewayPort`, zero độ trễ RPC và tiết kiệm tài nguyên RAM.
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -23,15 +24,15 @@ Hệ thống tuân thủ **Universal Social Gateway Architecture** của Omni Co
 ┌───────────────────────────▼────────────────────────────┐
 │              Omni Core (omni-core:8080)                │
 │       Bounded Context: Channel & Gateway               │
-└───────────────────────────┬────────────────────────────┘
-                            │ Connect-RPC (HTTP/2 gRPC)
-┌───────────────────────────▼────────────────────────────┐
-│         WhatsApp Gateway Daemon (Port 3001)            │
-│         Engine: go.mau.fi/whatsmeow (Pure Go)          │
-│         Persistent Storage: SQLite (/data/sessions.db) │
-│         Egress: Dedicated Residential SOCKS5 Proxy     │
-└───────────────────────────┬────────────────────────────┘
-                            │ Noise Protocol over WS
+│                                                        │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │ NativeWhatsmeowClient Engine (go.mau.fi/whatsmeow)│  │
+│  │ - In-Process Multi-Account Instance Manager      │  │
+│  │ - Persistent SQL Store (PostgreSQL sqlstore)     │  │
+│  │ - Dedicated Residential SOCKS5 Proxy Allocation  │  │
+│  └────────────────────────┬─────────────────────────┘  │
+└───────────────────────────┼────────────────────────────┘
+                            │ Noise Protocol over WS (TLS 443)
 ┌───────────────────────────▼────────────────────────────┐
 │           WhatsApp Web Server (c.whatsapp.net)         │
 └────────────────────────────────────────────────────────┘
