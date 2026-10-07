@@ -194,8 +194,9 @@ message InboundTelegramEvent {
 
 ---
 
-## 5. Đặc Tả REST Endpoints tại Omni Core (interfaces/http)
+## 5. Đặc Tả REST Endpoints & Luồng Điều Phối Outbound (interfaces/http)
 
+### 5.1 Danh Sách Endpoints REST Chuẩn
 Mọi endpoint danh sách bắt buộc tuân thủ chuẩn `pkg/pagination.PaginationParam` và `PageResult[T]`:
 
 | Phương thức | Endpoint | Quyền (RBAC) | Mô tả chi tiết |
@@ -204,7 +205,41 @@ Mọi endpoint danh sách bắt buộc tuân thủ chuẩn `pkg/pagination.Pagin
 | `GET` | `/api/v1/telegram-personal/accounts/:id/qr` | `channel.manage` | SSE stream hoặc polling nhận Base64 QR code đăng nhập |
 | `DELETE` | `/api/v1/telegram-personal/accounts/:id` | `channel.manage` | Hủy phiên đăng nhập và giải phóng proxy |
 | `GET` | `/api/v1/telegram-personal/accounts?page=&page_size=` | `channel.view` | Danh sách nick Telegram cá nhân (Chuẩn `pkg/pagination`: `{items, total, page, limit, totalPages, hasNext}`) |
-| `POST` | `/api/v1/telegram-personal/messages/send` | `conversation.send` | Gửi tin nhắn trực tiếp qua nick Telegram cá nhân |
+| `GET` | `/api/v1/telegram-personal/dialogs?page=&page_size=` | `conversation.view` | Danh sách hội thoại/nhóm/kênh nick đang tham gia |
+| `POST` | `/api/v1/telegram-personal/groups/:id/sync` | `channel.manage` | Kích hoạt cào thành viên nhóm nạp Lead vào Lead Pool (ADR-ARCH-009) |
+| `GET` | `/api/v1/telegram-personal/groups/:id/members?page=&page_size=` | `channel.view` | Danh sách thành viên đã cào kèm phân trang chuẩn |
+| `POST` | `/api/v1/telegram-personal/messages/send` | `conversation.send` | Gửi tin nhắn trực tiếp qua nick Telegram cá nhân (Dedicated Dispatch) |
+
+### 5.2 Luồng Điều Phối Outbound Hợp Nhất trong Hộp Thư (`POST /api/v1/conversations/{id}/messages`)
+Khi nhân viên chat trong giao diện Hộp thư Hợp nhất (`/chat` trên `omni-web`), frontend gọi endpoint `POST /api/v1/conversations/{id}/messages`. Backend (`internal/conversation/interfaces/http/handler.go`) phải điều phối Outbound theo loại kênh (`channel_type`):
+
+1. **Nhận diện Kênh:**
+   - Khi `conv.ChannelType() == "telegram"`:
+     - Trích xuất: `account_id = conv.ChannelAccountID()`, `peer_id = conv.ExternalConversationID()`.
+2. **Ghi nhận Outbox & Điều phối:**
+   - Lưu sự kiện `TELEGRAM_MESSAGE_DISPATCH_REQUESTED` vào bảng `domain_events` (Transactional Outbox).
+   - Đẩy thông điệp vào hàng đợi NSQ topic `telegram.outbound.messages` (`pkgnsq.TopicTelegramOutboundMessages`) hoặc gọi trực tiếp adapter `teleRepo.SendMessage` khi NSQ offline/fallback.
+3. **Cập nhật Trạng thái:**
+   - Khi tin nhắn được server Telegram tiếp nhận thành công (trả về `msg_id`), ghi nhận `UpdateChannelMessageID` thành `delivered`.
+
+### 5.3 Đồng Bộ Hợp Đồng Payload Gửi Tin (`POST /api/v1/telegram-personal/messages/send`)
+Đồng bộ nghiêm ngặt giữa Frontend (`omni-web/src/api/telegram-personal.ts`) và Backend (`internal/channel/interfaces/http/telegram/telegram_handler.go`):
+
+```json
+{
+  "account_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "peer_id": "123456789",
+  "text": "Chào bạn, mình liên hệ từ Omni CRM!",
+  "parse_mode": "markdown",
+  "media_type": "none",
+  "media_url": "",
+  "is_stranger": false
+}
+```
+- `account_id` (UUID): ID tài khoản Telegram của nhân viên trong CRM.
+- `peer_id` (string): UID người nhận hoặc Chat ID / Channel ID Telegram. Tuyệt đối không dùng `recipient_id`.
+- `text` (string): Nội dung văn bản gửi. Tuyệt đối không dùng `content`.
+- `is_stranger` (bool): Cờ đánh dấu người lạ để áp dụng hạn ngạch 25 tin/ngày (Anti-Ban Rule).
 
 ---
 
