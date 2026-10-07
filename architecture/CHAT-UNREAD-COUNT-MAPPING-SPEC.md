@@ -34,25 +34,28 @@
 
 | Thuật ngữ | UI Label | Mã Hệ thống (Code / DB) | Điều kiện Lọc Dữ liệu (PostgreSQL Filter) | Quy tắc Loại trừ |
 |---|---|---|---|---|
-| **Cá nhân** | Cá nhân | `personal` / `threadType=user` | `(metadata->>'threadType' IS NULL OR metadata->>'threadType' != 'group') AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')` | Loại trừ hội thoại nhóm và hội thoại đã chuyển sang Ưu tiên. |
+| **Cá nhân** | Cá nhân | `personal` / `threadType=user` | `(metadata->>'threadType' IS NULL OR metadata->>'threadType' != 'group') AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other') AND (metadata->>'isBot' IS NULL OR metadata->>'isBot' != 'true')` | Loại trừ hội thoại nhóm, bot bán hàng và hội thoại đã chuyển sang Ưu tiên. |
 | **Nhóm** | Nhóm | `group` / `threadType=group` | `metadata->>'threadType' = 'group' AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')` | Chỉ hội thoại nhóm, loại trừ hội thoại nhóm đã chuyển sang Ưu tiên. |
+| **BOT tele** | BOT tele | `telegram_bot` / `bot` | `(channel = 'telegram' AND (metadata->>'isBot' = 'true' OR metadata->>'telegramType' = 'bot')) OR channel = 'telegram_bot'` | Gom hội thoại Bot Telegram bán hàng; tách khỏi cá nhân 1-1 và nhóm. |
 | **Chính** | Chính | `main` / `tab=main` | `metadata->>'tab' IS NULL OR metadata->>'tab' != 'other'` | Bao gồm cả 1-1 và nhóm nằm trong hộp thư chính (loại trừ Ưu tiên). |
 | **Ưu tiên** | Ưu tiên | `other` / `is_pinned=true` | `metadata->>'tab' = 'other' OR is_pinned = true` | Hội thoại được ghim hoặc gán nhãn ưu tiên; tách biệt khỏi hộp thư chính. |
 
 ### Domain Invariants:
 1. **Bảo toàn số lượng (Disjoint Partition):**
-   - `unreadMain = unreadPersonal + unreadGroup`
+   - `unreadMain = unreadPersonal + unreadGroup + unreadTelegramBot`
    - `unreadTotal = unreadMain + unreadPriority`
 2. **Quy tắc đếm Chưa đọc (Unread Definition):**
    - Một hội thoại được tính là chưa đọc khi và chỉ khi: `unread_count > 0` VÀ `deleted_at IS NULL` VÀ thuộc tenant/account được phân quyền.
 3. **Quy tắc hiển thị Pill "Chưa đọc" theo Tab:**
    - Đang ở Tab **Cá nhân**: Pill "Chưa đọc" hiển thị đúng `unreadPersonal`.
    - Đang ở Tab **Nhóm**: Pill "Chưa đọc" hiển thị đúng `unreadGroup`.
+   - Đang ở Tab **BOT tele**: Pill "Chưa đọc" hiển thị đúng `unreadTelegramBot`.
    - Đang ở Tab **Chính**: Pill "Chưa đọc" hiển thị đúng `unreadMain`.
    - Đang ở Tab **Ưu tiên**: Pill "Chưa đọc" hiển thị đúng `unreadPriority`.
-4. **Quy tắc hiển thị Badge/Dot trên 4 Tab:**
+4. **Quy tắc hiển thị Badge/Dot trên các Tab:**
    - Tab **Cá nhân**: In đậm / hiển thị badge khi `unreadPersonal > 0`.
    - Tab **Nhóm**: In đậm / hiển thị badge khi `unreadGroup > 0`.
+   - Tab **BOT tele**: In đậm / dot đỏ khi `unreadTelegramBot > 0`.
    - Tab **Chính**: In đậm / hiển thị badge khi `unreadMain > 0`.
    - Tab **Ưu tiên**: Class `has-unread` (dot đỏ) khi `unreadPriority > 0` (hoặc `otherUnread > 0`).
 
@@ -118,12 +121,14 @@
   "otherUnread": 1,
   "unreadPersonal": 3,
   "unreadGroup": 5,
-  "unreadMain": 8,
+  "unreadTelegramBot": 2,
+  "unreadMain": 10,
   "unreadPriority": 1,
   "breakdown": {
     "personal": { "total": 55, "unread": 3, "unanswered": 2 },
     "group": { "total": 35, "unread": 5, "unanswered": 3 },
-    "main": { "total": 90, "unread": 8, "unanswered": 5 },
+    "telegramBot": { "total": 12, "unread": 2, "unanswered": 1 },
+    "main": { "total": 102, "unread": 10, "unanswered": 6 },
     "priority": { "total": 10, "unread": 1, "unanswered": 0 }
   }
 }
@@ -140,12 +145,14 @@ q := h.db.NewSelect().
     Where("tenant_id = ? OR tenant_id = '00000000-0000-0000-0000-000000000001'", tenantID).
     ColumnExpr("COUNT(*) AS total").
     ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0) AS unread_total").
-    ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0 AND (metadata->>'threadType' IS NULL OR metadata->>'threadType' != 'group') AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')) AS unread_personal").
+    ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0 AND (metadata->>'threadType' IS NULL OR metadata->>'threadType' != 'group') AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other') AND (metadata->>'isBot' IS NULL OR metadata->>'isBot' != 'true')) AS unread_personal").
     ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0 AND metadata->>'threadType' = 'group' AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')) AS unread_group").
+    ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0 AND ((channel = 'telegram' AND (metadata->>'isBot' = 'true' OR metadata->>'telegramType' = 'bot')) OR channel = 'telegram_bot')) AS unread_telegram_bot").
     ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0 AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')) AS unread_main").
     ColumnExpr("COUNT(*) FILTER (WHERE unread_count > 0 AND (metadata->>'tab' = 'other' OR is_pinned = true)) AS unread_priority").
-    ColumnExpr("COUNT(*) FILTER (WHERE (metadata->>'threadType' IS NULL OR metadata->>'threadType' != 'group') AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')) AS total_personal").
+    ColumnExpr("COUNT(*) FILTER (WHERE (metadata->>'threadType' IS NULL OR metadata->>'threadType' != 'group') AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other') AND (metadata->>'isBot' IS NULL OR metadata->>'isBot' != 'true')) AS total_personal").
     ColumnExpr("COUNT(*) FILTER (WHERE metadata->>'threadType' = 'group' AND (metadata->>'tab' IS NULL OR metadata->>'tab' != 'other')) AS total_group").
+    ColumnExpr("COUNT(*) FILTER (WHERE ((channel = 'telegram' AND (metadata->>'isBot' = 'true' OR metadata->>'telegramType' = 'bot')) OR channel = 'telegram_bot')) AS total_telegram_bot").
     ColumnExpr("COUNT(*) FILTER (WHERE metadata->>'tab' IS NULL OR metadata->>'tab' != 'other') AS total_main").
     ColumnExpr("COUNT(*) FILTER (WHERE metadata->>'tab' = 'other' OR is_pinned = true) AS total_priority")
 ```
@@ -167,6 +174,7 @@ counts: {
   group?: number;
   unreadPersonal?: number;
   unreadGroup?: number;
+  unreadTelegramBot?: number;
   unreadMain?: number;
   unreadPriority?: number;
   otherUnread?: number;
@@ -182,6 +190,9 @@ const activeUnreadCount = computed(() => {
   if (tab === 'group') {
     return props.counts.unreadGroup ?? 0;
   }
+  if (tab === 'telegram_bot') {
+    return props.counts.unreadTelegramBot ?? 0;
+  }
   if (tab === 'main') {
     return props.counts.unreadMain ?? props.counts.unread ?? 0;
   }
@@ -194,7 +205,7 @@ const activeUnreadCount = computed(() => {
 - Hiển thị trên giao diện:
   - Pill "Chưa đọc": `<span class="count">{{ activeUnreadCount }}</span>`
   - Mini counter: `<span class="accent">{{ activeUnreadCount }} chưa đọc</span>`
-  - Tab "Cá nhân", "Nhóm", "Chính": bổ sung badge / font-weight tương ứng khi có unread.
+  - Tab "Cá nhân", "Nhóm", "BOT tele", "Chính": bổ sung badge / font-weight hoặc unread-dot tương ứng khi có unread.
 
 ### 5.2 Cập nhật `ChatView.vue`
 - Hàm `fetchPriorityUnread()` (hoặc `fetchCounts()`) phân giải toàn bộ các trường:
@@ -209,6 +220,7 @@ serverCounts.value = {
   group: res.data.group ?? 0,
   unreadPersonal: res.data.unreadPersonal ?? 0,
   unreadGroup: res.data.unreadGroup ?? 0,
+  unreadTelegramBot: res.data.unreadTelegramBot ?? 0,
   unreadMain: res.data.unreadMain ?? 0,
   unreadPriority: res.data.unreadPriority ?? res.data.otherUnread ?? 0,
   otherUnread: res.data.otherUnread ?? 0,

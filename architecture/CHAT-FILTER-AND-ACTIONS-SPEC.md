@@ -84,4 +84,9 @@
 - Kiểm tra tính toán client-side cho count badge và đồng bộ với API.
 
 ### 2.3 Phân rã & Mapping Số đếm Chưa đọc (Unread Count Mapping)
-- Chi tiết đặc tả phân rã số đếm chưa đọc giữa **Group (Nhóm)**, **Cá nhân (1-1)**, **Chính (Hộp thư chính)** và **Ưu tiên (Priority)** được quy định chi tiết tại tài liệu [CHAT-UNREAD-COUNT-MAPPING-SPEC.md](./CHAT-UNREAD-COUNT-MAPPING-SPEC.md).
+- Chi tiết đặc tả phân rã số đếm chưa đọc giữa **Group (Nhóm)**, **Cá nhân (1-1)**, **BOT tele (Bot bán hàng)**, **Chính (Hộp thư chính)** và **Ưu tiên (Priority)** được quy định chi tiết tại tài liệu [CHAT-UNREAD-COUNT-MAPPING-SPEC.md](./CHAT-UNREAD-COUNT-MAPPING-SPEC.md).
+
+### 2.4 Tab Lọc "BOT tele" (Telegram Bot Bán Hàng)
+- **Vị trí UI:** Đặt ngay cạnh tab "Nhóm" trên thanh `ConversationFilterBar.vue` (Thứ tự: `Cá nhân` → `Nhóm` → `BOT tele` → `Chính` → `Ưu tiên`).
+- **Mục tiêu nghiệp vụ:** Gom toàn bộ các cuộc hội thoại xuất phát từ Bot bán hàng Telegram (`channel = 'telegram'` có cờ Bot hoặc kênh `telegram_bot`) về một khu vực riêng biệt. Giúp sale/chủ shop dễ dàng giám sát đơn hàng tự động và tương tác bot mà không bị lẫn vào luồng chat 1-1 hay nhóm chat thảo luận.
+- **Điều kiện lọc:** `(channel = 'telegram' AND (metadata->>'isBot' = 'true' OR metadata->>'telegramType' = 'bot')) OR channel = 'telegram_bot'`.
