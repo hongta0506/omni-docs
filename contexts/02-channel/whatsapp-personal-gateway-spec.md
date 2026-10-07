@@ -115,8 +115,23 @@ Hệ thống Omni Platform kết nối tài khoản **WhatsApp cá nhân (Person
 
 ## 4. Đặc Tả Giao Diện Kỹ Thuật (Go Interface & Struct Contracts)
 
-### 4.1 Interface Port: `WhatsAppGatewayPort`
-Vị trí: `internal/channel/infrastructure/whatsapp/client.go` (hoặc `port.go`):
+### 4.1 Phân Biệt Chat 1-1 và Group Chat (JID & Peer Classification)
+WhatsApp Web Protocol phân định rõ danh tính thực thể qua đuôi JID (`types.JID`):
+- **Chat 1-1 (Direct / Private):** Server là `s.whatsapp.net` (`<phone>@s.whatsapp.net`).
+  - `IsGroup = false`
+  - `Sender == Chat`
+  - Conversation mapping: `conversation_type = "direct"`, `peer_id = phone@s.whatsapp.net`.
+- **Chat Nhóm (Group Chat):** Server là `g.us` (`<group-node>@g.us`).
+  - `IsGroup = true`
+  - `Chat = groupJID` (Địa chỉ phòng nhóm).
+  - `Sender = participantJID` (Người thực tế gửi tin nhắn trong nhóm).
+  - Conversation mapping: `conversation_type = "group"`, `peer_id = groupJID`.
+- **Broadcast / Status:** Server là `broadcast` (`status@broadcast`). Bỏ qua hoặc phân loại riêng.
+
+---
+
+### 4.2 Interface Port: `WhatsAppGatewayPort`
+Vị trí: `internal/channel/infrastructure/whatsapp/port.go`:
 
 ```go
 package whatsapp
@@ -127,22 +142,55 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
+type WhatsAppGroupInfo struct {
+	JID          string   `json:"jid"`
+	Name         string   `json:"name"`
+	Topic        string   `json:"topic"`
+	OwnerJID     string   `json:"owner_jid"`
+	MemberCount  int      `json:"member_count"`
+	Participants []string `json:"participants"`
+}
+
+type WhatsAppGroupMember struct {
+	JID          string `json:"jid"`
+	DisplayName  string `json:"display_name"`
+	Role         string `json:"role"` // admin, superadmin, member
+	JoinedAtUnix int64  `json:"joined_at_unix"`
+}
+
 type WhatsAppGatewayPort interface {
+	// Account Lifecycle & QR
 	ExportLoginQR(ctx context.Context, tenantID, accountID uuid.UUID, proxyURL string, onSuccess func(ctx context.Context, tID, accID uuid.UUID, jid types.JID, pushName string) error) (string, error)
 	Disconnect(ctx context.Context, accountID string) error
+	Reconnect(ctx context.Context, accountID, proxyURL string) error
+
+	// Inbound Realtime Listener
+	StartInboundListener(ctx context.Context, tenantID, accountID uuid.UUID, proxyURL string) error
+
+	// Outbound Messaging: Text, Media, Reactions, Revoke
 	SendMessage(ctx context.Context, accountID, recipientJID, text, proxyURL string) (string, error)
 	SendMediaPhoto(ctx context.Context, accountID, recipientJID, caption, mediaURL, proxyURL string) (string, error)
-	StartInboundListener(ctx context.Context, tenantID, accountID uuid.UUID, proxyURL string) error
+	SendMediaDocument(ctx context.Context, accountID, recipientJID, fileName, mediaURL, proxyURL string) (string, error)
+	SendReaction(ctx context.Context, accountID, recipientJID, messageID, emoji, proxyURL string) error
+	RevokeMessage(ctx context.Context, accountID, recipientJID, messageID, proxyURL string) error
+
+	// Sync & Backfill
+	SyncAccount(ctx context.Context, accountID, proxyURL string) error
+
+	// Group Management & Member Scraping
+	GetJoinedGroups(ctx context.Context, accountID, proxyURL string) ([]WhatsAppGroupInfo, error)
+	SyncGroupMembers(ctx context.Context, accountID, groupJID, proxyURL string) ([]WhatsAppGroupMember, error)
 }
 ```
 
-### 4.2 Cấu Trúc Native Driver: `NativeWhatsmeowClient`
+### 4.3 Cấu Trúc Native Driver: `NativeWhatsmeowClient`
 Vị trí: `internal/channel/infrastructure/whatsapp/native_whatsmeow_client.go`:
 
 ```go
 package whatsapp
 
 import (
+	"context"
 	"sync"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -158,34 +206,81 @@ type NativeWhatsmeowClient struct {
 
 ---
 
-## 5. Đặc Tả REST Endpoints & Đồng Bộ Hợp Đồng API
+## 5. Ma Trận Đối Soát 100% Endpoints: Zalo vs Telegram vs WhatsApp
 
-Tất cả endpoints thuộc tiền tố `/api/v1/whatsapp-personal/*`:
+Hệ thống chuẩn hóa toàn bộ các API endpoint của 3 kênh Social Personal dưới cùng một triết lý thiết kế RESTful:
 
-| Phương thức | Endpoint | Quyền (RBAC) | Mô tả chi tiết |
+| Nghiệp Vụ / Hành Vi | Zalo Personal (`zalo-accounts`) | Telegram Personal (`telegram-personal`) | WhatsApp Personal (`whatsapp-personal`) |
 |---|---|---|---|
-| `GET` | `/api/v1/whatsapp-personal/accounts` | `channel.view` | Danh sách nick WhatsApp cá nhân (Chuẩn `pkg/pagination`) |
-| `POST` | `/api/v1/whatsapp-personal/accounts/init` | `channel.manage` | Khởi tạo phiên kết nối nick mới và xin cấp proxy SOCKS5 |
-| `GET` | `/api/v1/whatsapp-personal/accounts/:id/qr` | `channel.manage` | SSE stream hoặc polling nhận Base64 QR code đăng nhập thật |
-| `DELETE` | `/api/v1/whatsapp-personal/accounts/:id` | `channel.manage` | Đăng xuất, hủy phiên `whatsmeow` và giải phóng proxy |
-| `GET` | `/api/v1/whatsapp-personal/dialogs` | `conversation.view` | Danh sách hội thoại WhatsApp (Query DB `conversations`) |
-| `POST` | `/api/v1/whatsapp-personal/messages/send` | `conversation.send` | Gửi tin nhắn trực tiếp qua nick WhatsApp cá nhân |
+| **1. Danh sách nick** | `GET /api/v1/zalo-accounts` | `GET /api/v1/telegram-personal/accounts` | `GET /api/v1/whatsapp-personal/accounts` |
+| **2. Khởi tạo nick & cấp proxy** | `POST /api/v1/zalo-accounts` | `POST /api/v1/telegram-personal/accounts/init` | `POST /api/v1/whatsapp-personal/accounts/init` |
+| **3. Lấy QR code đăng nhập** | `POST /api/v1/zalo-accounts/qr/start` | `GET /api/v1/telegram-personal/accounts/{id}/qr` | `GET /api/v1/whatsapp-personal/accounts/{id}/qr` |
+| **4. Ngắt kết nối nick** | `DELETE /api/v1/zalo-accounts/{id}` | `DELETE /api/v1/telegram-personal/accounts/{id}` | `DELETE /api/v1/whatsapp-personal/accounts/{id}` |
+| **5. Tái kết nối rớt mạng** | `POST /api/v1/zalo-accounts/{id}/reconnect` | `POST /api/v1/telegram-personal/accounts/{id}/reconnect` | `POST /api/v1/whatsapp-personal/accounts/{id}/reconnect` |
+| **6. Danh sách hội thoại (Dialogs)** | `GET /api/v1/conversations?channel=zalo_personal` | `GET /api/v1/telegram-personal/dialogs` | `GET /api/v1/whatsapp-personal/dialogs` |
+| **7. Đồng bộ tin nhắn / Lịch sử** | `POST /api/v1/zalo-accounts/{id}/backfill-messages` | `POST /api/v1/telegram-personal/accounts/{id}/sync` | `POST /api/v1/whatsapp-personal/accounts/{id}/sync` |
+| **8. Gửi tin nhắn Text / Media** | Outbound Dispatcher (text/photo) | `POST /api/v1/telegram-personal/messages/send` | `POST /api/v1/whatsapp-personal/messages/send` |
+| **9. Thả Reaction / Icon / Emoji** | Reaction Webhook / Dispatcher | `POST /api/v1/telegram-personal/messages/react` | `POST /api/v1/whatsapp-personal/messages/react` |
+| **10. Thu hồi tin nhắn (Revoke)** | `POST /api/v1/webhook/zalo-personal/undo` | `DELETE /api/v1/telegram-personal/messages/{id}` | `POST /api/v1/whatsapp-personal/messages/revoke` |
+| **11. Danh sách nhóm (Groups)** | `GET /api/v1/zalo-accounts/{id}/groups` | `GET /api/v1/telegram-personal/dialogs?type=group` | `GET /api/v1/whatsapp-personal/groups` |
+| **12. Đồng bộ thành viên nhóm** | `POST /api/v1/zalo-accounts/{id}/group-scans` | `POST /api/v1/telegram-personal/groups/{id}/sync` | `POST /api/v1/whatsapp-personal/groups/{id}/sync` |
+| **13. Danh sách thành viên nhóm** | `GET /api/v1/zalo-accounts/{id}/groups/{gid}/members` | `GET /api/v1/telegram-personal/groups/{id}/members` | `GET /api/v1/whatsapp-personal/groups/{id}/members` |
 
-### Payload Gửi Tin Chuẩn (`POST /api/v1/whatsapp-personal/messages/send`):
+---
+
+## 6. Chi Tiết Request / Response DTOs Mở Rộng
+
+### 6.1 Gửi Tin Nhắn Đa Dạng (Text & Media): `POST /api/v1/whatsapp-personal/messages/send`
 ```json
 {
   "account_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "peer_id": "84901234567@s.whatsapp.net",
-  "text": "Chào bạn, mình liên hệ từ Omni CRM!",
-  "media_type": "none",
-  "media_url": "",
+  "peer_type": "direct",
+  "text": "Chào bạn, đây là hình ảnh và catalog sản phẩm!",
+  "media_type": "image",
+  "media_url": "https://storage.omni.vn/media/product-catalog.png",
+  "caption": "Catalog sản phẩm 2026",
   "is_stranger": false
+}
+```
+*Ghi chú:*
+- Nếu `peer_id` kết thúc bằng `@g.us`, hệ thống tự động suy diễn `peer_type = "group"`.
+- Hỗ trợ `media_type`: `"none"`, `"image"`, `"video"`, `"audio"`, `"document"`.
+
+### 6.2 Thả Reaction / Icon / Emoji: `POST /api/v1/whatsapp-personal/messages/react`
+```json
+{
+  "account_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "peer_id": "84901234567@s.whatsapp.net",
+  "message_id": "3EB0123456789ABCDEF",
+  "emoji": "👍"
+}
+```
+
+### 6.3 Thu Hồi Tin Nhắn: `POST /api/v1/whatsapp-personal/messages/revoke`
+```json
+{
+  "account_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "peer_id": "84901234567@s.whatsapp.net",
+  "message_id": "3EB0123456789ABCDEF"
+}
+```
+
+### 6.4 Đồng Bộ Thành Viên Nhóm: `POST /api/v1/whatsapp-personal/groups/{id}/sync`
+Query param: `?account_id=uuid`
+Response:
+```json
+{
+  "group_id": "120363025123456789@g.us",
+  "name": "Hội Khách Hàng Thân Thiết",
+  "total_members": 45,
+  "synced_at": "2026-10-07T10:00:00Z"
 }
 ```
 
 ---
 
-## 6. Chính Sách Quản Lý Session, Fingerprint & Chống Khóa Số (Anti-Ban Rules)
+## 7. Chính Sách Quản Lý Session, Fingerprint & Chống Khóa Số (Anti-Ban Rules)
 
 1. **Isolation Proxy Egress 1:1:**
    - Mỗi tài khoản WhatsApp kết nối qua 1 Proxy SOCKS5 dân cư độc lập (lấy từ Master Proxy Pool SPEC 056).
