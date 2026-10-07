@@ -283,3 +283,28 @@ Triển khai nghiêm ngặt theo khuyến cáo từ [`gotd/td/SUPPORT.md`](https
       │                         │   (group_id, batch_size) │── 3. channels.GetParticipants
       │                         │                          │◄── Batch 200 members ──│
       │                         │                          ├── 4. Sleep 2s (Anti-Flood)
+      │                         │◄── 5. Member Stream/Batch│                        │
+      │                         │    [Lưu DB group_members]│                        │
+      │                         ├── 6. Ingest to Lead Pool │                        │
+      │                         │    (Customer BC ADR-009) │                        │
+      │◄── 7. Completed ACK ────│                          │                        │
+```
+
+---
+
+## 8. Đối Soát Trạng Thái Implementation & Phân Tích Khoảng Trống (Audit Status & Gap Analysis)
+
+Kiểm tra toàn diện source code `internal/channel/interfaces/http/telegram/telegram_handler.go`, `native_gotd_client.go`, `postgres_repository.go` và `telegram_sync_worker.go`:
+
+| REST Endpoint / Nghiệp Vụ | DB Persistence (Bun ORM) | Call MTProto (gotd/td) | Trạng thái Hiện tại | Yêu Cầu Hoàn Thiện |
+|---|---|---|---|---|
+| `GET /api/v1/telegram-personal/accounts` | Đã xong (`channel_accounts`) | Không cần (chỉ đọc DB) | **READY** | Hỗ trợ phân trang chuẩn `pkg/pagination`. |
+| `POST /api/v1/telegram-personal/accounts/init` | Đã xong (`channel_accounts`) | SOCKS5 proxy allocate | **READY** | Khởi tạo tài khoản trạng thái `INITIALIZED`. |
+| `GET /api/v1/telegram-personal/accounts/{id}/qr` | Đã xong (lưu session token) | Đã gọi `client.QR().Export()` | **READY** | SSE / Polling Base64 QR code đăng nhập thật. |
+| `DELETE /api/v1/telegram-personal/accounts/{id}` | Đã xong (Hard delete DB) | Đã gọi `gotdClient.Disconnect()` | **READY** | Hủy session và giải phóng kết nối TCP. |
+| `GET /api/v1/telegram-personal/accounts/{id}/dialogs` | Đã xong (`conversations`) | Async sync qua NSQ | **READY** | Lấy danh sách hội thoại của 1 tài khoản chỉ định. |
+| `GET /api/v1/telegram-personal/dialogs` | **CHƯA (STUB)** | Không | **GAP** | Handler đang trả về mảng rỗng `[]teledom.TelegramDialog{}`. Cần query DB `conversations` theo `tenant_id` và filter `channel_type = 'telegram'`. |
+| `POST /api/v1/telegram-personal/accounts/{id}/sync` | Đã xong (NSQ Task enqueue) | Worker gọi `FetchDialogs` & `FetchHistory` | **READY** | Worker chạy nền cào lịch sử nạp vào DB. |
+| `POST /api/v1/telegram-personal/groups/{id}/sync` | Đã lưu `group_members` | **CHƯA (THIẾU)** | **GAP** | Chưa gọi MTProto `channels.GetParticipants`. Đang nhận member từ HTTP body thay vì tự cào Telegram DC. |
+| `GET /api/v1/telegram-personal/groups/{id}/members` | Đã xong (`group_members`) | Không cần (đọc DB) | **READY** | Danh sách thành viên nhóm đã cào kèm phân trang. |
+| `POST /api/v1/telegram-personal/messages/send` | Đã lưu `messages` & update conv | Đã gọi `SendMessage` & `SendMediaPhoto` | **READY** | Gửi tin nhắn outbound trực tiếp qua MTProto gotd client. |
