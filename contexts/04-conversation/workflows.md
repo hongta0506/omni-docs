@@ -141,15 +141,15 @@ flowchart TD
 
 ---
 
-## 5. Sơ Đồ Luồng Nghiệp Vụ: Đồng Bộ Cảm Xúc (WhatsApp / Multi-Channel Reactions Sync)
+## 5. Sơ Đồ Luồng Nghiệp Vụ: Đồng Bộ Cảm Xúc (WhatsApp / Telegram Multi-Channel Reactions Sync)
 
-Mô hình hóa luồng tiếp nhận cảm xúc Inbound và phân phối cảm xúc Outbound đa kênh:
+Mô hình hóa luồng tiếp nhận cảm xúc Inbound và phân phối cảm xúc Outbound đa kênh (hỗ trợ WhatsApp Whatsmeow & Telegram MTProto gotd):
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Customer as Khách Hàng (WhatsApp)
-    participant GW as WhatsApp Gateway (Whatsmeow)
+    actor Customer as Khách Hàng (WhatsApp / Telegram)
+    participant GW as Gateway Port (Whatsmeow / MTProto gotd)
     participant CQRS as Conversation App
     participant DB as PostgreSQL
     participant WSHub as WebSocket Hub
@@ -157,8 +157,8 @@ sequenceDiagram
 
     rect rgb(240, 255, 240)
     Note over Customer,Agent: Pha 1: Inbound Reaction Sync (Khách thả cảm xúc)
-    Customer->>GW: Gửi biểu cảm (Reaction Message trên WhatsApp)
-    GW->>CQRS: Inbound Event: MessageReactionReceived (TargetMsgID, Emoji, SenderJID)
+    Customer->>GW: Gửi biểu cảm (Reaction Event / UpdateMessageReactions)
+    GW->>CQRS: Inbound Event: MessageReactionReceived (TargetMsgID, Emoji, SenderID)
     CQRS->>DB: UPDATE messages SET reactions = jsonb_append(reactions, :reaction) WHERE external_id = :TargetMsgID
     CQRS->>WSHub: Broadcast Event: "chat.message.reaction_updated"
     WSHub-->>Agent: UI cập nhật emoji tức thời dưới bubble tin nhắn
@@ -169,8 +169,8 @@ sequenceDiagram
     Agent->>CQRS: POST /api/v1/conversations/:id/messages/:msg_id/reactions { emoji: "❤️" }
     CQRS->>DB: BEGIN TX -> Ghi reaction vào DB + INSERT outbox_events (ReactionPendingSend) -> COMMIT TX
     CQRS-->>Agent: 200 OK (Optimistic UI update)
-    CQRS->>GW: WhatsAppGatewayPort.SendReaction(accountID, chatJID, targetMsgID, "❤️")
-    GW->>Customer: cli.BuildReaction & cli.SendMessage qua MTProto / Whatsmeow
+    CQRS->>GW: Dispatcher -> GatewayPort.SendReaction(accountID, peerID, targetMsgID, "❤️")
+    GW->>Customer: cli.BuildReaction / raw.MessagesSendReaction
     GW-->>CQRS: ACK (Sent)
     CQRS->>WSHub: Broadcast ACK: "chat.message.reaction_updated"
     end

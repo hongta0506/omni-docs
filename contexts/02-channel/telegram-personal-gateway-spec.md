@@ -353,3 +353,23 @@ Kiểm tra toàn diện source code `internal/channel/interfaces/http/telegram/t
 | `POST /api/v1/telegram-personal/groups/{id}/sync` | Đã lưu `group_members` | **CHƯA (THIẾU)** | **GAP** | Chưa gọi MTProto `channels.GetParticipants`. Đang nhận member từ HTTP body thay vì tự cào Telegram DC. |
 | `GET /api/v1/telegram-personal/groups/{id}/members` | Đã xong (`group_members`) | Không cần (đọc DB) | **READY** | Danh sách thành viên nhóm đã cào kèm phân trang. |
 | `POST /api/v1/telegram-personal/messages/send` | Đã lưu `messages` & update conv | Đã gọi `SendMessage` & `SendMediaPhoto` | **READY** | Gửi tin nhắn outbound trực tiếp qua MTProto gotd client. |
+| `POST /api/v1/telegram-personal/messages/react` | Đã thiết kế schema | MTProto `messages.sendReaction` | **TODO (Issue #489)** | Thả hoặc gỡ cảm xúc reaction qua MTProto gotd client. |
+
+---
+
+## 9. Thả Cảm Xúc Tin Nhắn (Telegram Message Reactions — Inbound & Outbound)
+
+### 9.1 Cơ Chế MTProto Gotd
+
+1. **Outbound Reaction (`messages.sendReaction`):**
+   - API MTProto: `raw.MessagesSendReaction(ctx, &tg.MessagesSendReactionRequest{...})`.
+   - Tham số: `Peer` (InputPeerUser / InputPeerChannel / InputPeerChat), `MsgID` (int), `Reaction` (`[]tg.ReactionClass{ &tg.ReactionEmoji{Emoticon: emoji} }`).
+   - Gỡ reaction: Truyền slice rỗng `Reaction: []tg.ReactionClass{}` hoặc `Emoticon: ""`.
+
+2. **Inbound Reaction Updates (`UpdateDispatcher`):**
+   - Sự kiện MTProto gotd:
+     - `*tg.UpdateBotMessageReaction`: Reaction từ bot context.
+     - `*tg.UpdateChannelMessageReaction`: Reaction trong channel/supergroup.
+     - `*tg.UpdateMessageReactions`: Reaction updates tổng hợp trên tin nhắn.
+   - Trích xuất: `PeerID`, `MsgID`, `ActorID`, `OldReactions`, `NewReactions`, `Date`.
+   - Chuyển tiếp sang Conversation Bounded Context qua `InboundForwarder` để cập nhật bảng `messages.reactions` (JSONB) và broadcast WebSocket realtime `chat.message.reaction_updated`.
