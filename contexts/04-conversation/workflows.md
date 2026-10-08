@@ -138,3 +138,41 @@ flowchart TD
     IndexScan --> ReturnData["Lấy 30 bản ghi & encode cursor từ phần tử cuối cùng"]
     ReturnData --> Resp["Trả về Client: items + next_cursor"]
 ```
+
+---
+
+## 5. Sơ Đồ Luồng Nghiệp Vụ: Đồng Bộ Cảm Xúc (WhatsApp / Multi-Channel Reactions Sync)
+
+Mô hình hóa luồng tiếp nhận cảm xúc Inbound và phân phối cảm xúc Outbound đa kênh:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Khách Hàng (WhatsApp)
+    participant GW as WhatsApp Gateway (Whatsmeow)
+    participant CQRS as Conversation App
+    participant DB as PostgreSQL
+    participant WSHub as WebSocket Hub
+    actor Agent as Sales Agent (UI)
+
+    rect rgb(240, 255, 240)
+    Note over Customer,Agent: Pha 1: Inbound Reaction Sync (Khách thả cảm xúc)
+    Customer->>GW: Gửi biểu cảm (Reaction Message trên WhatsApp)
+    GW->>CQRS: Inbound Event: MessageReactionReceived (TargetMsgID, Emoji, SenderJID)
+    CQRS->>DB: UPDATE messages SET reactions = jsonb_append(reactions, :reaction) WHERE external_id = :TargetMsgID
+    CQRS->>WSHub: Broadcast Event: "chat.message.reaction_updated"
+    WSHub-->>Agent: UI cập nhật emoji tức thời dưới bubble tin nhắn
+    end
+
+    rect rgb(240, 248, 255)
+    Note over Agent,Customer: Pha 2: Outbound Reaction Dispatch (Sale thả cảm xúc trên UI)
+    Agent->>CQRS: POST /api/v1/conversations/:id/messages/:msg_id/reactions { emoji: "❤️" }
+    CQRS->>DB: BEGIN TX -> Ghi reaction vào DB + INSERT outbox_events (ReactionPendingSend) -> COMMIT TX
+    CQRS-->>Agent: 200 OK (Optimistic UI update)
+    CQRS->>GW: WhatsAppGatewayPort.SendReaction(accountID, chatJID, targetMsgID, "❤️")
+    GW->>Customer: cli.BuildReaction & cli.SendMessage qua MTProto / Whatsmeow
+    GW-->>CQRS: ACK (Sent)
+    CQRS->>WSHub: Broadcast ACK: "chat.message.reaction_updated"
+    end
+```
+

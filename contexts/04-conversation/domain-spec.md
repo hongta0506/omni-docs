@@ -71,12 +71,24 @@ const (
 
 type MessageType string
 const (
-	MsgTypeText  MessageType = "text"
-	MsgTypeImage MessageType = "image"
-	MsgTypeFile  MessageType = "file"
-	MsgTypeAudio MessageType = "audio"
-	MsgTypeVideo MessageType = "video"
+	MsgTypeText        MessageType = "text"
+	MsgTypeImage       MessageType = "image"
+	MsgTypeFile        MessageType = "file"
+	MsgTypeAudio       MessageType = "audio"
+	MsgTypeVideo       MessageType = "video"
+	MsgTypeLocation    MessageType = "location"
+	MsgTypeSticker     MessageType = "sticker"
+	MsgTypeContactCard MessageType = "contact_card"
+	MsgTypeSystem      MessageType = "system"
+	MsgTypeReaction    MessageType = "reaction"
 )
+
+type Reaction struct {
+	Emoji             string    `json:"emoji"`
+	SenderID          string    `json:"sender_id"`
+	ExternalMessageID string    `json:"external_message_id,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+}
 
 type MessageStatus string
 const (
@@ -96,6 +108,8 @@ type Message struct {
 	msgType           MessageType
 	content           string
 	mediaURL          string
+	metadata          map[string]any // Payload mở rộng: lat/long, sticker_id, vcard, reaction target
+	reactions         []Reaction     // Danh sách biểu cảm trên tin nhắn
 	status            MessageStatus
 	externalMessageID string
 	isPinned          bool
@@ -161,9 +175,13 @@ type ConversationRepository interface {
 type MessageRepository interface {
 	Save(ctx context.Context, msg *Message) error
 	GetByID(ctx context.Context, tenantID, id uuid.UUID) (*Message, error)
+	GetByExternalID(ctx context.Context, tenantID uuid.UUID, convID uuid.UUID, externalMsgID string) (*Message, error)
 	ListByConversation(ctx context.Context, tenantID, convID uuid.UUID, cursor *time.Time, limit int) ([]*Message, error)
 	UpdateStatus(ctx context.Context, tenantID, id uuid.UUID, status MessageStatus, externalMsgID string) error
 	PinMessage(ctx context.Context, tenantID, convID, msgID uuid.UUID, pin bool) error
+	AddReaction(ctx context.Context, tenantID, msgID uuid.UUID, reaction Reaction) error
+	RemoveReaction(ctx context.Context, tenantID, msgID uuid.UUID, senderID string) error
+	ListSharedResources(ctx context.Context, tenantID, convID uuid.UUID, resourceType string, limit, offset int) ([]*Message, int64, error)
 }
 
 type MediaRepository interface {

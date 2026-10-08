@@ -35,6 +35,8 @@
 | `DELETE` | `/api/v1/messages/:id` | `commands.RecallMessageHandler` | `ConversationService.RecallMessage` | Thu hồi / gỡ tin nhắn đã gửi trên kênh Zalo/WhatsApp |
 | `POST` | `/api/v1/messages/:id/pin` | `commands.PinMessageHandler` | `ConversationService.PinMessage` | Ghim tin nhắn quan trọng trong hội thoại |
 | `DELETE` | `/api/v1/messages/:id/pin` | `commands.UnpinMessageHandler` | `ConversationService.UnpinMessage` | Bỏ ghim tin nhắn |
+| `POST` | `/api/v1/conversations/:id/messages/:msg_id/reactions` | `commands.SendReactionHandler` | `ConversationService.SendReaction` | Thả/cập nhật biểu cảm cảm xúc (emoji reaction) trên tin nhắn |
+| `DELETE` | `/api/v1/conversations/:id/messages/:msg_id/reactions` | `commands.RemoveReactionHandler` | `ConversationService.RemoveReaction` | Gỡ biểu cảm cảm xúc đã thả |
 | `GET` | `/api/v1/conversations/:id/pinned` | `queries.ListPinnedMessagesHandler` | `ConversationService.ListPinnedMessages` | Lấy danh sách tin nhắn được ghim |
 | `GET` | `/api/v1/conversations/folders` | `queries.ListFoldersHandler` | `ConversationService.ListFolders` | Danh sách thư mục phân loại chat cá nhân/chung |
 | `POST` | `/api/v1/conversations/folders` | `commands.CreateFolderHandler` | `ConversationService.CreateFolder` | Tạo thư mục chat mới |
@@ -55,6 +57,7 @@
 | `POST` | `/api/v1/conversations/batch-read` | `commands.BatchMarkAsReadHandler` | `ConversationService.BatchMarkAsRead` | Đánh dấu đã đọc hàng loạt |
 | `POST` | `/api/v1/conversations/batch-archive` | `commands.BatchArchiveHandler` | `ConversationService.BatchArchive` | Lưu trữ hàng loạt hội thoại cũ |
 | `GET` | `/api/v1/conversations/unread-count` | `queries.GetTotalUnreadCountHandler` | `ConversationService.GetUnreadCount` | Đếm tổng số tin nhắn chưa đọc của nhân viên |
+| `GET` | `/api/v1/conversations/:id/shared-media`| `queries.ListSharedMediaHandler` | `ConversationService.ListSharedMedia` | Trích xuất toàn bộ ảnh, video đã trao đổi trong chat |
 | `GET` | `/api/v1/conversations/:id/shared-links`| `queries.ListSharedLinksHandler` | `ConversationService.ListSharedLinks` | Trích xuất toàn bộ link URL đã gửi trong chat |
 | `GET` | `/api/v1/conversations/:id/shared-files`| `queries.ListSharedFilesHandler` | `ConversationService.ListSharedFiles` | Trích xuất toàn bộ file tài liệu đã trao đổi |
 | `POST` | `/api/v1/conversations/:id/notes` | `commands.AddInternalNoteHandler` | `ConversationService.AddInternalNote` | Thêm ghi chú nội bộ (chỉ nhân viên thấy) |
