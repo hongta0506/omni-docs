@@ -225,3 +225,23 @@ CREATE INDEX idx_user_vault_sync_lookup ON user_vault_sync_states(tenant_id, use
 3. **Mạng chập chờn / Mất điện đột ngột:**
    - Client lưu `last_synced_cursor` vào `localDb`. Khi mạng có lại hoặc mở lại tab, client gửi lại offset để tiếp tục kéo phần còn lại mà không phải tải lại từ đầu.
 
+### 4.4 Chốt Chặn An Toàn Khi Xóa (Zero Data Loss Purge Guard)
+
+> **NGUYÊN TẮC BẤT DI BẤT DỊCH (DATA SAFETY INVARIANT):**
+> **"CHƯA XÁC NHẬN NẠP VÀO INDEXEDDB THÌ TUYỆT ĐỐI KHÔNG ĐƯỢC XÓA BẢN GỐC."**
+
+1. **Giai đoạn Chạy Hệ thống Cũ (Source ZaloCRM DB):**
+   - Dữ liệu trên Database cũ (Prisma) **ĐƯỢC ĐÓNG BĂNG VÀ GIỮ NGUYÊN 100% (READ-ONLY SNAPSHOT)**. 
+   - Sau khi xuất bản tệp nén `.vault.json.gz` và nạp dữ liệu CRM sang Go, database cũ vẫn được lưu trữ làm backup an toàn trong tối thiểu 30-60 ngày. Tuyệt đối không xóa database cũ ngay.
+2. **Giai đoạn Vận hành Mới (Omni-Core PostgreSQL):**
+   - Lệnh Purge định kỳ (`DELETE FROM messages WHERE sent_at < NOW() - INTERVAL '7 days'`) **CHỈ ĐƯỢC ÁP DỤNG CHO DỮ LIỆU ĐANG VẬN HÀNH BÌNH THƯỜNG TRÊN HỆ THỐNG MỚI**.
+   - **Đối với dữ liệu lịch sử chuyển giao:**
+     - Trước khi Cron Purge chạy hoặc xóa bất kỳ tin nhắn nào thuộc diện di trú, hệ thống phải đối soát:
+       ```sql
+       -- Chỉ dọn dẹp kho lưu trữ tạm sau khi TẤT CẢ các tài khoản đã gửi ACK thành công
+       SELECT count(*) FROM user_vault_sync_states WHERE status != 'completed';
+       ```
+     - Nếu `count > 0` (vẫn còn nhân viên chưa online kéo dữ liệu về máy): Tệp nén archive `.vault.json.gz` **bắt buộc phải giữ nguyên trên đĩa server** để sẵn sàng phục vụ khi nhân viên đó mở máy kết nối.
+     - Sau khi nhận được `POST /api/v1/migration/vault-sync/ack` với `status = 'completed'` và checksum hợp lệ từ toàn bộ nhân viên, server mới kích hoạt chính sách dọn dẹp các tệp lưu trữ tạm thời.
+
+
