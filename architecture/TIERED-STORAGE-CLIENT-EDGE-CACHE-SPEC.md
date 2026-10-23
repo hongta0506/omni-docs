@@ -264,3 +264,28 @@ Khi cấp quản lý yêu cầu phân tích chuyên sâu (ví dụ: đánh giá 
 1. Client query lịch sử chat liên quan từ IndexedDB cục bộ.
 2. Nén và gửi payload lên API `POST /api/v1/analytics/conversations/analyze-stream`.
 3. Server nhận stream, gọi LLM phân tích, trả kết quả chỉ số về dashboard và **xóa ngay dữ liệu thô khỏi bộ nhớ tạm**, bảo toàn cam kết Zero-Raw-Storage.
+
+---
+
+## 9. Kế hoạch Refactor Server: Bãi bỏ Lưu trữ Thô & Tinh giản Bảng (Server De-bloating & Schema Pruning)
+
+### 9.1 Bảng Cơ sở Dữ liệu Cần Tinh giản / Bãi bỏ (Deprecated & Purged Tables)
+
+| Tên Bảng | Trạng thái Hiện tại | Chiến lược Chuyển dịch (Migration Strategy) |
+|---|---|---|
+| **`media_assets` & `media_folders`** | Lưu trữ metadata ảnh, video, watermark, thẻ tag trên Server | **Bãi bỏ & Deprecate**. Đẩy toàn bộ media về Client IndexedDB (`mediaBlobs`). Server chỉ lưu link gốc tạm thời trong lúc relay. Không tốn đĩa và băng thông lưu trữ. |
+| **`messages`** | Đang lưu toàn bộ tin nhắn vĩnh viễn (text, JSON attachments, metadata) | **Chuyển thành Rolling Hot-Buffer (7 ngày)**. Toàn bộ lịch sử cũ hơn 7 ngày bị hard-delete qua Cron Job. Lịch sử vĩnh viễn do Client IndexedDB đảm nhiệm. |
+| **`conversation_folder_mappings`** | Phân loại thư mục hội thoại phức tạp ít dùng | **Bãi bỏ hoặc gộp trực tiếp vào metadata hội thoại** nếu cần, giảm bớt JOIN query. |
+
+### 9.2 Lộ trình Thực thi Refactor Server (`omni-core`):
+1. **Giai đoạn 1 (Chuyển tiếp Hot-Buffer):**
+   - Viết migration bổ sung index tối ưu cho Rolling Buffer (`sent_at`).
+   - Thiết lập cron worker tự động xóa tin nhắn cũ:
+     ```sql
+     DELETE FROM messages WHERE sent_at < NOW() - INTERVAL '7 days';
+     ```
+2. **Giai đoạn 2 (Ngừng tải Media về Server):**
+   - Không gọi logic tải file nhị phân trong gateway Zalo/Telegram/WhatsApp lên Server local disk hay S3 nữa.
+   - Trả nguyên bản URL CDN ngoài qua WebSocket để trình duyệt client tự fetch về IndexedDB.
+3. **Giai đoạn 3 (Deprecate Media Tables & Clean Endpoints):**
+   - Đóng gói migration drop bảng `media_assets`, `media_folders` khi `omni-web` đã hoàn tất migrate sang `mediaBlobs`.
