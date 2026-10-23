@@ -210,3 +210,57 @@ CREATE INDEX idx_customer_intent_score ON customer_intent_profiles(tenant_id, bu
 2. **Xuất bản Backup Mã hóa (Optional Tenant Backup):**
    - Cung cấp tính năng: Quản lý Tenant có thể bấm *"Xuất bản sao lưu lịch sử chat"*.
    - Client nén toàn bộ IndexedDB thành tệp tin `.enc` (mã hóa mật khẩu) tải về máy của Tenant hoặc đẩy lên Google Drive riêng của Tenant. Server SaaS hoàn toàn không lưu trữ tệp này.
+
+---
+
+## 8. Cơ chế Kỹ thuật Tối ưu Đồng bộ IndexedDB & Multi-Tab Concurrency
+
+### 8.1 Multi-Tab Concurrency Control (Web Locks API & BroadcastChannel)
+Khi nhân viên mở nhiều tab làm việc đồng thời trên trình duyệt:
+1. **Leader Election:** Sử dụng Web Locks API (`navigator.locks`) để bầu 1 tab làm "Leader" duy nhất duy trì kết nối WebSocket tới Server.
+2. **Data Distribution:** Tab Leader ghi dữ liệu vào IndexedDB và phát thông báo qua `BroadcastChannel('omni_chat_sync')` để các tab vệ tinh (Followers) cập nhật giao diện mà không cần duplicate kết nối socket hay xung đột transaction write.
+
+```typescript
+// src/services/storage/tab-sync.ts
+const channel = new BroadcastChannel('omni_chat_sync');
+
+export function initMultiTabSync(onNewMessage: (msg: LocalMessage) => void) {
+  navigator.locks.request('omni_socket_leader', { mode: 'exclusive' }, async (lock) => {
+    // Tab này được bầu làm Leader
+    setupRealtimeSocket((msg) => {
+      localDb.messages.put(msg);
+      channel.postMessage({ type: 'MESSAGE_RECEIVED', payload: msg });
+      onNewMessage(msg);
+    });
+    // Giữ lock cho tới khi đóng tab
+    await new Promise(() => {});
+  });
+
+  // Tab Follower lắng nghe từ Leader
+  channel.onmessage = (event) => {
+    if (event.data?.type === 'MESSAGE_RECEIVED') {
+      onNewMessage(event.data.payload);
+    }
+  };
+}
+```
+
+### 8.2 Cơ chế Cache-First SWR có Cursor Gap Detection
+1. **0ms Render:** Khi người dùng click chọn hội thoại, truy vấn ngay 50 tin nhắn gần nhất từ IndexedDB qua Compound Index `[conversationId+sentAt]`.
+2. **Gap Catch-up:** Lấy `latestSentAt` của tin nhắn mới nhất trong IndexedDB, gửi request `GET /api/v1/conversations/{id}/messages?since_ts={latestSentAt}` lên Server.
+3. **Batch Commit:** Sử dụng `localDb.messages.bulkPut(newMessages)` để thực thi dưới 1 transaction duy nhất, không block UI thread.
+
+### 8.3 Quản lý & Tối ưu Media Blob Vault
+- **Ảnh đại diện, Sticker & Thumbnail:** Tải nhị phân về máy client và lưu trực tiếp dạng `Blob` vào store `mediaBlobs`. Render tức thì bằng `URL.createObjectURL(blob)` không tốn băng thông CDN.
+- **Tệp tin lớn & Video (> 5MB):** Tuyệt đối không lưu Blob vào IndexedDB. Chỉ lưu remote URL để streaming theo nhu cầu nhằm tránh tràn bộ nhớ trình duyệt (Quota Throttling).
+
+### 8.4 Tự động Thu dọn Bộ nhớ Nền (LRU Idle Eviction)
+Tận dụng thời gian rảnh của trình duyệt qua `window.requestIdleCallback` để thực thi dọn dẹp bộ nhớ:
+- Xóa các tin nhắn vượt quá ngưỡng 1.000 tin gần nhất của mỗi hội thoại.
+- Xóa các bản ghi `mediaBlobs` không được truy xuất trong vòng 30 ngày qua.
+
+### 8.5 Phân tích Dữ liệu On-Demand (Client-to-Server Intent Sync)
+Khi cấp quản lý yêu cầu phân tích chuyên sâu (ví dụ: đánh giá kỹ năng tư vấn, phân tích chất lượng cuộc gọi/chat dài hạn):
+1. Client query lịch sử chat liên quan từ IndexedDB cục bộ.
+2. Nén và gửi payload lên API `POST /api/v1/analytics/conversations/analyze-stream`.
+3. Server nhận stream, gọi LLM phân tích, trả kết quả chỉ số về dashboard và **xóa ngay dữ liệu thô khỏi bộ nhớ tạm**, bảo toàn cam kết Zero-Raw-Storage.
