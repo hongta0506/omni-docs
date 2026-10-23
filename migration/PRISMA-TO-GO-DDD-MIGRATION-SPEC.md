@@ -135,3 +135,93 @@ SELECT 'new_orders', count(*) FROM orders;
    await localDb.messages.bulkPut(historicalMessages);
    ```
 4. Hoàn tất quá trình: Nhân viên có toàn bộ lịch sử chat nhiều năm trên máy của mình, tra cứu 0ms, trong khi máy chủ PostgreSQL vẫn hoàn toàn tinh gọn và nhẹ nhàng.
+
+---
+
+## 4. Cơ Chế Quản Lý Trạng Thái Di Trú & Bơm Dữ Liệu Tuần Tự Xuống Client (Asynchronous On-Connect Sync)
+
+Vì nhân viên không phải lúc nào cũng mở máy và online cùng lúc, quá trình đẩy dữ liệu cũ xuống IndexedDB phải diễn ra theo cơ chế **kéo tuần tự, lưu vết trạng thái (Stateful Checkpoint) và không phụ thuộc thời gian (Time-decoupled)**.
+
+### 4.1 Bảng Theo Dõi Trạng Thái Di Trú Máy Chủ (`user_vault_sync_states`)
+Mỗi nhân viên/tài khoản kết nối có một bản ghi theo dõi trạng thái đồng bộ:
+
+```sql
+-- migrations/000070_user_vault_sync_states.up.sql
+CREATE TABLE IF NOT EXISTS user_vault_sync_states (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    channel_account_id UUID REFERENCES channel_accounts(id) ON DELETE CASCADE,
+    
+    archive_file_path VARCHAR(500) NOT NULL,
+    archive_checksum VARCHAR(64) NOT NULL,      -- SHA-256 đối soát toàn vẹn
+    total_messages INT NOT NULL DEFAULT 0,
+    file_size_bytes BIGINT NOT NULL DEFAULT 0,
+    
+    -- Trạng thái: 'ready' (kho sẵn sàng) | 'in_progress' | 'completed' (đã nạp xong) | 'failed'
+    status VARCHAR(50) NOT NULL DEFAULT 'ready',
+    client_synced_at TIMESTAMPTZ,
+    client_user_agent TEXT,
+    retry_count INT NOT NULL DEFAULT 0,
+    error_message TEXT,
+    
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uq_user_channel_vault UNIQUE (tenant_id, user_id, channel_account_id)
+);
+
+CREATE INDEX idx_user_vault_sync_lookup ON user_vault_sync_states(tenant_id, user_id, status);
+```
+
+### 4.2 Luồng Vận Hành Tuần Tự Khi Nhân Viên Kết Nối (On-Connect Flowchart)
+
+```
+[Nhân viên bật máy tính & Mở Web omni-web]
+                 │
+                 ▼
+     [Gửi Auth Token lên Server]
+                 │
+                 ▼
+  [Gọi API: GET /api/v1/migration/vault-sync/status]
+                 │
+                 ▼
+   ┌─────────────────────────────┐
+   │ Có kho lưu trữ cũ sẵn sàng? │
+   │   (status == 'ready')       │
+   └──────────────┬──────────────┘
+                  │
+        ┌─────────┴─────────┐
+       Có                  Không (Đã nạp rồi / Tài khoản mới)
+        │                   │
+        ▼                   ▼
+[1. Hiển thị thông báo:]    [Bình thường: Chỉ chạy]
+"Đang đồng bộ dữ liệu chat" [Hot Rolling Buffer 7 ngày]
+        │
+        ▼
+[2. Tải Stream tệp .vault.json.gz]
+  (Hỗ trợ Range Request / Tự động Resume nếu rớt mạng)
+        │
+        ▼
+[3. Web Worker giải nén Gzip & Đối soát Checksum SHA-256]
+        │
+        ▼
+[4. Chunking 500 tin / batch: localDb.messages.bulkPut()]
+        │
+        ▼
+[5. Gửi xác nhận đối soát lên Server:]
+  POST /api/v1/migration/vault-sync/ack
+  Payload: { status: "completed", imported_count: 15420, checksum: "..." }
+        │
+        ▼
+[6. Server cập nhật: user_vault_sync_states.status = 'completed']
+```
+
+### 4.3 Các Biện Pháp Phòng Vệ & Tự Động Phục Hồi (Resilience Guarantees)
+1. **Chống trùng lặp (Idempotent Bulk Put):**
+   - Khóa chính của IndexedDB là `id` (UUID). Nếu tải lặp lại hoặc mạng ngắt giữa chừng rồi chạy lại, lệnh `bulkPut()` tự động ghi đè không sinh duplicate message bubbles.
+2. **Không khóa luồng giao diện (Web Worker Threading):**
+   - Quá trình giải nén 50.000 tin nhắn cũ và lưu vào IndexedDB được thực thi hoàn toàn trong **Web Worker**. Luồng UI chính của nhân viên vẫn nhắn tin, trả lời khách trơn tru ở 60 FPS.
+3. **Mạng chập chờn / Mất điện đột ngột:**
+   - Client lưu `last_synced_cursor` vào `localDb`. Khi mạng có lại hoặc mở lại tab, client gửi lại offset để tiếp tục kéo phần còn lại mà không phải tải lại từ đầu.
+
