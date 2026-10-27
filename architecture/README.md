@@ -52,4 +52,12 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 - Cơ chế sinh mã tự động cho Go và Connect-RPC client/server.
 - Quy chuẩn ánh xạ mã lỗi giữa domain `pkg/errors` và `connect.Code`.
 
+### 9. [CROSS-CHANNEL-MESSAGE-REACTION-SYNC-SPEC.md](./CROSS-CHANNEL-MESSAGE-REACTION-SYNC-SPEC.md) (Đặc Tả Đồng Bộ Cảm Xúc Tin Nhắn Đa Kênh)
+- Đồng bộ phản ứng tin nhắn hai chiều giữa Omni Core và Zalo, Facebook Messenger, Telegram, WhatsApp.
+- Giải pháp xử lý race-condition kéo lịch sử (Backfill CMD 610/611), dynamic msgType cho media, và chuẩn hóa schema frontend.
+
+### 10. [AI-COPILOT-FLOATING-WIDGET-AND-AGENT-SELECTION-SPEC.md](./AI-COPILOT-FLOATING-WIDGET-AND-AGENT-SELECTION-SPEC.md) (Floating AI Copilot Widget & Agent Selection)
+- Đặc tả Floating Chat Bubble AI Copilot góc phải dưới toàn app kèm tự động bắt ngữ cảnh hội thoại/khách hàng.
+- Loại bỏ sidecar 502 Bad Gateway và kết nối trực tiếp bảng cấu hình `ai_agents` / `tenants.default_ai_agent_key`.
+
 
