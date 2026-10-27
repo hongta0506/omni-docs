@@ -90,6 +90,24 @@ Thay vì giả định cần một process sidecar kiểm tra GoClaw bên ngoài
 }
 ```
 
+### 2.3 Khắc Phục Lỗi 409 Conflict Trên Endpoint Hỏi Trợ Lý (`POST /api/v1/ai/ask` - Issue #1415)
+- **Nguyên nhân cốt lõi**:
+  - `ask_handler.go` sử dụng một biến bộ nhớ tạm `askModels = map[string]string{}` được bảo vệ bằng `sync.Mutex`. Biến này không được lưu xuống DB và không đồng bộ với `tenants.default_ai_agent_key`.
+  - Khi chưa gọi `PUT /api/v1/ai/ask-model`, `model` bị rỗng -> hàm `domain.DecideAsk` trả về `{ ok: false, code: "agent_not_selected" }` -> trả HTTP 409 Conflict về giao diện Web.
+  - Khi `model` có giá trị, mã nguồn cũ chỉ trả về `{ ok: true, agent: "goclaw:..." }` chứ **hoàn toàn chưa tích hợp gọi LLM sinh câu trả lời**.
+- **Quy chuẩn sửa đổi (Resolution Contract)**:
+  1. Khi nhận `POST /api/v1/ai/ask`, đọc `default_ai_agent_key` từ `DefaultAIAgentRepository` (hoặc bảng `tenants`).
+  2. Nếu tìm thấy agent tương ứng trong bảng `ai_agents`, sử dụng `system_prompt` và `model_name` của agent đó.
+  3. Nếu tenant chưa chọn agent mặc định, hệ thống **tự động fallback về Router9 GOSO provider** với persona "Trợ lý bán hàng sản phẩm" thay vì ném mã lỗi 409 Conflict làm gián đoạn người dùng.
+  4. Gửi prompt (kèm `contactId`, `conversationId`, và danh sách lịch sử câu hỏi trước đó) tới LLM Provider, trả về định dạng chuẩn mà `omni-web/src/api/ai-ask.ts` yêu cầu:
+  ```json
+  {
+    "answer": "Sản phẩm hiện đang có sẵn tại kho với mức chiết khấu 15%...",
+    "model": "goso:router9",
+    "ok": true
+  }
+  ```
+
 ---
 
 ## 3. Đặc Tả Floating AI Copilot Chat Widget Phía Frontend
