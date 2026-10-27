@@ -126,25 +126,33 @@ omni-web/src/
 └── App.vue                           # Mount <AiCopilotFloatingWidget /> toàn cục
 ```
 
-### 3.2 Thiết Kế Bottom-Center Capsule Dock (Chống Che Khuất Thao Tác CRM)
+### 3.2 Thiết Kế Bottom-Left Sidebar Dock & Khung Chat Mở Rộng 760px (Ultra-Spacious Viewport)
 
-1. **Vấn Đề Thực Tế Của Nút Float Góc Phải**:
-   - Vùng góc phải bên dưới màn hình là không gian thao tác cốt lõi của CRM: ô nhập tin nhắn chat (`/chat/:id`), nút Gửi, nút đính kèm ảnh/file/âm thanh, nút cuộn xuống cuối, và panel thông tin khách hàng.
-   - Nút float cố định tại góc phải `bottom: 24px; right: 24px` che mất các nút hành động này, gây cản trở nghiêm trọng cho nhân viên trực chat.
-2. **Quy Chuẩn Bottom-Center Capsule Dock**:
-   - **Tọa độ Neo**: `position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 999;`.
-   - **Giao Diện Dock Thu Gọn (Capsule Pill)**:
-     - Kích thước: Chiều cao 38px, bo tròn hoàn toàn (`border-radius: 9999px`).
-     - Phong cách: Glassmorphism / Surface theme (`background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);`).
+1. **Vấn Đề Thực Tế Của Nút Float Góc Phải & Dock Giữa Màn Hình**:
+   - Nút góc phải `bottom: 24px; right: 24px`: Che khuất ô soạn tin nhắn chat (`/chat/:id`), nút Gửi, nút đính kèm ảnh/file và panel thông tin khách hàng.
+   - Dock giữa màn hình: Dễ che mất dòng cuộn tin nhắn ở giữa và các nút xem thêm tin nhắn cũ/mới trong luồng chat.
+   - Khung chat kích thước cũ (`420px x 580px`) quá chật chội, khó đọc các đoạn tóm tắt Markdown dài, bảng báo giá nhiều cột, hoặc đối chiếu dữ liệu 2 bên.
+2. **Quy Chuẩn Bottom-Left Sidebar Anchor**:
+   - **Tọa độ Neo**: `position: fixed; bottom: 16px; left: calc(var(--v-layout-left, 256px) + 16px); z-index: 999;` (Sát ngay mép phải thanh Sidebar chính, hoặc neo trực tiếp ở chân Sidebar).
+   - **Giao Diện Dock Thu Gọn (Sidebar Capsule / Trigger Pill)**:
+     - Kích thước: Chiều cao 38px, bo tròn pill (`border-radius: 9999px`), padding ngang 14px-16px.
+     - Phong cách: Glassmorphism / Dark Surface (`background: rgba(30, 41, 59, 0.90); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);`).
      - Nội dung: Icon Sparkles phát sáng nhẹ + chữ "AI Copilot" + phím tắt badge `Ctrl+K` (hoặc `⌘K`).
-     - Hiệu ứng: Hover phóng nhẹ (`transform: translateX(-50%) translateY(-2px)`), bóng sáng tím (`box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35)`).
-3. **Khung Chat Mở Rộng Từ Dock**:
-   - Tọa độ mở: `position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%);` (Neo trồi lên ngay trên thanh dock, nằm cân đối giữa màn hình).
-   - Kích thước: `width: 420px; height: 580px; max-height: calc(100vh - 100px); max-width: calc(100vw - 32px);`.
-   - Hiệu ứng mở: `transform-origin: bottom center; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);`.
-   - Header: Tên Agent kèm badge "GOSO Live", nút thu nhỏ và nút xóa lịch sử chat.
-   - Footer: Textarea tự động co giãn theo nội dung, phím tắt Enter gửi, Shift+Enter xuống dòng.
-   - **Giải phóng 100% không gian góc phải**: Toàn bộ thanh soạn tin nhắn chat, nút Gửi, panel khách hàng hoàn toàn thông thoáng.
+     - Hiệu ứng: Hover phóng nhẹ, bóng sáng tím sang trọng.
+3. **Khung Chat Mở Rộng Gấp Gần Đôi (Spacious 760px Viewport)**:
+   - Tọa độ mở: Neo từ góc trái dưới `position: fixed; bottom: 64px; left: calc(var(--v-layout-left, 256px) + 16px);`.
+   - **Kích thước to gấp gần đôi**:
+     - Chiều rộng: `width: 760px; max-width: calc(100vw - 320px);` (Gấp 1.8x kích thước 420px cũ, cho phép đọc code, bảng dữ liệu và tóm tắt cực kỳ thoải mái).
+     - Chiều cao: `height: 680px; max-height: calc(100vh - 100px);`.
+   - **Header Tính Năng Đỉnh Cao**:
+     - Tên Agent kèm badge "GOSO Live" + Context Chip hiển thị ngành nghề hiện tại.
+     - Nút **Maximize / Restore**: Cho phép phóng to toàn màn hình (hoặc 1100px Split View) khi cần phân tích chuyên sâu.
+     - Nút Xóa lịch sử & Nút Thu nhỏ.
+   - **Footer Soạn Thảo**:
+     - Textarea đa dòng tự co giãn, gợi ý sẵn câu lệnh nhanh (Quick Prompt chips: "Tóm tắt hội thoại", "Soạn báo giá", "Gợi ý trả lời").
+   - **Giải phóng 100% không gian CRM**:
+     - Góc phải (ô chat khách, nút gửi, nút đính kèm, panel CRM): Hoàn toàn tự do.
+     - Khu vực giữa màn hình (dòng tin nhắn chat): Không bị che chắn bất kỳ phần tử nào.
 
 ### 3.3 Tự Động Thu Thập Ngữ Cảnh (Context Injection)
 
@@ -269,11 +277,11 @@ Trong mô hình SaaS đa ngành (Bất động sản, Spa/Thẩm mỹ, Bán lẻ
 - [ ] Cập nhật `AiCopilotChatWindow.vue`: hiển thị nội dung stream thời gian thực và fallback khi rỗng.
 - [ ] Thêm dual-field `"token"` và `"text"` trong backend `chat_service.go`.
 
-### Pha 4: Tái Cấu Trúc Nút Float Sang Bottom-Center Capsule Dock (Issue #165)
-- [ ] Tái cấu trúc `AiCopilotFloatingWidget.vue` về vị trí `bottom: 16px; left: 50%; transform: translateX(-50%);`.
-- [ ] Thiết kế Capsule Dock pill thanh lịch, giải phóng hoàn toàn góc phải màn hình cho khung chat CRM.
-- [ ] Neo khung chat `AiCopilotChatWindow.vue` trồi lên trên dock ở giữa màn hình.
-- [ ] Đảm bảo phím tắt `Ctrl+K` mở/đóng mượt mà.
+### Pha 4: Tái Cấu Trúc Nút Float Sang Bottom-Left Sidebar Dock & Khung Chat 760px (Issue #165)
+- [ ] Tái cấu trúc `AiCopilotFloatingWidget.vue` về vị trí sát sidebar trái `bottom: 16px; left: calc(var(--v-layout-left, 256px) + 16px);`.
+- [ ] Mở rộng kích thước khung chat `AiCopilotChatWindow.vue` lên `width: 760px; height: 680px;` (gấp gần đôi kích thước 420px cũ).
+- [ ] Bổ sung nút Phóng to / Thu nhỏ (Maximize / Restore) cho khung chat Copilot.
+- [ ] Đảm bảo phím tắt `Ctrl+K` mở/đóng mượt mà và không che khuất luồng chat CRM ở trung tâm & góc phải.
 
 ### Pha 5: Lưu Trữ Harness Trace & Lịch Sử Phiên Chat Backend
 - [ ] Migration tạo 2 bảng `ai_copilot_sessions` và `ai_copilot_turns` trong PostgreSQL.
