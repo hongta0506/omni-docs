@@ -202,11 +202,55 @@ Khi backend chuyển đổi luồng streaming từ Connect-RPC/gRPC sang REST SS
 - [ ] Cập nhật `AiCopilotChatWindow.vue`: hiển thị nội dung stream thời gian thực và fallback khi rỗng.
 - [ ] Thêm dual-field `"token"` và `"text"` trong backend `chat_service.go`.
 
-### Pha 4: Tái Cấu Trúc Nút Float Sang Bottom-Center Capsule Dock
-- [ ] Tái cấu trúc `AiCopilotFloatingWidget.vue` về vị trí `bottom: 16px; left: 50%; transform: translateX(-50%);`.
-- [ ] Thiết kế Capsule Dock pill thanh lịch, giải phóng hoàn toàn góc phải màn hình cho khung chat CRM.
-- [ ] Neo khung chat `AiCopilotChatWindow.vue` trồi lên trên dock ở giữa màn hình.
-- [ ] Đảm bảo phím tắt `Ctrl+K` mở/đóng mượt mà.
+### 3.6 Đặc Tả Lưu Trữ Vết Hội Thoại (Harness Session & Turn Trace Persistence)
+
+Nhằm mục đích kiểm toán chất lượng prompt, đo lường độ trễ token, và hỗ trợ replay/eval tự động tương tự cơ chế DeepSeek Harness:
+1. **Mô Hình Dữ Liệu PostgreSQL**:
+   - Bảng `ai_copilot_sessions`: Quản lý phiên hội thoại cấp người dùng/tenant.
+     - `id` (UUID PK), `tenant_id` (UUID), `user_id` (UUID), `title` (VARCHAR), `industry_domain` (VARCHAR), `created_at`, `updated_at`.
+   - Bảng `ai_copilot_turns`: Lưu chi tiết từng turn hỏi-đáp.
+     - `id` (UUID PK), `session_id` (UUID FK), `tenant_id` (UUID), `user_prompt` (TEXT), `system_prompt` (TEXT), `client_context` (JSONB), `model_name` (VARCHAR), `assistant_reply` (TEXT), `tool_executions` (JSONB), `tokens_used` (INT), `duration_ms` (INT), `status` (VARCHAR: `COMPLETED` / `FAILED`), `created_at`.
+2. **Cơ Chế Ghi Không Chặn (Non-Blocking Trace Persister)**:
+   - Toàn bộ quá trình lưu vết diễn ra sau khi hoàn tất stream (`COPILOT_CHAT_STREAM_COMPLETED`), không làm trễ tốc độ stream token về client.
+   - Sử dụng Transactional Outbox hoặc background worker bounded pool để ghi dữ liệu trace vào PostgreSQL.
+3. **API Tra Cứu Lịch Sử & Replay Trace**:
+   - `GET /api/v1/ai/copilot/sessions?page=&page_size=`: Danh sách các phiên trò chuyện của user/tenant.
+   - `GET /api/v1/ai/copilot/sessions/:id/turns`: Chi tiết toàn bộ các lượt prompt, tool execution và chunk token đã nhận từ GOSO.
+
+### 3.7 Kiến Trúc Tự Động Gom Ngữ Cảnh Phía Client (Client-Driven Context Injection)
+
+Trong mô hình SaaS đa ngành (Bất động sản, Spa/Thẩm mỹ, Bán lẻ tiêu dùng, Phòng khám):
+1. **Lý Do Đẩy Từ Client (Client-Driven)**:
+   - Máy chủ không thể chạy các truy vấn nặng (join 4-5 bảng `contacts`, `deals`, `messages`, `notes`) mỗi khi nhân viên gửi một câu hỏi cho Copilot.
+   - Client nắm chính xác nhất trạng thái thao tác của nhân viên tại thời điểm hiện tại: Tab đang mở, bản ghi liên hệ đang chọn, các tin nhắn đang hiển thị trong khung nhìn (viewport).
+2. **Cấu Trúc `client_context` Chuẩn Hóa**:
+   ```json
+   {
+     "industry_preset": "real_estate",
+     "active_entity": {
+       "entity_type": "deal",
+       "entity_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+       "snapshot": {
+         "title": "Căn hộ Vinhomes Grand Park 2PN",
+         "stage": "NEGOTIATION",
+         "value": 3500000000,
+         "customer_name": "Nguyễn Văn A",
+         "customer_phone": "0987654321"
+       }
+     },
+     "viewport_messages": [
+       { "sender": "customer", "content": "Dự án này có sổ hồng chưa em?", "sent_at": "2026-10-27T10:15:00Z" },
+       { "sender": "agent", "content": "Dạ dự án đã có sổ từng căn rồi ạ.", "sent_at": "2026-10-27T10:16:00Z" }
+     ]
+   }
+   ```
+3. **Nguyên Tắc Hybrid Context Injection Trên Backend**:
+   - Nếu `req.ClientContext` tồn tại: Backend ưu tiên sử dụng snapshot và viewport messages của client để ráp vào System Prompt, **hoàn toàn không cần query lại DB tin nhắn**.
+   - Nếu `req.ClientContext` rỗng: Fallback sang `crm.get_conversation_context` query 10 tin gần nhất trong PostgreSQL.
+
+---
+
+## 4. Kế Hoạch Triển Khai Kỹ Thuật (Phasing & Checklist)
 
 ### Pha 1: Triển Khai Backend Bridge (Issue #1412)
 - [ ] Refactor `DefaultAIAgentHTTPHandler` trong `internal/aiagent/interfaces/http/default_ai_agent_tail.go`.
@@ -219,3 +263,24 @@ Khi backend chuyển đổi luồng streaming từ Connect-RPC/gRPC sang REST SS
 - [ ] Tạo components `AiCopilotFloatingWidget.vue` và `AiCopilotChatWindow.vue`.
 - [ ] Tích hợp vào `App.vue` và kiểm tra trên các độ phân giải màn hình.
 - [ ] Kiểm thử luồng hỏi đáp streaming và thực thi công cụ MCP có xác nhận.
+
+### Pha 3: Bóc Tách SSE Stream Token Đa Chuẩn & Khắc Phục Lỗi Ẩn Tin Nhắn (Issue #164)
+- [ ] Sửa `use-ai-copilot.ts`: hỗ trợ đa key (`token`, `text`, `content`, `delta`), di chuyển `currentEvent` ra ngoài `while (true)`.
+- [ ] Cập nhật `AiCopilotChatWindow.vue`: hiển thị nội dung stream thời gian thực và fallback khi rỗng.
+- [ ] Thêm dual-field `"token"` và `"text"` trong backend `chat_service.go`.
+
+### Pha 4: Tái Cấu Trúc Nút Float Sang Bottom-Center Capsule Dock (Issue #165)
+- [ ] Tái cấu trúc `AiCopilotFloatingWidget.vue` về vị trí `bottom: 16px; left: 50%; transform: translateX(-50%);`.
+- [ ] Thiết kế Capsule Dock pill thanh lịch, giải phóng hoàn toàn góc phải màn hình cho khung chat CRM.
+- [ ] Neo khung chat `AiCopilotChatWindow.vue` trồi lên trên dock ở giữa màn hình.
+- [ ] Đảm bảo phím tắt `Ctrl+K` mở/đóng mượt mà.
+
+### Pha 5: Lưu Trữ Harness Trace & Lịch Sử Phiên Chat Backend
+- [ ] Migration tạo 2 bảng `ai_copilot_sessions` và `ai_copilot_turns` trong PostgreSQL.
+- [ ] Triển khai repository `CopilotTraceRepository` ghi vết phiên và turn chat không làm nghẽn stream.
+- [ ] Viết endpoints `GET /api/v1/ai/copilot/sessions` và `GET /api/v1/ai/copilot/sessions/:id/turns` phân trang chuẩn `pkg/pagination`.
+
+### Pha 6: Bộ Gom Ngữ Cảnh Client-Driven & Đa Ngành Frontend (`omni-web`)
+- [ ] Tạo composable `use-copilot-context.ts` tự động gom: industry preset, thực thể active, 5-10 tin nhắn trong viewport.
+- [ ] Cập nhật payload `POST /api/v1/ai/copilot/chat` trong `use-ai-copilot.ts` gửi kèm `client_context`.
+- [ ] Bổ sung selector cấu hình ngành nghề (Real Estate, Spa, Retail, Clinic) trong giao diện Copilot.
