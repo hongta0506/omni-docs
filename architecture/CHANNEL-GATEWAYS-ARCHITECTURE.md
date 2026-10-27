@@ -399,3 +399,38 @@ Khác với Zalo OA sử dụng webhook HTTP từ Zalo Developer Portal, **Zalo 
      ```json
      [{"url": "https://photo-stal-...", "type": "image"}]
      ```
+
+---
+
+## 9. Đồng Bộ Sự Kiện Thành Viên Nhóm Đa Kênh (Group Membership Events: Join / Leave / Remove)
+
+### 9.1 Cơ Chế Lắng Nghe & Bắt Sự Kiện Trên 3 Nền Tảng
+| Nền tảng | Thư viện Driver | Cấu trúc sự kiện nguồn | Dữ liệu trích xuất (Join / Leave) |
+|---|---|---|---|
+| **Telegram** | `gotd/td/tg` (MTProto) | `*tg.UpdateNewMessage`, `*tg.UpdateNewChannelMessage` chứa `*tg.MessageService` với `Action` | `*tg.MessageActionChatAddUser` (Users), `*tg.MessageActionChatJoinedByLink` (InviterID), `*tg.MessageActionChatDeleteUser` (UserID). Hoặc `*tg.UpdateChannelParticipant` |
+| **WhatsApp** | `whatsmeow` | `*events.GroupInfo`, `*events.JoinedGroup` | `evt.Join []types.JID` (thành viên được thêm/tham gia), `evt.Leave []types.JID` (thành viên rời nhóm/bị xóa), `evt.Sender` (người thực hiện thao tác) |
+| **Zalo** | `zcago` (`pkg/zcago`) | Channel `ln.Group() <-chan model.GroupEvent` | `GroupEventTypeJoin` (UpdateMembers), `GroupEventTypeLeave` (rời nhóm), `GroupEventTypeRemoveMember` (bị admin xóa khỏi nhóm) |
+
+### 9.2 Quy Chuẩn Lưu Trữ Tin Nhắn Hệ Thống (System Invariant)
+1. **Phân loại tin nhắn**:
+   - `content_type = "system"` (hoặc `"event"`).
+   - `sender_type = "system"`.
+   - `sender_id = "system"` hoặc ID người thực hiện thao tác (admin).
+2. **Nội dung hiển thị (`content`)**:
+   - Tham gia nhóm: `"{Tên người dùng} đã tham gia nhóm"` hoặc `"{Người mời} đã thêm {Tên người dùng} vào nhóm"`.
+   - Rời nhóm: `"{Tên người dùng} đã rời khỏi nhóm"`.
+   - Bị xóa khỏi nhóm: `"{Admin} đã xóa {Tên người dùng} khỏi nhóm"`.
+3. **Metadata**:
+   ```json
+   {
+     "system_event": "group_member_change",
+     "action": "join | leave | remove",
+     "platform": "telegram | whatsapp | zalo",
+     "actor_id": "...",
+     "target_user_ids": ["..."],
+     "group_id": "..."
+   }
+   ```
+4. **Realtime Broadcast**:
+   - Gateway đẩy tin nhắn hệ thống vào hub WebSocket (`chat:message`).
+   - Frontend (`message-bubble.vue`) nhận `content_type === 'system'` và render dạng badge chip nằm giữa dòng thời gian (system notification pill), không render dạng bubble tin nhắn thông thường.
