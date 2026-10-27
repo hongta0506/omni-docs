@@ -51,3 +51,21 @@ Qua quá trình rà soát commit `b56aad1` (PR #44) và backend Telegram gateway
 1. Khi nhận `tg.MessageMediaDocument`:
    - Nếu `doc.MimeType` bắt đầu bằng `image/`, gán `contentType = "image"` và thực hiện stream tải về lưu vào `media/telegram_photo_<id>.<ext>`.
    - Nếu `doc.MimeType` bắt đầu bằng `video/`, gán `contentType = "video"` và gán URL tương ứng.
+
+---
+
+## 4. Quy Chuẩn Hiển Thị Album Ảnh & Lọc URL Thừa (Frontend - Issue #161)
+
+### 4.1 Ngưỡng Gom Cụm Album (Multi-Item Threshold)
+- **Quy tắc**: Chỉ gom cụm hiển thị dạng Album (`kind === 'album'`) khi số lượng phương tiện **lớn hơn hoặc bằng 2** (`messages.length >= 2`).
+- Nếu một tin nhắn có `albumKey` nhưng đứng độc lập hoặc chỉ có 1 ảnh/video, hệ thống hiển thị dưới dạng tin nhắn đơn (`kind === 'single'`) qua `MessageBubble.vue`, tránh hiển thị khung lưới 1 ô và bộ đếm `🖼️ 1` thừa thãi.
+
+### 4.2 Lọc Chuỗi URL Thừa Trong Album Caption (`getAlbumCaption`)
+- **Vấn đề**: Khi tin nhắn media không có chú thích (caption), trường `content` trong cơ sở dữ liệu thường lưu chính đường dẫn URL của ảnh (`http://...`, `https://...`, `/api/v1/media/...`). Hàm `getAlbumCaption` chỉ kiểm tra `!m.content.startsWith('{')` dẫn đến việc render nguyên dòng URL thô bên dưới album.
+- **Tiêu chuẩn khử URL (Suppression Invariant)**:
+  `getAlbumCaption(item)` bắt buộc bỏ qua chuỗi nếu:
+  1. Bắt đầu bằng giao thức mạng: `http://`, `https://`, `blob:`.
+  2. Bắt đầu bằng đường dẫn tương đối: `/`, `/api/v1/media/`.
+  3. Trùng khớp với kết quả của `getImageUrl(m)` hoặc `getMediaUrl(m)`.
+  4. Là các nhãn giữ chỗ (placeholder): `[Hình ảnh]`, `[Image]`, `[Video]`.
+  - Chỉ khi nội dung là văn bản mô tả thực sự do người dùng nhập mới hiển thị thẻ `.album-caption`.
