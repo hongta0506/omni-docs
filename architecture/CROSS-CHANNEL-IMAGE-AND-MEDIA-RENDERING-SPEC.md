@@ -69,3 +69,28 @@ Qua quá trình rà soát commit `b56aad1` (PR #44) và backend Telegram gateway
   3. Trùng khớp với kết quả của `getImageUrl(m)` hoặc `getMediaUrl(m)`.
   4. Là các nhãn giữ chỗ (placeholder): `[Hình ảnh]`, `[Image]`, `[Video]`.
   - Chỉ khi nội dung là văn bản mô tả thực sự do người dùng nhập mới hiển thị thẻ `.album-caption`.
+
+---
+
+## 5. Quy Chuẩn Hiển Thị Sticker Đa Kênh (Telegram .tgs, .webm & Zalo Sprites)
+
+### 5.1 Phân Loại Định Dạng Sticker Đa Kênh
+| Nền tảng | Định dạng kỹ thuật | Bản chất nội dung | Phương thức render giao diện |
+|---|---|---|---|
+| **Zalo** | Static WebP / CSS Sprite Sheet | Ảnh PNG/WebP ghép nhiều khung hình | CSS Sprite Animation (`steps(N)`) |
+| **Telegram Static** | WebP (`.webp`) | Raster image | Thẻ HTML `<img>` |
+| **Telegram Video** | WebM (`.webm`) | Video VP9 không tiếng | Thẻ HTML `<video autoplay loop muted playsinline>` |
+| **Telegram Animated** | TGS (`.tgs`) | GZIP-compressed Lottie Bodymovin JSON | Giải nén `pako/fflate` + render Canvas/SVG qua `lottie-web` |
+
+### 5.2 Sự Cố Thực Tế File .tgs Không Hiển Thị
+1. **Lỗi Render**: `message-bubble.vue` gán trực tiếp URL `.tgs` vào thẻ `<img :src="stickerFallbackUrl">`. Do `.tgs` là file nén gzip chứa JSON chứ không phải file ảnh, trình duyệt báo lỗi decode và hiển thị khung ảnh vỡ hoặc chữ placeholder.
+2. **Quy Chuẩn Render Sticker TGS (Frontend `omni-web`)**:
+   - Nhận diện URL kết thúc bằng `.tgs` hoặc `metadata.sticker_format === 'tgs'` hoặc `mime_type === 'application/x-tgsticker'`.
+   - Sử dụng component chuyên biệt `TelegramStickerPlayer.vue`:
+     - Tải tệp nhị phân qua `fetch(url)` với `responseType: 'arraybuffer'`.
+     - Dùng `pako.ungzip()` giải nén nhị phân ra chuỗi JSON Lottie.
+     - Nạp JSON vào `lottie-web` vẽ trên thẻ `<canvas>` kích thước tối đa 160x160 px, thiết lập `loop: true, autoplay: true`.
+     - Áp dụng bộ nhớ đệm (LRU Cache) cho các sticker JSON đã giải nén để tránh giải nén lặp lại khi cuộn màn hình.
+   - Khi gặp tệp `.webm`: Render thẻ `<video autoplay loop muted playsinline class="sticker-video" />`.
+   - Fallback khi lỗi mạng: Hiển thị emoji đại diện (`metadata.sticker_emoji`, ví dụ 👍, 😂) kèm badge "Sticker".
+
