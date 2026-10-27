@@ -126,19 +126,25 @@ omni-web/src/
 └── App.vue                           # Mount <AiCopilotFloatingWidget /> toàn cục
 ```
 
-### 3.2 Vị Trí & Tương Tác Người Dùng (UX & Micro-interactions)
+### 3.2 Thiết Kế Bottom-Center Capsule Dock (Chống Che Khuất Thao Tác CRM)
 
-1. **Vị Trí Cố Định**:
-   - Tọa độ: `position: fixed; bottom: 24px; right: 24px; z-index: 1000;`.
-   - Nút kích hoạt: Nút tròn 56x56px, màu gradient chủ đạo (Indigo/Purple), đổ bóng nổi (`box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4)`), icon AI lấp lánh (Sparkles/Bot Icon).
-   - Tooltip: Hiển thị "Trợ lý AI Copilot (Ctrl + Space)".
-2. **Khung Chat Mở Rộng**:
-   - Kích thước: `width: 420px; height: 600px; max-height: calc(100vh - 120px);`.
-   - Hiệu ứng mở: `transform-origin: bottom right; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);`.
-   - Header: Tên Agent đang chọn kèm badge "Trực tuyến", nút thu nhỏ và nút xóa lịch sử chat.
-   - Body: Danh sách tin nhắn có thanh cuộn tự động cuộn xuống khi token đang stream về.
-   - Quick Prompt Chips: Các nút bấm gợi ý nhanh ("Tóm tắt khách này", "Gợi ý kịch bản xử lý từ chối", "Tra cứu tồn kho").
-   - Footer: Textarea tự động co giãn theo nội dung, nút gửi và phím tắt gửi (Enter, Shift+Enter xuống dòng).
+1. **Vấn Đề Thực Tế Của Nút Float Góc Phải**:
+   - Vùng góc phải bên dưới màn hình là không gian thao tác cốt lõi của CRM: ô nhập tin nhắn chat (`/chat/:id`), nút Gửi, nút đính kèm ảnh/file/âm thanh, nút cuộn xuống cuối, và panel thông tin khách hàng.
+   - Nút float cố định tại góc phải `bottom: 24px; right: 24px` che mất các nút hành động này, gây cản trở nghiêm trọng cho nhân viên trực chat.
+2. **Quy Chuẩn Bottom-Center Capsule Dock**:
+   - **Tọa độ Neo**: `position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 999;`.
+   - **Giao Diện Dock Thu Gọn (Capsule Pill)**:
+     - Kích thước: Chiều cao 38px, bo tròn hoàn toàn (`border-radius: 9999px`).
+     - Phong cách: Glassmorphism / Surface theme (`background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15);`).
+     - Nội dung: Icon Sparkles phát sáng nhẹ + chữ "AI Copilot" + phím tắt badge `Ctrl+K` (hoặc `⌘K`).
+     - Hiệu ứng: Hover phóng nhẹ (`transform: translateX(-50%) translateY(-2px)`), bóng sáng tím (`box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35)`).
+3. **Khung Chat Mở Rộng Từ Dock**:
+   - Tọa độ mở: `position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%);` (Neo trồi lên ngay trên thanh dock, nằm cân đối giữa màn hình).
+   - Kích thước: `width: 420px; height: 580px; max-height: calc(100vh - 100px); max-width: calc(100vw - 32px);`.
+   - Hiệu ứng mở: `transform-origin: bottom center; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);`.
+   - Header: Tên Agent kèm badge "GOSO Live", nút thu nhỏ và nút xóa lịch sử chat.
+   - Footer: Textarea tự động co giãn theo nội dung, phím tắt Enter gửi, Shift+Enter xuống dòng.
+   - **Giải phóng 100% không gian góc phải**: Toàn bộ thanh soạn tin nhắn chat, nút Gửi, panel khách hàng hoàn toàn thông thoáng.
 
 ### 3.3 Tự Động Thu Thập Ngữ Cảnh (Context Injection)
 
@@ -152,9 +158,55 @@ Hàm `use-ai-copilot.ts` tự động bắt Router hiện tại:
 - Lịch sử hội thoại của Floating Copilot được lưu vào `sessionStorage` hoặc Pinia Store. Khi nhân viên chuyển trang trong app, khung chat không bị reset nội dung.
 - Cung cấp nút "Làm mới phiên chat" (New Chat) để nhân viên xóa sạch ngữ cảnh cũ khi bắt đầu câu hỏi mới.
 
+### 3.5 Đặc Tả Thống Nhất Giao Thức Stream (gRPC-to-REST SSE Token Unification)
+
+Khi backend chuyển đổi luồng streaming từ Connect-RPC/gRPC sang REST SSE (`POST /api/v1/ai/copilot/chat`):
+1. **Lệch Key Dữ Liệu**:
+   - Backend phát sự kiện:
+     ```
+     event: token
+     data: {"token":"Omni CRM ready. Provide customer ID, lead, or"}
+     ```
+   - Phía frontend (`use-ai-copilot.ts`) không được phụ thuộc cứng vào duy nhất `data.text`.
+   - Bóc tách theo thứ tự ưu tiên đa giao thức (Multi-protocol resilient extractor):
+     ```ts
+     const tokenChunk = data?.token ?? data?.text ?? data?.content ?? data?.delta ?? data?.chunk_text ?? (typeof data === 'string' ? data : '');
+     ```
+2. **Scoping Biến Sự Kiện Qua Chunk Phân Mảnh (TCP Chunk Splitting)**:
+   - Biến `currentEvent` phải được khai báo **bên ngoài** vòng lặp đọc stream (`while (true)`), mặc định là `'token'`.
+   - Khi dòng là rỗng (`\n\n` kết thúc một event SSE), reset `currentEvent = 'token'` để sẵn sàng cho event tiếp theo.
+3. **Hiển Thị Tin Nhắn An Toàn (Layout Fallback)**:
+   - Trong `AiCopilotChatWindow.vue`: Khi đang stream (`status === 'streaming'`), nếu `msg.content` chưa có ký tự nào thì hiển thị typing indicator 3 chấm; khi đã có `msg.content` thì render markdown ngay lập tức.
+   - Khi nhận `event: done` hoặc kết thúc stream: nếu `msg.content` vẫn rỗng vì lỗi upstream, hiển thị thông báo lỗi thân thiện thay vì để bubble trống hoàn toàn.
+4. **Backend Tương Thích Kép**:
+   - `internal/aiagent/application/copilot/chat_service.go` phát cả 2 key `"token"` và `"text"` trong `copilotdom.EventToken` để tương thích ngược 100% với mọi phiên bản client.
+
 ---
 
 ## 4. Kế Hoạch Triển Khai Kỹ Thuật (Phasing & Checklist)
+
+### Pha 1: Triển Khai Backend Bridge (Issue #1412)
+- [ ] Refactor `DefaultAIAgentHTTPHandler` trong `internal/aiagent/interfaces/http/default_ai_agent_tail.go`.
+- [ ] Xóa bỏ toàn bộ mã trả về 502 `agent_sidecar_unavailable`.
+- [ ] Truy vấn danh sách từ `ai_agents` và `tenants.default_ai_agent_key`.
+- [ ] Viết unit tests kiểm thử trạng thái 200 OK cho cả trường hợp có agent và danh sách rỗng.
+
+### Pha 2: Triển Khai Giao Diện Floating Copilot (Issue #1413)
+- [ ] Tạo composable `use-ai-copilot.ts` xử lý Server-Sent Events (SSE) streaming từ `/api/v1/ai/copilot/chat`.
+- [ ] Tạo components `AiCopilotFloatingWidget.vue` và `AiCopilotChatWindow.vue`.
+- [ ] Tích hợp vào `App.vue` và kiểm tra trên các độ phân giải màn hình.
+- [ ] Kiểm thử luồng hỏi đáp streaming và thực thi công cụ MCP có xác nhận.
+
+### Pha 3: Bóc Tách SSE Stream Token Đa Chuẩn & Khắc Phục Lỗi Ẩn Tin Nhắn
+- [ ] Sửa `use-ai-copilot.ts`: hỗ trợ đa key (`token`, `text`, `content`, `delta`), di chuyển `currentEvent` ra ngoài `while (true)`.
+- [ ] Cập nhật `AiCopilotChatWindow.vue`: hiển thị nội dung stream thời gian thực và fallback khi rỗng.
+- [ ] Thêm dual-field `"token"` và `"text"` trong backend `chat_service.go`.
+
+### Pha 4: Tái Cấu Trúc Nút Float Sang Bottom-Center Capsule Dock
+- [ ] Tái cấu trúc `AiCopilotFloatingWidget.vue` về vị trí `bottom: 16px; left: 50%; transform: translateX(-50%);`.
+- [ ] Thiết kế Capsule Dock pill thanh lịch, giải phóng hoàn toàn góc phải màn hình cho khung chat CRM.
+- [ ] Neo khung chat `AiCopilotChatWindow.vue` trồi lên trên dock ở giữa màn hình.
+- [ ] Đảm bảo phím tắt `Ctrl+K` mở/đóng mượt mà.
 
 ### Pha 1: Triển Khai Backend Bridge (Issue #1412)
 - [ ] Refactor `DefaultAIAgentHTTPHandler` trong `internal/aiagent/interfaces/http/default_ai_agent_tail.go`.
