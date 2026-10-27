@@ -58,6 +58,10 @@ Hợp nhất toàn bộ thiết kế kiến trúc và bản đồ chuyển đổ
 
 ### 10. [AI-COPILOT-FLOATING-WIDGET-AND-AGENT-SELECTION-SPEC.md](./AI-COPILOT-FLOATING-WIDGET-AND-AGENT-SELECTION-SPEC.md) (Floating AI Copilot Widget & Agent Selection)
 - Đặc tả Floating Chat Bubble AI Copilot góc phải dưới toàn app kèm tự động bắt ngữ cảnh hội thoại/khách hàng.
+
+### 11. [FRONTEND-NEXTJS-ARCHITECTURE-SPEC.md](./FRONTEND-NEXTJS-ARCHITECTURE-SPEC.md) (Đặc Tả Kiến Trúc Chuẩn Frontend Next.js)
+- Kiến trúc chuẩn Next.js 16 (App Router, Turbopack, React 19, Tailwind CSS v4, shadcn/ui, Zustand, TanStack Query).
+- Ánh xạ 1:1 với 8 Bounded Contexts backend và quy chuẩn kỷ luật kỹ thuật kế thừa từ dự án Lottery (`CLAUDE.md` & `AGENTS.md`).
 - Loại bỏ sidecar 502 Bad Gateway và kết nối trực tiếp bảng cấu hình `ai_agents` / `tenants.default_ai_agent_key`.
 
 
