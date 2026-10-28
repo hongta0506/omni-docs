@@ -251,8 +251,12 @@ export function initMultiTabSync(onNewMessage: (msg: LocalMessage) => void) {
 3. **Batch Commit:** Sử dụng `localDb.messages.bulkPut(newMessages)` để thực thi dưới 1 transaction duy nhất, không block UI thread.
 
 ### 8.3 Quản lý & Tối ưu Media Blob Vault
-- **Ảnh đại diện, Sticker & Thumbnail:** Tải nhị phân về máy client và lưu trực tiếp dạng `Blob` vào store `mediaBlobs`. Render tức thì bằng `URL.createObjectURL(blob)` không tốn băng thông CDN.
-- **Tệp tin lớn & Video (> 5MB):** Tuyệt đối không lưu Blob vào IndexedDB. Chỉ lưu remote URL để streaming theo nhu cầu nhằm tránh tràn bộ nhớ trình duyệt (Quota Throttling).
+- **100% Client-Side Media Vault (Zero-Server-Storage):** Bắt buộc toàn bộ tệp nhị phân đa phương tiện (Ảnh mọi dung lượng, Sticker, Thumbnail, Âm thanh Voice, Tệp tài liệu và Video) đều phải được đồng bộ và lưu trữ hoàn chỉnh tại bộ nhớ cục bộ của máy Client (IndexedDB `mediaBlobs` / OPFS Client Vault).
+- **Tuyệt đối không lưu vĩnh viễn trên Server / MinIO:** Máy chủ và MinIO chỉ đóng vai trò bộ đệm trung chuyển tạm thời (Ephemeral Relay Buffer) với thời gian lưu tối đa 7 ngày (Hot Rolling Buffer). Sau 7 ngày, cron worker quét dọn dẹp sạch toàn bộ file vật lý trên đĩa server.
+- **Cơ chế lưu trữ Video & Tệp lớn tại Client:**
+  - Bãi bỏ giới hạn chặn cứng 5MB và bộ lọc chỉ cho phép ảnh của `MediaBlobVault`.
+  - Hỗ trợ lưu trữ Blob video và tệp đính kèm lớn trực tiếp vào IndexedDB hoặc Origin Private File System (OPFS) của trình duyệt.
+  - Video được đọc và phát lại trực tiếp từ Blob URL cục bộ (`URL.createObjectURL(blob)`) với đầy đủ tính năng tua/seek qua browser native video player mà không tốn một byte băng thông hay dung lượng đĩa server nào sau khi đã đồng bộ.
 
 ### 8.4 Tự động Thu dọn Bộ nhớ Nền (LRU Idle Eviction)
 Tận dụng thời gian rảnh của trình duyệt qua `window.requestIdleCallback` để thực thi dọn dẹp bộ nhớ:

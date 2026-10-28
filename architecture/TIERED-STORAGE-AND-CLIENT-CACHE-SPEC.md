@@ -54,14 +54,13 @@
   - Truy vấn hội thoại chỉ quét trên partition hiện tại, loại bỏ việc scan bảng hàng chục triệu dòng.
   - Khi hết chu kỳ 60 ngày: Detach partition và đẩy sang Cold Store mà không lock bảng chính.
 
-### Tier 2: Media Object Storage & CDN (MinIO / Cloudflare R2 / AWS S3)
-- **Mục đích:** Lưu trữ toàn bộ tệp nhị phân đa phương tiện (ảnh, video, audio voice, văn bản).
-- **Quy trình xử lý Worker:**
-  1. Khi nhận webhook/event chứa ảnh từ gateway: Ingestion Worker tải stream nhị phân về background.
-  2. Nén tự động định dạng `WebP` (giảm 70-80% dung lượng so với JPEG/PNG gốc) và tạo thumbnail 200px.
-  3. Đẩy lên Object Storage theo cấu trúc phân cấp:
-     `{tenant_id}/{channel}/{year}/{month}/{file_hash}.webp`
-  4. Database (PostgreSQL/NoSQL) chỉ lưu chuỗi đường dẫn tương đối hoặc public URL đại diện, tuyệt đối không lưu binary.
+### Tier 2: Ephemeral Media Relay Buffer (MinIO / Local Disk - Tối đa 7 Ngày)
+- **Mục đích:** Chỉ làm bộ đệm trung chuyển tạm thời (Ephemeral Transit Buffer), TUYỆT ĐỐI KHÔNG LƯU TRỮ VĨNH VIỄN. Toàn bộ tệp nhị phân (Ảnh mọi kích cỡ, Video, Audio Voice, Tệp tài liệu đính kèm) bắt buộc được đồng bộ đẩy về lưu tại Client-Side Edge Cache (Tier 4).
+- **Quy tắc Lưu trữ & Purge Tự động:**
+  1. Khi nhận file từ gateway: Ingestion Worker chuyển tiếp URL gốc hoặc stream nhị phân tạm thời.
+  2. Server/MinIO chỉ duy trì tệp tối đa **7 ngày** (Hot Rolling Buffer) để phục vụ client kéo về.
+  3. Sau 7 ngày (hoặc khi client đã hoàn tất đồng bộ về local), cron worker tự động xóa sạch file vật lý trên máy chủ.
+  4. Không duy trì kho lưu trữ Object Storage vĩnh viễn trên hạ tầng server nhằm triệt tiêu 100% chi phí đĩa cứng và bảo vệ quyền riêng tư tuyệt đối cho khách hàng.
 
 ### Tier 3: Cold Archive & Data Mining Store (ClickHouse hoặc MongoDB)
 - **Mục đích:** Lưu trữ vĩnh viễn lịch sử chat, phục vụ huấn luyện AI Intent, phân tích báo cáo (OLAP) và khai phá dữ liệu (Data Mining).
