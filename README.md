@@ -31,6 +31,7 @@
 | [`CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md`](./architecture/CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md) | Quản trị lỗi, ngoại lệ & khả năng chống chịu xuyên suốt 8 BCs | Phân loại Exception Taxonomy (Transient, Terminal, Security/Policy), Circuit Breaker, Exponential Backoff, DLQ & 3 tầng Observability (Loki/Prometheus/Postgres). |
 | [`PROTOBUF-CONNECT-RPC-SPEC.md`](./architecture/PROTOBUF-CONNECT-RPC-SPEC.md) | Quy chuẩn Protobuf & Connect-RPC RPC Delivery | Chuẩn hóa schema protobuf, cấu hình Buf CLI, sinh mã nguồn Go và ánh xạ mã lỗi Connect-RPC. |
 | [`ZALOCRM-FUNCTIONAL-CATALOG.md`](./architecture/ZALOCRM-FUNCTIONAL-CATALOG.md) | Danh mục chức năng nghiệp vụ chi tiết | 792 endpoints & 27 workers phân tích từ mã nguồn Fastify, catalog 34 modules nghiệp vụ nguyên bản. |
+| [`COPILOT-RAG-GUIDE-AND-AUTOMATION-ACTION-HARNESS-SPEC.md`](./architecture/COPILOT-RAG-GUIDE-AND-AUTOMATION-ACTION-HARNESS-SPEC.md) | RAG Hướng dẫn sử dụng & Action Harness Tự động hóa | Tra cứu RAG docs hệ thống trên GoSO Copilot toàn cục và Autonomy Gate L1 đề xuất tạo/gắn flow bám đuổi an toàn. |
 
 ### 2.2 Đặc Tả 8 Bounded Contexts (`contexts/`)
 > Thư mục chi tiết: [`contexts/README.md`](./contexts/README.md)
