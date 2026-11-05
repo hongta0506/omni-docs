@@ -178,6 +178,21 @@
 
 ---
 
+### 2.5 Module Hạn Mức Tài Nguyên & Định Mức Sử Dụng (User Quotas & Usage Limits)
+> **Chi tiết kiến trúc & BDD:** Xem tài liệu chuẩn [`SPEC-ARCH-QUOTA-001` (ROLE-BASED-RESOURCE-QUOTA-AND-USAGE-LIMIT-SPEC.md)](../../architecture/ROLE-BASED-RESOURCE-QUOTA-AND-USAGE-LIMIT-SPEC.md).
+
+#### EP 73-76: Quản Lý Hạn Ngạch & Sổ Cái Sử Dụng
+- **GET `/api/v1/my/usage-quota`**:
+  - **Nghiệp vụ:** Trả về quota cá nhân của người dùng đang đăng nhập: số nick social đã kết nối / trần nick, số lượt gọi AI hôm nay / trần ngày, số token AI đã dùng / trần ngày. Nếu là Admin/Owner, cờ `isAdmin: true` và `isUnlimited: true`.
+- **GET `/api/v1/admin/user-quotas`**:
+  - **Nghiệp vụ:** (Chỉ Admin/Owner) Danh sách chính sách hạn mức của các role hoặc ghi đè riêng cho từng user. Phân trang chuẩn `pkg/pagination`.
+- **PUT `/api/v1/admin/user-quotas/{userId}`**:
+  - **Nghiệp vụ:** (Chỉ Admin/Owner) Thiết lập trần nick social và quota AI riêng biệt cho một nhân viên cụ thể (ghi đè chính sách mặc định của vai trò).
+- **GET `/api/v1/admin/ai-usage/analytics`**:
+  - **Nghiệp vụ:** (Chỉ Admin/Owner) Thống kê lượng token và số lượt gọi AI theo phòng ban, nhân viên và tính năng.
+
+---
+
 ## 3. Ma Trận Observability, Logging & Exception Chuẩn
 
 | Nhóm Ngoại Lệ | Danh Sách Lỗi Kỹ Thuật / Domain | Phân Loại `pkg/errors` | Hành Động Hệ Thống | Event Log `pkg/logger` |
