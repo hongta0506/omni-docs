@@ -252,3 +252,44 @@ CREATE INDEX idx_ai_usage_user_daily ON public.ai_usage_ledgers (tenant_id, user
    - `QUOTA_SOCIAL_ACCOUNT_BLOCKED`
    - `QUOTA_AI_DAILY_CONSUMED`
    - `QUOTA_AI_DAILY_BLOCKED`
+
+---
+
+## 9. Đo Lường Token Chuẩn Xác: Upstream LLM Response vs Client Estimation
+
+### 9.1 So Sánh Phương Pháp Đo Lường
+
+| Tiêu chí | Đo tại Client / API Gateway (Ước lượng) | Đo tại Phản Hồi của LLM Provider (Chuẩn Hóa Đơn) |
+|---|---|---|
+| **Cơ chế** | Đếm ký tự hoặc dùng tokenizer mã nguồn mở ở Client/Server trước khi gửi đi. | Lấy trực tiếp trường `usage` từ JSON response do OpenAI, Gemini, Claude hoặc PicoClaw trả về sau khi hoàn tất sinh văn bản. |
+| **Độ chính xác** | **Rất sai lệch (Sai số 10x - 50x)**. Lý do: Client chỉ gửi 1 câu ngắn (10 tokens), nhưng AI Agent phải inject: System Prompt (~1.500 tokens), Lịch sử 20 tin nhắn (~2.000 tokens), Schema MCP Tools (~1.000 tokens) và Knowledge RAG. | **Chính xác tuyệt đối 100%**. Trùng khớp từng token với hóa đơn chi phí (Billing Invoice) của nhà cung cấp LLM. |
+| **Xử lý Tiếng Việt** | Mỗi model có byte-pair encoding khác nhau (GPT-4o dùng `o200k_base`, Claude/Gemini có vocab riêng). Tokenizer client không bao quát hết. | Nhà cung cấp tính tiền dựa trên chính xác vocab của họ. |
+| **Khuyến nghị chuẩn** | Chỉ dùng để hiển thị ước lượng sơ bộ trước khi submit (nếu cần). | **BẮT BUỘC DÙNG** làm dữ liệu nguồn ghi sổ cái `ai_usage_ledgers` và trừ quota người dùng. |
+
+### 9.2 Hợp Đồng Dữ Liệu Token Đo Lường Chuẩn
+```go
+type LLMTokenTelemetry struct {
+    PromptTokens     int    `json:"prompt_tokens"`     // Số token đầu vào (System + History + Prompt + Tools)
+    CompletionTokens int    `json:"completion_tokens"` // Số token câu trả lời do model sinh ra
+    TotalTokens      int    `json:"total_tokens"`      // Tổng số token bị tính phí
+    ModelName        string `json:"model_name"`        // Định danh model thực tế (gpt-4o-mini, gemini-1.5-flash)
+    LatencyMs        int64  `json:"latency_ms"`         // Thời gian chờ xử lý của upstream
+}
+```
+
+---
+
+## 10. Lộ Trình Mở Rộng: Trung Tâm Quản Trị Hạn Mức & Hệ Thống Cảnh Báo (Dedicated Quota Governance & Alert Center)
+
+Trong các pha nâng cấp tiếp theo (Pha Refactor), hệ thống sẽ tách riêng một phân hệ **Super Admin Quota Governance Center**:
+
+1. **Cảnh Báo Chạm Ngưỡng Đa Kênh (Multi-Channel Threshold Alerts):**
+   - **Ngưỡng 80% (Warning):** Gửi cảnh báo mềm trong giao diện chat ("Bạn đã dùng 80% hạn ngạch AI hôm nay").
+   - **Ngưỡng 100% (Blocked):** Chặn gọi AI, đồng thời bắn Webhook / Telegram Bot cảnh báo cho Quản lý phòng ban và Admin.
+2. **Quy Trình Phê Duyệt Nâng Quota Tức Thì (Self-service Quota Request & Approval):**
+   - Nhân viên bị hết quota có thể bấm "Yêu cầu cấp thêm quota hôm nay" kèm lý do (ví dụ: đang tư vấn khách hàng VIP).
+   - Admin nhận thông báo realtime qua Socket.IO / Telegram và có thể bấm "Duyệt +50 lượt" ngay lập tức mà không cần vào bảng cấu hình phức tạp.
+3. **Báo Cáo Đối Soát Chi Phí Nhà Cung Cấp (Provider Cost Reconciliation):**
+   - Thống kê tỷ trọng token tiêu thụ giữa các model (OpenAI vs Gemini vs Local LLM).
+   - Tự động cảnh báo khi chi phí API trong ngày của toàn bộ Workspace vượt ngưỡng ngân sách cấu hình (Budget Overrun Kill-Switch).
+
