@@ -53,3 +53,17 @@ Mỗi tin nhắn gửi qua cơ chế dịch tự động (AI Auto-Translate Repl
     *`Đã dịch từ: "Chào bạn, đơn hàng của bạn đã gửi."`*
   - Hỗ trợ nút/icon bấm để đảo vị trí hiển thị (toggle view gốc / dịch).
 - **Lưu ý nghiệp vụ:** `omni-web` (Vue 3 legacy) **KHÔNG** triển khai tính năng này, chỉ hỗ trợ trên `omni-web-next` và `omni-core`.
+
+## 5. Persistence & Inbound Translation Requirements (SPEC-AI-TRANS-002)
+
+### 5.1. Persistence Compliance (Server & Local)
+- **Server-side**: Metadata dịch thuật (`is_ai_translated`, `original_content`, `translation_info`) bắt buộc lưu vào cột `metadata` (JSONB) trong DB. Tuyệt đối không filter hoặc strip metadata này khi truyền qua API/Socket.
+- **Client-side (IndexedDB)**: Schema `localDb.messages` phải hỗ trợ field `metadata`. Khi deduplicate tin nhắn giữa cache và delta (API), phải dùng deep merge để bảo tồn metadata này sau mỗi lần reload trang.
+
+### 5.2. Inbound Translation (Dịch tin nhắn khách)
+- Đối với tin nhắn khách hàng gửi đến (Inbound), Frontend cần cung cấp nút bấm hoặc tag **"Dịch"** (Translate) ngay dưới bong bóng chat nếu ngôn ngữ tin nhắn khác tiếng Việt.
+- UI/UX:
+  - Hiển thị nội dung gốc (tiếng khách) là mặc định.
+  - Nút "Dịch" (🌐) hiển thị bên dưới.
+  - Khi bấm, hiển thị nội dung tiếng Việt (đã dịch bởi AI) ngay phía dưới, kèm chú thích `Đã dịch bởi AI`.
+  - Tính năng này phải dùng chung logic preview/toggle giống như luồng "AI Auto-Translate Reply" (SPEC-AI-TRANS-001).
