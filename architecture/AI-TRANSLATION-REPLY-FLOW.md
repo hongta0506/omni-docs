@@ -1,34 +1,30 @@
 # AI-TRANSLATION-REPLY-FLOW.md — Đặc tả Luồng Dịch Tin nhắn Trả lời (AI Translation Reply)
 
-> **Context:** Chat Composer, AI Copilot, Language Detection.
-> **Status:** Engineering Design Doc
+> **Context:** AI Agent, Chat Composer, Language Detection, Translation.
+> **Status:** Engineering Design Doc (Updated)
 
-## 1. Mục tiêu
-Tự động hóa việc dịch tin nhắn của nhân viên sang ngôn ngữ của khách hàng khi nhân viên sử dụng tính năng **Trả lời (Reply)**, đảm bảo trải nghiệm khách hàng bản địa hóa 100%.
+## 1. Luồng xử lý mới (Agent-Centric Flow)
+Dựa trên chỉ đạo: **AI Agent sẽ chịu trách nhiệm chính** để tối ưu tốc độ và sự tiện lợi cho nhân viên.
 
-## 2. Logic nghiệp vụ (Business Rules)
-1. **Detection**: Dựa trên `customer.language` hoặc `conversation.metadata.language` (được gán sau bước AI/Human Detect).
-2. **Trigger**: Khi nhân viên bấm "Reply" tin nhắn và soạn nội dung, hệ thống check:
-   - Nếu `nhân_viên_ngôn_ngữ` != `khách_ngôn_ngữ`: Kích hoạt dịch tự động.
-3. **Flow**:
-   - Nhân viên soạn thảo (tiếng Việt mặc định).
-   - Trước khi gửi, hệ thống hiển thị bản dịch "nháp" (dưới dạng text mờ) ngay dưới khung soạn thảo.
-   - Nhân viên nhấn "Gửi" -> Nội dung dịch được đẩy vào `payload.content`.
+### 1.1. Luồng tự động (Workflow)
+1. **Detection (Context-based)**: 
+   - AI Agent phân tích lịch sử chat (các tin nhắn gần nhất) để xác định ngôn ngữ khách hàng (`targetLanguage`).
+   - Nếu khách chat tiếng Trung/Anh/Nhật, AI ghi nhận ngữ cảnh.
+2. **Translation Service**:
+   - Khi nhân viên Reply, AI Agent nhận nội dung tiếng Việt (gốc).
+   - Agent **tự động gọi dịch** sang `targetLanguage`.
+   - Kết quả dịch được trả về để hiển thị bản nháp cho nhân viên (không lưu tin nhắn nháp vào DB).
+3. **Execution**:
+   - Nhân viên chỉ cần duyệt bản dịch, bấm **Gửi**.
+   - Khách hàng nhận tin đã dịch.
+   - Tin nhắn lưu trong DB là nội dung đã dịch (gửi cho khách), có thể lưu thêm metadata về nội dung gốc để quản lý kiểm tra.
 
-## 3. Cấu trúc yêu cầu (Backend API Update)
-Endpoint: `POST /api/v1/conversations/:id/messages`
-Payload mới:
-```json
-{
-  "content": "Dịch nội dung",
-  "replyMessageId": "UUID",
-  "originalContent": "Nội dung gốc (tiếng Việt)",
-  "targetLanguage": "en"
-}
-```
+## 2. Logic cập nhật
+- **Không lưu bản dịch nháp**: Chỉ hiển thị preview bản dịch tại UI để nhân viên xác nhận.
+- **Agent đóng vai trò trung tâm**: AI Agent xử lý nội dung, trừ trường hợp nhân viên muốn trả lời/chỉnh sửa thủ công.
+- **Language Detection**: Ưu tiên lịch sử chat thay vì field language tĩnh.
 
-## 4. Checklist Implementation (Composer & ComposerStore)
-- [ ] Bổ sung state `translationState` vào `ComposerStore`.
-- [ ] Tích hợp API `/api/v1/ai/translate` vào `composer.tsx`.
-- [ ] Toggle bật/tắt dịch trong UI Composer.
-- [ ] Lưu log bản dịch trong `metadata` của tin nhắn gửi đi để audit.
+## 3. Checklist cập nhật
+- [ ] Agent Service: Bổ sung endpoint/flow xử lý: `Detect Language (Context) -> Translate (Content) -> Reply Preview`.
+- [ ] UI Composer: Hiển thị bản dịch preview dưới khung soạn thảo.
+- [ ] Workflow: Nếu nhân viên gõ trực tiếp tiếng nước ngoài (không qua Việt), AI giữ nguyên nội dung.
