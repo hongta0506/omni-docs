@@ -28,3 +28,28 @@ Dựa trên chỉ đạo: **AI Agent sẽ chịu trách nhiệm chính** để t
 - [ ] Agent Service: Bổ sung endpoint/flow xử lý: `Detect Language (Context) -> Translate (Content) -> Reply Preview`.
 - [ ] UI Composer: Hiển thị bản dịch preview dưới khung soạn thảo.
 - [ ] Workflow: Nếu nhân viên gõ trực tiếp tiếng nước ngoài (không qua Việt), AI giữ nguyên nội dung.
+
+## 4. Metadata Standard & Sync Representation (SPEC-AI-TRANS-001)
+
+### 4.1. Payload & Metadata Schema
+Mỗi tin nhắn gửi qua cơ chế dịch tự động (AI Auto-Translate Reply) lưu tại `messages.metadata`:
+```json
+{
+  "is_ai_translated": true,
+  "original_content": "Chào bạn, đơn hàng của bạn đã gửi.",
+  "translation_info": {
+    "from": "vi",
+    "to": "en",
+    "provider": "ai_agent"
+  }
+}
+```
+
+### 4.2. Nguyên tắc hiển thị trên CRM (chỉ áp dụng cho Next.js omni-web-next)
+- **Cột `content` trong DB**: Luôn lưu nội dung đã dịch (ngôn ngữ đích của khách) để khi sync về hoặc gửi đi đều thống nhất.
+- **Bong bóng chat (`MessageBubble`):**
+  - Hiển thị chữ chính: Nội dung đã dịch (`message.content`).
+  - Phụ đề nguồn (Translation Pill): Dưới nội dung có dòng text nhỏ mờ `text-slate-500 text-xs` kèm icon 🌐:
+    *`Đã dịch từ: "Chào bạn, đơn hàng của bạn đã gửi."`*
+  - Hỗ trợ nút/icon bấm để đảo vị trí hiển thị (toggle view gốc / dịch).
+- **Lưu ý nghiệp vụ:** `omni-web` (Vue 3 legacy) **KHÔNG** triển khai tính năng này, chỉ hỗ trợ trên `omni-web-next` và `omni-core`.
