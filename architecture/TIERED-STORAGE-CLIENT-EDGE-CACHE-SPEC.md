@@ -202,14 +202,35 @@ CREATE INDEX idx_customer_intent_score ON customer_intent_profiles(tenant_id, bu
 
 ---
 
-## 7. Cơ chế Dự phòng & Đồng bộ Khi Đổi Thiết Bị (Device Sync & Failover)
+## 7. Cơ chế Dự phòng & Đồng bộ Khi Đổi Thiết Bị (Device Sync & Failover Architecture)
 
-1. **Nhân viên đổi máy tính / Đăng nhập tab mới:**
-   - Server vẫn lưu trữ **50 tin nhắn nóng gần nhất (Hot Rolling Buffer)** cho mỗi hội thoại trong vòng 7 ngày (hoặc trên Redis Stream).
-   - Khi client mới kết nối, client kéo 50 tin nóng này về nạp vào IndexedDB cục bộ.
-2. **Xuất bản Backup Mã hóa (Optional Tenant Backup):**
-   - Cung cấp tính năng: Quản lý Tenant có thể bấm *"Xuất bản sao lưu lịch sử chat"*.
-   - Client nén toàn bộ IndexedDB thành tệp tin `.enc` (mã hóa mật khẩu) tải về máy của Tenant hoặc đẩy lên Google Drive riêng của Tenant. Server SaaS hoàn toàn không lưu trữ tệp này.
+### 7.1 Bản chất Client Cache vs Server Source of Truth
+- **IndexedDB không tự động mang sang máy khác**: Trình duyệt sandbox dữ liệu cục bộ trên ổ cứng máy khách. Khi đổi máy hoặc trình duyệt bị xóa cache (Safari ITP 7 ngày), IndexedDB trên máy mới ban đầu là rỗng.
+- **Không dùng IP làm điều kiện kích hoạt**: Tuyệt đối không dùng sự thay đổi IP để trigger đồng bộ (vì IP đổi liên tục khi dùng 4G, Wi-Fi, VPN làm quá tải hàng loạt request thừa).
+- **Phân định tải (Tránh nghẽn Server & Tràn Storage)**:
+  - **Dữ liệu siêu nhẹ (Text, Tag, Trạng thái đọc, AI Translation Metadata)**: Write-Through ngầm 100% lên PostgreSQL khi phát sinh.
+  - **Dữ liệu nặng (Ảnh/Video binary blob, File đính kèm)**: Lưu tại Client-Side Edge Cache (Tier 4). Media URL lưu trữ tại CDN/S3 tạm thời, không bao giờ nhét Blob vào DB Server.
+
+### 7.2 Chiều 1: Tự động Sync Lên (Upstream Write-Through)
+- Mọi thao tác nghiệp vụ phát sinh tại client (gửi tin, gắn tag CRM, AI dịch tin nhắn) bắt buộc gửi payload lên API Server ngay lập tức.
+- Server lưu vào PostgreSQL (Master Source of Truth) -> trả về kết quả -> Client cập nhật IndexedDB.
+- Không để nhân viên phải bấm "Lưu/Upload" thủ công cho các dữ liệu văn bản/metadata nghiệp vụ vì dễ quên và rủi ro mất dữ liệu nếu máy hỏng đột ngột.
+
+### 7.3 Chiều 2: Kéo Về Máy Mới (Downstream Lazy Windowing & 7-Day Sync Buffer)
+Khi phát hiện `localDb` rỗng (máy mới hoặc sau 7 ngày Safari ITP purge):
+1. **Lazy Windowing (Cửa sổ trượt 7 ngày)**:
+   - Server **không dump toàn bộ lịch sử nhiều năm** (tránh nghẽn băng thông và tràn RAM máy mới).
+   - Server cung cấp cơ chế đóng gói nén gzip tin nhắn 7 ngày gần nhất qua worker hàng đợi NSQ (`POST /api/v1/conversations/sync-buffer/request` -> `GET /api/v1/conversations/sync-buffer/stream`).
+   - Client nạp gói 7 ngày vào IndexedDB để làm việc ngay lập tức (<15ms).
+2. **On-Demand Pagination**:
+   - Khi nhân viên cuộn xem lịch sử cũ hơn 7 ngày, hệ thống mới query PostgreSQL phân trang 20-50 tin tiếp theo và lưu nối tiếp vào IndexedDB.
+
+### 7.4 Chiều 3: Đồng bộ Chủ Đích Sang Máy Mới (User-Initiated Migration với TTL 24h)
+Dành cho trường hợp nhân viên muốn mang theo cấu hình nháp, ghi chú riêng, hoặc toàn bộ media offline sang máy tính mới:
+1. Tại máy cũ, nhân viên bấm **"Sao lưu sang thiết bị mới"** trong Cài đặt.
+2. Trình duyệt đóng gói dữ liệu IndexedDB thành tệp mã hóa và tải lên **Temporary Transit Buffer** trên server.
+3. Server thiết lập thời gian tự hủy (**TTL = 24 giờ**), tự động xóa file vật lý sau 24h để giải phóng 100% storage.
+4. Tại máy mới, nhân viên nhập mã xác thực (OTP / Passphrase) để kéo gói dữ liệu về giải nén vào IndexedDB cục bộ.
 
 ---
 
