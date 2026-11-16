@@ -1,11 +1,11 @@
-# Bounded Contexts — Đặc Tả Nghiệp Vụ & Kỹ Thuật 8 Contexts
+# Bounded Contexts — Đặc Tả Nghiệp Vụ & Kỹ Thuật 9 Contexts
 
-> Thư mục chứa toàn bộ tài liệu đặc tả nghiệp vụ chi tiết, use cases, domain model, repository ports và mapping routes của **8 Bounded Contexts** trong hệ thống **Omni Core** (`omni-core/internal/`).
+> Thư mục chứa toàn bộ tài liệu đặc tả nghiệp vụ chi tiết, use cases, domain model, repository ports và mapping routes của **9 Bounded Contexts** trong hệ thống **Omni Core** (`omni-core/internal/`).
 > Golang Core developers tra cứu trực tiếp tại từng context tương ứng để triển khai độc lập.
 
 ---
 
-## 1. Danh Mục 8 Bounded Contexts
+## 1. Danh Mục 9 Bounded Contexts (8 đã triển khai + 1 planned)
 
 | STT | Bounded Context | Thư Mục Package Go | Thư Mục Docs | Endpoints | Trọng Tâm Nghiệp Vụ |
 |:---:|---|---|---|:---:|---|
@@ -17,7 +17,8 @@
 | **06** | **Marketing & Automation** | `internal/marketing` | [`06-marketing/`](./06-marketing/) | 84 | Broadcast campaigns, Tags đa kênh, Nuôi dưỡng sequences, Automation flows. |
 | **07** | **AI Agent & Knowledge** | `internal/aiagent` | [`07-aiagent/`](./07-aiagent/) | 65 | AI Agents, Providers (DeepSeek/OpenAI), RAG Knowledge base, Ops Radar. |
 | **08** | **Service API & Gateway** | `internal/serviceapi` | [`08-serviceapi/`](./08-serviceapi/) | 40 | Public API cho daemons (GoClaw), HMAC Auth, Analytics SLA, Webhooks. |
-| | **TỔNG CỘNG** | | | **615** | Chuẩn hóa từ 792 routes thô Fastify. |
+| **09** | **Storefront** `(planned)` | `internal/storefront` | [`09-storefront/`](./09-storefront/) | 0 | Giỏ hàng, Checkout session, Giữ hàng, Coupon, Shopper account. Chưa có endpoint — xem [`../architecture/STOREFRONT-BC9-SPEC.md`](../architecture/STOREFRONT-BC9-SPEC.md). |
+| | **TỔNG CỘNG** | | | **615** | Chuẩn hóa từ 792 routes thô Fastify. BC 09 chưa đóng góp endpoint nào. |
 
 ---
 
