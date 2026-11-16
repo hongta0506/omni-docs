@@ -142,7 +142,7 @@ Quyết định này **có hạn**. Chuyển sang Phương án B khi **bất k�
 
 | # | Điều kiện | Ngưỡng đề xuất | Vì sao ngưỡng này |
 |---|---|---|---|
-| 1 | **PCI DSS** — payment đi vào phạm vi thẻ thật, cần cô lập CDE | Khi payment chuyển từ DEFERRED sang thực thi và chạm dữ liệu thẻ | Phạm vi PCI bao quanh service chứ không bao quanh cả monolith CRM. Đây là lý do **mạnh nhất** trong danh sách. |
+| 1 | **Phạm vi thanh toán (PCI)** — cần cô lập vùng chạm dữ liệu thẻ | Khi provider yêu cầu xử lý thẻ trực tiếp thay vì trang thanh toán hosted | Đi qua trang hosted của provider thì phạm vi PCI vẫn nhỏ; nếu sau này tự xử lý thẻ, việc cô lập CDE sẽ là lý do **mạnh nhất** để tách service. |
 | 2 | **Traffic spike** — tải shopper làm chậm CRM nội bộ | p99 của route CRM nội bộ tăng > 2× so với baseline khi storefront cao điểm, kéo dài > 30 ngày | Đo được, không phỏng đoán |
 | 3 | **Team riêng** — có team sở hữu storefront | Team có release cadence riêng và bị chặn bởi CI của core | Đúng tiêu chí Team Topology trong `MODULAR-MONOLITH-TO-MICROSERVICES.md` §2 |
 | 4 | **Tải DB** — storefront chiếm phần lớn I/O DB | > 40% thời gian DB của instance đến từ bảng `storefront` | Chỉ cần DB riêng, chưa chắc cần service riêng |

@@ -223,9 +223,9 @@ UNIQUE `(cart_id, product_id, variant_key)` — thêm trùng mặt hàng thì c�
 
 UNIQUE `(tenant_id, code)`.
 
-### 4.7 `payment_intents` `(planned — DEFERRED)`
+### 4.7 `payment_intents` `(planned)`
 
-Chỉ ghi nhận phạm vi, chưa thiết kế cột chốt: `provider`, `provider_txn_id UNIQUE`, `amount`, `currency`, `status`, `idempotency_key`. Không vào sprint hiện tại.
+Cột: `id`, `tenant_id`, `checkout_session_id`, `provider`, `provider_txn_id` (UNIQUE), `amount`, `currency`, `status`, `idempotency_key`, `created_at`, `updated_at`. Không lưu dữ liệu thẻ: dùng trang thanh toán của provider, chỉ lưu `provider_txn_id`. Chi tiết ở issue `[storefront] Tích hợp thanh toán`.
 
 ---
 
@@ -373,7 +373,7 @@ Bổ sung vào `internal/serviceapi/domain/credential/credential.go` (hiện có
 5. **Không đụng `omni-web-next`.** Đó là app admin nội bộ.
 6. **Không làm shipment, tax engine, đa kho thông minh, loyalty point.**
 7. **Không thay thế `deal`.** Pipeline, quote, pricebook, order vẫn thuộc `deal`.
-8. **Không làm payment executor** — chỉ ghi phạm vi, xem §4.7.
+8. **Không tự lưu dữ liệu thẻ** — thanh toán đi qua trang của provider, `storefront` chỉ giữ `provider_txn_id` (xem §4.7). Không làm cổng thanh toán riêng, không ví điện tử nội bộ.
 
 ---
 
