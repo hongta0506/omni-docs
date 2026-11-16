@@ -30,7 +30,7 @@
 2. **Phiên chốt đơn:** tổng tiền, áp coupon, giữ hàng, chốt đơn, hết hạn.
 3. **Danh tính shopper:** đăng ký, đăng nhập, hồ sơ. Principal hoàn toàn tách khỏi staff.
 4. **Mã giảm giá:** định nghĩa, giới hạn lượt dùng, ghi nhận lượt dùng.
-5. **Ý định thanh toán** `(planned, DEFERRED)` — chỉ ghi phạm vi.
+5. **Thanh toán:** tạo `payment_intent`, nhận callback từ provider, đối soát. Chỉ lưu `provider_txn_id`, không lưu dữ liệu thẻ `(planned)`.
 
 ### 2.2 Ngoài phạm vi (thuộc BC khác)
 

@@ -146,7 +146,7 @@ Giỏ hàng phải sống qua nhiều thiết bị, nhiều tab, và qua lúc đ
 | `/search` | Server, dynamic | Public | — | Theo `searchParams` |
 | `/cart` | Server, **dynamic** | Guest hoặc shopper | `CartService/GetCart` | Nguồn sự thật của giỏ |
 | `/checkout` | Server, **dynamic** | Bắt buộc shopper | `CheckoutService/CreateSession` | Không cho guest vào |
-| `/checkout/payment` | Server, **dynamic** | Bắt buộc shopper | `(planned, DEFERRED)` | Payment chưa vào sprint |
+| `/checkout/payment` | Server, **dynamic** | Bắt buộc shopper | `PaymentService/CreateIntent` | Redirect sang trang thanh toán của provider |
 | `/checkout/success/[id]` | Server, **dynamic** | Bắt buộc shopper | `CheckoutService/GetSession` | Idempotent theo session id |
 | `/login` | Server shell + client form | Public | `ShopperService/Login` | Form là client, token do server giữ |
 | `/register` | Server shell + client form | Public | `ShopperService/Register` | Verify email |
