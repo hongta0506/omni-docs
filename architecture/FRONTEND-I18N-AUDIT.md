@@ -14,11 +14,11 @@ Hệ thống dịch **đã có và đúng**: 623 key × 3 locale (`vi`/`en`/`zh`
 |---|---|
 | Route kiểm tra | **164** |
 | Route vẫn hiện chữ Việt khi chọn `en` | **164 (100%)** |
-| Tổng ký tự Việt còn sót trong HTML | **26.198** |
+| Tổng ký tự Việt còn sót trong HTML | **26.198 – 27.944** (hai lần chạy) |
 | Chuỗi Việt viết thẳng trong `src/` | **4.602** (626 file) |
 | File có gọi `t()` | **61** / 626 |
 
-Không có trang nào sạch. Vì vậy issue được mở **theo khu vực chức năng**, không theo từng route — 164 route nhưng phần lớn dùng chung component.
+Số route hỏng **ổn định 164/164** giữa các lần chạy; số ký tự dao động ~7% vì trang render dữ liệu sống (giờ, số đếm, tên). Vì vậy issue được mở **theo khu vực chức năng**, không theo từng route — 164 route nhưng phần lớn dùng chung component, mở 164 issue là nhiễu.
 
 ## 2. Hai Phép Đo, Vì Một Phép Đo Sẽ Nói Dối
 
