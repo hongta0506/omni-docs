@@ -92,6 +92,21 @@ Tracker: **!632** — `[i18n] Audit toàn bộ trang: 164/164 route còn chữ V
 3. **`Intl` hardcode `vi-VN`.** `toLocaleString('vi-VN')` ở bảng tiền/ngày sẽ sai định dạng khi chọn `en`/`zh` dù chữ đã dịch. Phải truyền `locale` từ `useI18n()`.
 4. **`<html lang>`.** `i18n/context.tsx:50-63` đã ghi lại lỗi cũ: server không đọc cookie nên HTML đúng byte giữa `vi` và `en`. Hiện đã sửa (`initialLocale`), nhưng mọi trang mới phải kiểm lại `lang`.
 
+
+## 6.5 Tầng tài liệu — phát hiện thêm khi kiểm `<html lang>`
+
+Không phải chuỗi dịch, mà là khung trang. Ảnh hưởng cả 164 route cùng lúc:
+
+| Kiểm | Kết quả |
+|---|---|
+| `<html lang>` khi `NEXT_LOCALE=vi` / `en` / `zh` | **luôn `"vi"`** (đo trên `/dashboard`, `/settings`, `/chat`, `/login`) |
+| `src/app/layout.tsx:29` | `lang="vi"` viết cứng |
+| `src/app/layout.tsx:33` | `<I18nProvider>` không truyền `initialLocale` → server không resolve cookie |
+| `src/app/layout.tsx:16-24` | `metadata` tĩnh, không dịch |
+| Hardcode `'vi-VN'` | **181 chỗ** (`grep -rn "'vi-VN'" src`); chỉ 2 file trong `src/components` dùng `locale` từ `useI18n()` |
+
+Vì vậy đổi sang `en`: chữ có thể dịch nhưng `lang` vẫn `vi`, tiền vẫn `1.234.567đ`, ngày vẫn `dd/mm/yyyy`. Issue riêng: **!633**.
+
 ## 7. Cách Chạy Lại
 
 ```bash
@@ -108,5 +123,5 @@ python3 omni-docs/scripts/i18n-audit.py runtime --repo . --base http://localhost
 - [ ] `runtime` với `NEXT_LOCALE=en`: 0 ký tự Việt trong text nhìn thấy, ở cả 164 route
 - [ ] `static`: 0 literal tiếng Việt ngoài `src/messages/`
 - [ ] `parity`: 0 key lệch giữa 3 locale
-- [ ] `<html lang>` khớp locale đang chọn ở mọi route
+- [ ] `<html lang>` khớp locale đang chọn ở mọi route (hiện luôn `"vi"` — !633)
 - [ ] Không còn `toLocaleString('vi-VN')` hardcode
