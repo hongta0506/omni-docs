@@ -60,6 +60,22 @@ Một build, một deploy, một login. Rail đổi bộ 9 đích ↔ 8 đích, 
 
 Đơn của website rơi về **cùng bảng order của `deal`**, mang nguồn `storefront` (xem `STOREFRONT-BC9-SPEC.md` §5.2). Workspace Website không có bảng dữ liệu riêng nào.
 
+### 4.1.1 Phân biệt "cấu hình website" và "site bán hàng" (chốt 2026-11-17)
+
+ADR này chỉ nói về **màn hình cấu hình** website (nhận diện, trang mẫu, danh mục publish, phí ship, cổng thanh toán, tên miền, SEO) — những màn đó là **workspace trong app admin**.
+
+**Site bán hàng cho khách KHÔNG nằm trong app admin.** Nó là **một repo riêng — site ecom độc lập**, vì phục vụ end-user: SEO, tốc độ tải, theme riêng, tên miền riêng, lịch deploy riêng.
+
+| | App admin (`omni-web` / `omni-web-next`) | Site storefront (repo riêng) |
+|---|---|---|
+| Người dùng | staff đã đăng nhập | khách vãng lai |
+| Auth | staff JWT | không (token shopper riêng) |
+| Gọi API | API nội bộ + staff JWT | **chỉ public API** (`/api/v1/public/**`) |
+| Logic nghiệp vụ | có (qua backend) | **không** — chỉ render + gọi API |
+| Widget chat | cấu hình + đọc hội thoại trong inbox | hiển thị widget cho khách |
+
+Hệ quả: mọi đặc tả có màn hình khách nhìn thấy phải ghi rõ repo đích — xem [`STOREFRONT-WEBCHAT-CHANNEL-SPEC.md`](./STOREFRONT-WEBCHAT-CHANNEL-SPEC.md) §1.1 và [`PAYMENT-METHODS-ADAPTER-SPEC.md`](./PAYMENT-METHODS-ADAPTER-SPEC.md) §7.1.
+
 ### 4.2 Điều kiện bắt buộc
 
 1. `src/config/navigation.ts` export `CRM_NAV` và `WEBSITE_NAV` cùng một type — nếu hai cây dùng hai type khác nhau thì đã là hai app trên một shell, và lúc đó phải chọn B.
