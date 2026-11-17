@@ -382,6 +382,9 @@ Bổ sung vào `internal/serviceapi/domain/credential/credential.go` (hiện có
 - [`ADR-STOREFRONT-BC-VS-SEPARATE-SERVICE.md`](./ADR-STOREFRONT-BC-VS-SEPARATE-SERVICE.md) — vì sao là BC trong repo, khi nào đổi.
 - [`FRONTEND-STOREFRONT-NEXTJS-SPEC.md`](./FRONTEND-STOREFRONT-NEXTJS-SPEC.md) — app Next.js riêng cho storefront.
 - [`../contexts/09-storefront/README.md`](../contexts/09-storefront/README.md) — trách nhiệm, invariant, event.
+- [`PAYMENT-METHODS-ADAPTER-SPEC.md`](./PAYMENT-METHODS-ADAPTER-SPEC.md) — port `Provider`, 7 phương thức thanh toán, adapter pattern, VietQR, mã đơn chuyển khoản, VAT theo tenant.
+- [`BANK-EMAIL-RECONCILIATION-SPEC.md`](./BANK-EMAIL-RECONCILIATION-SPEC.md) — đối soát chuyển khoản bằng email ngân hàng (planned).
+- [`STOREFRONT-COUPON-VOUCHER-SPEC.md`](./STOREFRONT-COUPON-VOUCHER-SPEC.md) — coupon/voucher/promotion, engine tính tiền, lịch sử redemption.
 - [`MODULAR-MONOLITH-TO-MICROSERVICES.md`](./MODULAR-MONOLITH-TO-MICROSERVICES.md) — điều kiện tách service.
 - [`BOUNDED-CONTEXT-BC7-AIAGENT-VS-BC8-SERVICEAPI.md`](./BOUNDED-CONTEXT-BC7-AIAGENT-VS-BC8-SERVICEAPI.md) — tiền lệ loại bỏ God Context.
 - [`CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md`](./CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md) — phân loại lỗi và retry.
