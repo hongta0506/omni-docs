@@ -124,6 +124,44 @@ Mỗi panel ≤ 10 mục hiển thị, phần còn lại qua ô lọc. Không m�
 
 Cùng khung, rail 8 đích, cây riêng: `Tổng quan · Giao diện · Trang · Danh mục · Bán hàng · Vận chuyển · Thanh toán · Tên miền`. Ranh giới và lý do tách: xem [ADR-FRONTEND-WORKSPACE-VS-SEPARATE-APP](./ADR-FRONTEND-WORKSPACE-VS-SEPARATE-APP.md).
 
+### 3.8 Nút AI Copilot (cam)
+
+Nút nổi đang có nằm ở `copilot-capsule-dock.tsx`: 48px, `bottom-24 left-5`, gradient `amber-500 → orange-500 → amber-600`, bóng `orange-500/35`, Sparkles 24px, chấm emerald 12px, 2 lớp radar khi đóng, `stone-900` + X khi mở, hotkey `⌘J`.
+
+**Toạ độ cũ không dùng được** với bố cục mới. Nút được thiết kế để nằm trong khoảng trống đáy của sidebar 240px (comment trong code: *"Sidebar bottom-left position"*). Khi nav thành rail 72 + panel 248 = **320px**, khoảng trống đó biến mất: `left: 20px` đặt nút **bên trong rail**, đè đích thứ 8–9 và khối tổ chức. Sheet (`copilot-chat-sheet.tsx`) mở ở `left-20 / sm:left-24` với `w-[500px] sm:w-[540px]` → che kín panel.
+
+#### Neo
+
+```css
+:root { --nav-w: 72px; }
+:root[data-panel="pinned"] { --nav-w: 320px; }
+```
+
+- Nút: `left: calc(var(--nav-w) + 20px)`, `bottom-24` (96px) — giữ nguyên kích thước, màu, `z-40`.
+- Sheet: `left: calc(var(--nav-w) + 16px)`, `w-[500px] sm:w-[540px] h-[640px]`, `max-w: calc(100vw - var(--nav-w) - 2rem)`.
+- Peek **không** làm nút dịch (peek nổi 72–320, nút ở 340).
+- `z-index`: nút/sheet 40 > panel 30 > peek overlay 20.
+- `prefers-reduced-motion`: tắt `animate-contact-radar-*` và `animate-ping`.
+
+#### Nhưng: ẩn nút ở màn tin nhắn chi tiết
+
+Ở `/chat/[convId]` (`chat/[convId]/page.tsx:19-31`) đáy màn hình là composer, bên phải là nút Gửi, và từ 1280px còn CRM drawer `w-88` (352px). Ba vùng đó chiếm hết cả hai góc:
+
+| Vị trí | Xung đột đo được | Kết luận |
+|---|---|---|
+| Đáy-trái cột nội dung | Không có gì | **Giữ** cho các màn khác |
+| Đáy-phải viewport | Đè nút Gửi; mobile đè bottom nav | Bỏ |
+| Phải khi drawer mở | Nút nổi **trên** drawer 352px, che nút đóng | Bỏ |
+| Mobile màn Khách hàng | `contacts-mobile-fab.tsx:18` đã là nút cam `bottom-20 right-4` 52px | Bỏ — hai nút cam cùng màu chồng nhau |
+
+Và ở màn chat, AI **đã có** đường vào riêng: `composer-toolbar.tsx:293` (Sparkles cạnh ô soạn) và `ai-suggest-bar.tsx:42`. Thêm nút nổi thứ ba ở đó là che composer mà không thêm khả năng gì.
+
+**Quy tắc:** nút nổi là phần tử được thêm cuối cùng, nên nó nhường chỗ. Ẩn ở `/chat/[id]`, giữ ở mọi màn khác.
+
+Nếu vẫn muốn góc phải: phải dựng **FAB stack** dùng chung (AI + Thêm khách) và cộng bề rộng drawer vào `right` — không nhét lẻ (issue `!615`).
+
+Ảnh: [`ai-capsule.png`](./assets/nav-layout/ai-capsule.png), [`ai-button-placement.png`](./assets/nav-layout/ai-button-placement.png)
+
 ## 4. Ảnh
 
 | Ảnh | Nội dung |
@@ -133,6 +171,8 @@ Cùng khung, rail 8 đích, cây riêng: `Tổng quan · Giao diện · Trang ·
 | [rail-peek.png](./assets/nav-layout/rail-peek.png) | Hover rail = peek overlay, nội dung không nhảy |
 | [collapsed-mobile.png](./assets/nav-layout/collapsed-mobile.png) | < 1024px và mobile bottom nav |
 | [website-workspace.png](./assets/nav-layout/website-workspace.png) | Workspace Website, cùng logo và màu |
+| [ai-capsule.png](./assets/nav-layout/ai-capsule.png) | Nút AI cam: 4 trạng thái, sheet, lỗi vị trí và cách sửa |
+| [ai-button-placement.png](./assets/nav-layout/ai-button-placement.png) | Đặt nút AI ở đâu: 5 phương án đo trên màn chat chi tiết |
 
 ## 5. Hợp Đồng Dữ Liệu Điều Hướng
 
