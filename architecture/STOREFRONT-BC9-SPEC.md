@@ -380,11 +380,12 @@ Bổ sung vào `internal/serviceapi/domain/credential/credential.go` (hiện có
 ## 9. Tài Liệu Liên Quan
 
 - [`ADR-STOREFRONT-BC-VS-SEPARATE-SERVICE.md`](./ADR-STOREFRONT-BC-VS-SEPARATE-SERVICE.md) — vì sao là BC trong repo, khi nào đổi.
-- [`FRONTEND-STOREFRONT-NEXTJS-SPEC.md`](./FRONTEND-STOREFRONT-NEXTJS-SPEC.md) — app Next.js riêng cho storefront.
+- [`FRONTEND-STOREFRONT-NEXTJS-SPEC.md`](./FRONTEND-STOREFRONT-NEXTJS-SPEC.md) — app riêng cho storefront (site ecom). **Lưu ý:** repo storefront chưa tồn tại; tên/stack là quyết định riêng, tài liệu chỉ ràng buộc nó gọi public API và không chứa logic nghiệp vụ.
 - [`../contexts/09-storefront/README.md`](../contexts/09-storefront/README.md) — trách nhiệm, invariant, event.
 - [`PAYMENT-METHODS-ADAPTER-SPEC.md`](./PAYMENT-METHODS-ADAPTER-SPEC.md) — port `Provider`, 7 phương thức thanh toán, adapter pattern, VietQR, mã đơn chuyển khoản, VAT theo tenant.
 - [`BANK-EMAIL-RECONCILIATION-SPEC.md`](./BANK-EMAIL-RECONCILIATION-SPEC.md) — đối soát chuyển khoản bằng email ngân hàng (planned).
 - [`STOREFRONT-COUPON-VOUCHER-SPEC.md`](./STOREFRONT-COUPON-VOUCHER-SPEC.md) — coupon/voucher/promotion, engine tính tiền, lịch sử redemption.
+- [`STOREFRONT-WEBCHAT-CHANNEL-SPEC.md`](./STOREFRONT-WEBCHAT-CHANNEL-SPEC.md) — kênh `webchat`: widget trên site ecom (repo riêng), visitor session, inbound vào Conversation BC, SSE, rate limit, ranh giới repo.
 - [`MODULAR-MONOLITH-TO-MICROSERVICES.md`](./MODULAR-MONOLITH-TO-MICROSERVICES.md) — điều kiện tách service.
 - [`BOUNDED-CONTEXT-BC7-AIAGENT-VS-BC8-SERVICEAPI.md`](./BOUNDED-CONTEXT-BC7-AIAGENT-VS-BC8-SERVICEAPI.md) — tiền lệ loại bỏ God Context.
 - [`CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md`](./CROSS-BC-RESILIENCE-AND-ERROR-HANDLING-SPEC.md) — phân loại lỗi và retry.

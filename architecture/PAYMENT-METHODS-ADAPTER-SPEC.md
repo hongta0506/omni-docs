@@ -2,7 +2,7 @@
 
 > **Document Code:** `SPEC-STOREFRONT-PAYMENT-001`
 > **Status:** ACTIVE — sprint hiện tại chỉ implement **bank transfer (VietQR)**; các phương thức còn lại là `planned`.
-> **Audience:** AI Coding Agents; Backend (Go — `omni-core`); Frontend **Vue 3 + Vuetify + Pinia** (`omni-web`, admin CRM AI và storefront widget). Không dùng Next.js cho phạm vi này.
+> **Audience:** AI Coding Agents; Backend (Go — `omni-core`); Frontend admin **Vue 3 + Vuetify + Pinia** (`omni-web`); **site storefront là repo riêng** (site ecom độc lập, chỉ gọi public API).
 > **Liên quan:** [STOREFRONT-BC9-SPEC.md](./STOREFRONT-BC9-SPEC.md) §4.7, §6.3; [BANK-EMAIL-RECONCILIATION-SPEC.md](./BANK-EMAIL-RECONCILIATION-SPEC.md).
 
 ---
@@ -186,18 +186,31 @@ GET    /api/v1/public/storefront/payment-methods?tenant=... → chỉ method b�
 
 ---
 
-## 7.1 UI surfaces (Vue — `omni-web`)
+## 7.1 UI surfaces — hai repo, hai loại màn hình
 
-Mọi màn hình quản trị nằm trong `omni-web` (Vue 3 + Vuetify + Pinia), **không** phải app Next.js:
+**Ranh giới repo (chốt):**
+
+| Loại màn hình | Repo | Ghi chú |
+|---|---|---|
+| Quản trị (admin CRM AI) | `omni-web` — Vue 3 + Vuetify + Pinia | auth staff JWT |
+| Site storefront (khách xem, đặt hàng, trang hoàn tất) | **repo storefront riêng** (site ecom) | chỉ gọi public API, không gọi API nội bộ |
+
+### 7.1.1 Admin — `omni-web`
 
 | Màn hình | View | Store | API service |
 |---|---|---|---|
 | Cấu hình phương thức thanh toán | `src/views/StorefrontPaymentView.vue` | `src/stores/storefront-payment.ts` | `src/api/storefront-payment.ts` |
 | Cấu hình VAT | tab trong `StorefrontPaymentView.vue` (hoặc `StorefrontVatView.vue`) | dùng chung store trên | dùng chung service trên |
 | Danh sách & xác nhận đơn chuyển khoản | `src/views/StoreOrdersView.vue` | `src/stores/store-orders.ts` | `src/api/store-orders.ts` |
-| Trang hoàn tất cho khách (public) | `src/views/public/StoreOrderStatusView.vue` (route công khai, không auth) | — | `src/api/public-store-order.ts` |
 
-Quy ước UI bắt buộc: 5 state (Loading skeleton, Empty, Error thật kèm Retry, Active dạng bảng dày, In-action disable + spinner), phân trang server-side `page`/`limit`, không mock data, không hiển thị `secret_ref`.
+### 7.1.2 Site storefront — repo riêng
+
+| Màn hình | Route | Endpoint tiêu thụ |
+|---|---|---|
+| Checkout + chọn phương thức | `/checkout` | `GET /api/v1/public/storefront/payment-methods`, `POST /api/v1/public/storefront/checkout` |
+| Trang hoàn tất + QR chuyển khoản | `/order/:code` | `GET /api/v1/public/storefront/orders/{order_code}?token=`, `GET /api/v1/public/storefront/qr/{order_code}.svg` |
+
+Quy ước UI bắt buộc (áp cho cả hai repo): 5 state (Loading skeleton, Empty, Error thật kèm Retry, Active dạng bảng dày, In-action disable + spinner), phân trang server-side `page`/`limit`, không mock data, không hiển thị `secret_ref`.
 
 ## 8. Failure modes
 
