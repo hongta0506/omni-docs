@@ -111,10 +111,10 @@ Tất cả dưới `/api/v1/public/webchat/`. Tenant resolve từ **host** (`Ori
 | Method | Path | Auth | Body / Query | Trả |
 |---|---|---|---|---|
 | POST | `/session` | origin allowlist | `{shopper_token?}` | `201 {visitorId, expiresAt}` + `Set-Cookie: wc_token=<opaque>; HttpOnly; Secure; SameSite=None; Path=/` |
-| POST | `/messages` | visitor token | `{clientMessageId, body}` | `202 {messageId}` |
+| POST | `/messages` | visitor token | `{clientMessageId, body, context?}` | `202 {messageId}` |
 | GET | `/messages?after=<id>&limit=` | visitor token | `limit ≤ 50` | `{items:[{messageId, direction, body, createdAt}]}` |
 | GET | `/stream` | visitor token | `Last-Event-ID` | `text/event-stream`, event `message`, heartbeat 15s |
-| GET | `/chat-config?tenant=<slug>` | public | — | `{enabled, title, greeting, accentColor}` |
+| GET | `/chat-config?tenant=<slug>` | public | — | `{enabled, title, greeting, accentColor, locale, quickReplies[], fallback}` |
 
 Bất biến:
 
@@ -125,6 +125,8 @@ Bất biến:
 5. SSE chỉ phát event thuộc **chính** hội thoại của visitor đó; không broadcast chéo.
 6. Origin ngoài allowlist → `403`, **không** tạo row nào.
 7. Cookie phải do **site ecom** set qua route handler server-side của nó (không để JS đọc token); SPA thuần thì giữ token trong memory, **cấm** `localStorage`.
+8. `context` (tuỳ chọn) chỉ gồm `{productSku, pageUrl, pageTitle}`, tổng ≤ **512 byte**, `pageUrl` phải **cùng origin** đã allowlist (khác → `422`), strip HTML như `body`. Lưu vào `messages.metadata` (jsonb) — **không** thêm cột vào `conversations`. Idempotency giữ nguyên: `clientMessageId` trùng → cùng `messageId`, metadata theo lần ghi đầu.
+9. Mọi field trong `context` là dữ liệu **không tin cậy**: chỉ dùng để hiển thị cho agent (link ra PDP), **không** dùng để resolve tenant/quyền, không render HTML.
 
 ---
 
@@ -150,8 +152,10 @@ Widget là **thành phần của site**, không phải của CRM. Hợp đồng 
 5. **Persistence:** giữ hội thoại qua điều hướng trang (sessionStorage giữ `after` id, token trong cookie/memory), không tạo session mới mỗi lần chuyển trang.
 6. **A11y:** `role="log"`, `aria-live="polite"`, focus trap khi mở, `Esc` đóng, đọc được bằng screen reader.
 7. **Không phụ thuộc thư viện nặng:** bundle widget ≤ 60 KB gzip; nếu nhúng site ngoài domain thì đóng gói Web Component để CSS không xung đột.
-8. **Config-driven:** lấy `title/greeting/accentColor` từ `/chat-config`; config sai → fallback token theme, không vỡ layout.
+8. **Config-driven:** lấy `title/greeting/accentColor/locale/quickReplies/fallback` từ `/chat-config`; `quickReplies` ≤ 4 item, `fallback` (`zaloUrl`, `hotline`) có thể null → ẩn dòng đó; config sai → fallback token theme, không vỡ layout. **Cấm** hard-code chip/lời chào trong widget.
 9. **Không** dùng `localStorage` cho token; **không** gọi endpoint nội bộ; **không** gửi dữ liệu đơn hàng/thanh toán trong chat.
+10. **Không tự sinh tin nhắn phía client.** Cấm mọi `setTimeout(...)` chèn câu trả lời giả để "trông như đang chat"; tin của shop chỉ đến từ SSE, tin của khách chỉ đổi trạng thái theo response thật.
+11. **Entry point theo ngữ cảnh:** nút "Đặt nhanh"/"Báo giá sỉ" trên product card mở widget và prefill theo sản phẩm, gửi kèm `context` (§5 bất biến 8) để agent thấy SKU/trang khách đang xem.
 
 ---
 
@@ -198,6 +202,9 @@ Widget là **thành phần của site**, không phải của CRM. Hợp đồng 
 - XSS: `<script>alert(1)</script>xin chào` → lưu `xin chào`.
 - Contract test cho widget (repo storefront): dùng fake server, assert optimistic send + retry cùng id + reconnect.
 - Tải: 500 visitor đồng thời, 1 msg/visitor → p95 `POST /messages` < 150ms, không rơi tin.
+- `context`: `pageUrl` khác origin → `422`; `context` > 512 byte → `422`; context hợp lệ → có trong `messages.metadata` và hiện cho agent.
+- Idempotency + `context`: gửi lại cùng `clientMessageId` với `context` khác → cùng `messageId`, metadata không bị ghi đè.
+- `chat-config`: `quickReplies` > 4 → bị cắt/`422`; `fallback` null → widget ẩn dòng liên hệ, không vỡ layout.
 
 ---
 
