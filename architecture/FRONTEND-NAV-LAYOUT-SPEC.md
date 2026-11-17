@@ -48,7 +48,15 @@ Bề rộng: rail 72 + panel 248 = **320px** → nội dung 1120px ở 1440, 104
 
 ### 3.2 Rail có nhãn, không phải icon trơn
 
-**Quyết định: mỗi đích trong rail là icon 20px + nhãn chữ 9.2px, luôn hiển thị.**
+**Quyết định: mỗi đích trong rail là icon 20px + nhãn chữ 9.2px, luôn hiển thị. Rail không chứa logo.**
+
+| Thông số rail | Giá trị |
+|---|---|
+| Bề rộng | 72px |
+| Mục | 9 đích, mỗi mục cao 56px (icon 20px ở `y+16`, nhãn 9.2px ở `y+38`) |
+| Điểm bắt đầu | ngay dưới topbar 56px (`TOP`), không có khối logo |
+| Đáy rail | khối tổ chức 58px (`OrgSwitcher` sẵn có, `sidebar.tsx:556`) |
+| Tổng cao | 9×56 + 58 = 562px < 712px khả dụng ở màn 768px |
 
 Lý do, dựa trên dữ liệu ở §2:
 
@@ -89,7 +97,11 @@ Không đổi bảng màu, không đổi logo:
 | Viền | `slate-200/80` | `sidebar.tsx:93` |
 | Chữ | `slate-900` tiêu đề, `slate-500` nhãn phụ (≥4.5:1) | AGENTS.md §4.1 |
 
-Logo chuyển từ topbar vào **đầu rail** (40px tile). Topbar giữ tên workspace + badge. Lý do: rail là trục dọc cố định — logo ở đó neo thương hiệu và giải phóng 200px ngang ở topbar cho tabs.
+**Logo giữ nguyên ở góc trên-trái của topbar**, đúng như bản hiện tại (`top-nav.tsx:53-66`): tile 32px nền `stone-950` viền `amber-500/40` + `brandName` + badge `CRM` màu amber. Không chuyển vào rail.
+
+Bố cục topbar từ trái sang: `[logo 32px] Stonekitlabs CRM [CRM] · [workspace switcher] · [tabs] · [search ⌘K] · [thông báo] · [avatar]`.
+
+Rail **không có logo** — nó chỉ có 9 đích, bắt đầu ngay từ đỉnh dưới topbar. Lý do: logo ở rail là thứ tôi tự thêm, không ai yêu cầu; nó chiếm 62px dọc của rail và làm logo rời khỏi vị trí người dùng đã quen.
 
 ### 3.5 Ánh xạ 32 đích hiện tại → 9 rail
 
@@ -167,7 +179,7 @@ Nếu vẫn muốn góc phải: phải dựng **FAB stack** dùng chung (AI + Th
 | Ảnh | Nội dung |
 |---|---|
 | [before-current.png](./assets/nav-layout/before-current.png) | Hiện trạng: 240px, 5 khối, 33 mục tràn nếp gấp 900px |
-| [rail-pinned.png](./assets/nav-layout/rail-pinned.png) | Chốt: rail 72 có logo + nhãn, panel pinned, workspace CRM |
+| [rail-pinned.png](./assets/nav-layout/rail-pinned.png) | Chốt: logo ở góc trên-trái topbar, rail 72 không logo + nhãn, panel pinned |
 | [rail-peek.png](./assets/nav-layout/rail-peek.png) | Hover rail = peek overlay, nội dung không nhảy |
 | [collapsed-mobile.png](./assets/nav-layout/collapsed-mobile.png) | < 1024px và mobile bottom nav |
 | [website-workspace.png](./assets/nav-layout/website-workspace.png) | Workspace Website, cùng logo và màu |
@@ -215,7 +227,7 @@ export const WEBSITE_NAV: NavDestination[];
 
 | Phase | Việc | Chặn bởi |
 |---|---|---|
-| 1 | `navigation.ts` + rail 72 (logo, nhãn, active) + panel đọc từ data | — |
+| 1 | `navigation.ts` + rail 72 (nhãn, active) + panel đọc từ data · logo giữ ở topbar | — |
 | 2 | 3 trạng thái panel + `localStorage` + `⌘K` palette | Phase 1 |
 | 3 | Gộp 29 route settings trùng + `301` | Phase 1 |
 | 4 | Workspace switcher + cây Website | Có API cấu hình storefront |
